@@ -10,6 +10,7 @@ const TicketsProvider = ({ children }) => {
     const loadTickets = async () => {
       try {
         const response = await axios.get('http://localhost:8080/tickets')
+        console.log('Fetched tickets:', response.data)
         setTickets(response.data)
       } catch (error) {
         console.error('Error fetching tickets:', error)
@@ -17,17 +18,34 @@ const TicketsProvider = ({ children }) => {
         setIsLoading(false)
       }
     }
-
     loadTickets()
   }, [])
 
-  const createTicket = async ({ title, content, image }) => {
+  const createTicket = async (ticketData) => {
     console.log('🚀 createTicket function triggered!')
+    console.log('Received Data:', ticketData)
+
+    const { title, content, image } = ticketData
+
+    if (!title || !content) {
+      console.error('Title and content are required')
+      return
+    }
+
+    console.log(
+      'Image Type:',
+      image instanceof File ? '✅ File' : '❌ Not a File'
+    )
 
     const formData = new FormData()
     formData.append('title', title)
     formData.append('content', content)
-    if (image) formData.append('image', image)
+
+    if (image instanceof File) {
+      formData.append('image', image)
+    } else {
+      console.warn('⚠️ Image is NOT a File object:', image)
+    }
 
     console.log('📤 Sending FormData:')
     for (let [key, value] of formData.entries()) {
@@ -43,17 +61,29 @@ const TicketsProvider = ({ children }) => {
         }
       )
       console.log('✅ Ticket created:', response.data)
-      setTickets((prev) => [...prev, response.data]) // ✅ Update state
+      setTickets((prev) => [...prev, response.data])
     } catch (error) {
       console.error('❌ Error creating ticket:', error.response?.data || error)
     }
   }
 
   const updateTicket = async (id, { title, content, image }) => {
+    console.log('🚀 updateTicket function triggered!')
+    console.log('Image type:', image instanceof File ? 'File' : typeof image)
+
     const formData = new FormData()
     formData.append('title', title)
     formData.append('content', content)
-    if (image) formData.append('image', image) // Append only if updating image
+    if (image instanceof File) {
+      formData.append('image', image)
+    } else {
+      console.warn('Image is not a File object:', image)
+    }
+
+    console.log('Updating FormData:')
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value)
+    }
 
     try {
       const response = await axios.put(
@@ -63,18 +93,19 @@ const TicketsProvider = ({ children }) => {
           headers: { 'Content-Type': 'multipart/form-data' },
         }
       )
+      console.log('Update response:', response.data)
       setTickets((prev) =>
         prev.map((ticket) => (ticket.id === id ? response.data : ticket))
-      ) // ✅ Update state after update
+      )
     } catch (error) {
-      console.error('Error updating ticket:', error)
+      console.error('Error updating ticket:', error.response?.data || error)
     }
   }
 
   const deleteTicket = async (id) => {
     try {
       await axios.delete(`http://localhost:8080/tickets/${id}`)
-      setTickets((prev) => prev.filter((ticket) => ticket.id !== id)) // ✅ Remove from state
+      setTickets((prev) => prev.filter((ticket) => ticket.id !== id))
     } catch (error) {
       console.error('Error deleting ticket:', error)
     }

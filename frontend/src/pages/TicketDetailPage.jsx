@@ -18,6 +18,7 @@ const TicketDetailPage = () => {
 
   useEffect(() => {
     if (ticket) {
+      console.log('Ticket Data:', ticket)
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
@@ -26,36 +27,36 @@ const TicketDetailPage = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
+    console.log('Selected file:', file)
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setEditedImage(file)
-        setPreviewImage(reader.result)
-      }
-      reader.readAsDataURL(file)
+      setEditedImage(file)
+      setPreviewImage(URL.createObjectURL(file))
     }
   }
 
-  if (isLoading) {
-    return <Loading />
-  }
-
-  const saveChanges = () => {
-    updateTicket(ticket.id, {
+  const saveChanges = async () => {
+    console.log('Saving:', {
       title: editedTitle,
       content: editedContent,
       image: editedImage,
     })
-    setIsEditing(false)
+    try {
+      await updateTicket(ticket.id, {
+        title: editedTitle,
+        content: editedContent,
+        image: editedImage,
+      })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Update failed:', error)
+    }
   }
 
-  if (!ticket) {
-    return <TicketNotFoundPage />
-  }
+  if (isLoading) return <Loading />
+  if (!ticket) return <TicketNotFoundPage />
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      {/* Ticket Details Card */}
       <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg">
         {isEditing ? (
           <>
@@ -66,31 +67,26 @@ const TicketDetailPage = () => {
               onChange={(e) => setEditedTitle(e.target.value)}
               className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:border-yellow-400 focus:outline-none"
             />
-
             <textarea
               placeholder="Edit your ticket"
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
               className="w-full p-3 mt-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:border-yellow-400 focus:outline-none"
-            ></textarea>
-
-            {/* Image Upload Input */}
+            />
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
               className="mt-3 p-2 w-full text-sm text-gray-300 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"
             />
-
-            {/* Image Preview */}
             {previewImage && (
               <img
                 src={previewImage}
                 alt="Ticket Preview"
                 className="mt-3 rounded-md shadow-lg max-h-72 w-full object-cover"
+                onError={() => console.error('Preview failed:', previewImage)}
               />
             )}
-
             <div className="flex gap-4 mt-5">
               <button
                 onClick={() => {
@@ -121,16 +117,17 @@ const TicketDetailPage = () => {
               <span className="text-yellow-400 font-medium">Posted by:</span>{' '}
               {ticket.postedBy}
             </p>
-
-            {/* Display the uploaded image if available */}
             {ticket.image && (
               <img
                 src={ticket.image}
                 alt="Uploaded Ticket"
-                className="mt-4 rounded-md shadow-lg max-h-72 w-full object-cover"
+                className="mt-4 rounded-md shadow-lg max-h-72 w-auto max-w-full mx-auto object-contain"
+                onError={(e) => {
+                  console.error('Image failed to load:', e.target.src)
+                  e.target.src = '/image.jpg'
+                }}
               />
             )}
-
             <button
               onClick={() => setIsEditing(true)}
               className="mt-5 px-5 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition"
@@ -140,8 +137,6 @@ const TicketDetailPage = () => {
           </>
         )}
       </div>
-
-      {/* Comment Section (Separate Card) */}
       <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg">
         <CommentSection ticketId={ticket.id} />
       </div>

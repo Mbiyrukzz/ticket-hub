@@ -9,17 +9,20 @@ import {
 const NewTicketForm = ({ onSubmit = () => {} }) => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [image, setImage] = useState(null) // Store uploaded image as Base64
+  const [image, setImage] = useState(null) // Store the File object
+  const [imagePreview, setImagePreview] = useState(null) // Store Base64 for preview
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Convert image to Base64
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
+      setImage(file) // Store File object ✅
+
+      // Generate preview
       const reader = new FileReader()
-      reader.readAsDataURL(file) // Convert file to Base64
+      reader.readAsDataURL(file)
       reader.onloadend = () => {
-        setImage(reader.result) // Store Base64 string
+        setImagePreview(reader.result)
       }
     }
   }
@@ -29,18 +32,23 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
 
     setIsSubmitting(true)
 
-    const newTicket = { id: Date.now(), title, content, image }
-    const savedTickets = JSON.parse(localStorage.getItem('tickets')) || []
-    const updatedTickets = [...savedTickets, newTicket]
+    console.log('🚀 Submitting Ticket:')
+    console.log('Title:', title)
+    console.log('Content:', content)
+    console.log('Image:', image)
+    console.log(
+      'Image Type:',
+      image instanceof File ? '✅ File' : '❌ Not a File'
+    )
 
-    localStorage.setItem('tickets', JSON.stringify(updatedTickets)) // Store tickets
+    // Ensure image is passed correctly
+    onSubmit({ title, content, image: image || null })
 
-    onSubmit(newTicket)
-
-    // Reset form
+    // Reset form after submit
     setTitle('')
     setContent('')
     setImage(null)
+    setImagePreview(null)
     setIsSubmitting(false)
   }
 
@@ -52,7 +60,6 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
       </h5>
 
       <div className="space-y-3">
-        {/* Title Input */}
         <input
           type="text"
           placeholder="Enter Issue Title..."
@@ -60,8 +67,6 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
           onChange={(e) => setTitle(e.target.value)}
           className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none transition"
         />
-
-        {/* Content Input */}
         <textarea
           placeholder="Describe the issue..."
           value={content}
@@ -69,8 +74,6 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
           className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none transition"
           rows="4"
         ></textarea>
-
-        {/* Image Upload Input */}
         <label className="cursor-pointer flex items-center gap-2 bg-gray-800 p-3 rounded-md border border-gray-700 hover:bg-gray-700 transition">
           <FontAwesomeIcon icon={faImage} className="text-yellow-400" />
           <span className="text-gray-300">Upload Image</span>
@@ -81,25 +84,24 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
             className="hidden"
           />
         </label>
-
-        {/* Image Preview */}
-        {image && (
+        {imagePreview && (
           <div className="relative mt-3">
             <img
-              src={image}
+              src={imagePreview}
               alt="Preview"
               className="rounded-md shadow-lg max-h-40 w-full object-cover"
             />
             <button
-              onClick={() => setImage(null)}
+              onClick={() => {
+                setImage(null)
+                setImagePreview(null)
+              }}
               className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 p-1 rounded-full"
             >
               <FontAwesomeIcon icon={faTrash} className="text-red-400" />
             </button>
           </div>
         )}
-
-        {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !title.trim() || !content.trim()}

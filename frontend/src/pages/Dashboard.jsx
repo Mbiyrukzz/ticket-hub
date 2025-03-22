@@ -12,8 +12,8 @@ const Dashboard = () => {
 
   const [currentlyDeleteTicketId, setCurrentlyDeleteTicketId] = useState()
 
-  const handleCreateTicket = ({ title, content }) => {
-    createTicket({ title, content })
+  const handleCreateTicket = ({ title, content, image }) => {
+    createTicket({ title, content, image })
     setNewTicketModalIsOpen(false)
   }
 
