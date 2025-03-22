@@ -38,7 +38,6 @@ const start = async () => {
     console.log('✅ Connected to MongoDB')
     const ticketsCollection = client.db('tickets-app-db').collection('tickets')
 
-    // Get all tickets
     app.get('/tickets', async (req, res) => {
       const tickets = await ticketsCollection.find().toArray()
       res.json(tickets)
