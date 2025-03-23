@@ -1,33 +1,35 @@
 import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrashAlt, faTimes, faCheck } from '@fortawesome/free-solid-svg-icons'
 
 const ConfirmDeleteResponse = ({ onConfirm, onDeny }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-transparent">
-      <div className="p-6 bg-gray-900 bg-opacity-90 text-white rounded-lg shadow-xl w-1/3 border border-gray-700">
+      <div className="p-6 bg-white text-gray-800 rounded-lg shadow-xl w-2/3 max-w-lg border border-gray-400">
         {/* Header */}
-        <h5 className="text-2xl font-bold text-red-500 flex items-center">
-          🛑 Delete Comment
+        <h5 className="text-2xl font-bold text-red-600 flex items-center gap-2">
+          <FontAwesomeIcon icon={faTrashAlt} /> Delete Comment
         </h5>
 
         {/* Message */}
-        <p className="text-gray-300 mt-2 text-lg leading-relaxed">
+        <p className="text-gray-700 mt-3 text-lg leading-relaxed text-center">
           Are you sure you want to delete this comment? This action
-          <span className="font-semibold text-red-400"> cannot be undone.</span>
+          <span className="font-semibold text-red-500"> cannot be undone.</span>
         </p>
 
         {/* Buttons */}
-        <div className="mt-6 flex justify-end gap-6">
+        <div className="mt-6 flex justify-center gap-4">
           <button
             onClick={onDeny}
-            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-200"
+            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-all duration-200 flex items-center gap-2"
           >
-            Cancel
+            <FontAwesomeIcon icon={faTimes} /> Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-200 shadow-md"
+            className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-400 transition-all duration-200 shadow-md flex items-center gap-2"
           >
-            Yes, Delete
+            <FontAwesomeIcon icon={faCheck} /> Yes, Delete
           </button>
         </div>
       </div>

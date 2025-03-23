@@ -1,4 +1,6 @@
 import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTimes } from '@fortawesome/free-solid-svg-icons'
 
 const Modal = ({ isOpen, onRequestClose, children }) => {
   if (!isOpen) return null
@@ -9,23 +11,22 @@ const Modal = ({ isOpen, onRequestClose, children }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-sm"
     >
       <div
-        className="bg-gray-900 bg-opacity-90 text-white rounded-lg shadow-2xl p-8 w-full max-w-5xl 
-                   transform transition-all duration-300 scale-100 border border-yellow-400 
-                   shadow-yellow-500/50 hover:shadow-yellow-400/80"
+        className="bg-white text-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-3xl border border-gray-300 
+                   transform transition-all duration-300 scale-95 hover:scale-100"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
-        {/* Modal Top Bar */}
+        {/* Modal Header */}
         <div className="flex justify-end">
           <button
             onClick={onRequestClose}
-            className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition shadow-lg"
+            className="p-2 text-gray-600 hover:text-gray-900 transition"
           >
-            ✕
+            <FontAwesomeIcon icon={faTimes} className="text-2xl" />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="mt-4">{children}</div>
+        <div className="mt-2">{children}</div>
       </div>
     </div>
   )

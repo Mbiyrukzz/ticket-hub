@@ -32,16 +32,8 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
 
     setIsSubmitting(true)
 
-    console.log('🚀 Submitting Ticket:')
-    console.log('Title:', title)
-    console.log('Content:', content)
-    console.log('Image:', image)
-    console.log(
-      'Image Type:',
-      image instanceof File ? '✅ File' : '❌ Not a File'
-    )
+    console.log('🚀 Submitting Ticket:', { title, content, image })
 
-    // Ensure image is passed correctly
     onSubmit({ title, content, image: image || null })
 
     // Reset form after submit
@@ -53,8 +45,8 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
   }
 
   return (
-    <div className="p-6 bg-gray-900 text-white rounded-lg shadow-xl">
-      <h5 className="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
+    <div className="p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg shadow-xl border border-gray-300 dark:border-gray-700">
+      <h5 className="text-2xl font-bold text-blue-600 dark:text-yellow-400 mb-4 flex items-center">
         <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-lg" />
         Add New Issue
       </h5>
@@ -65,18 +57,21 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
           placeholder="Enter Issue Title..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none transition"
+          className="w-full p-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-md border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-yellow-400 outline-none transition"
         />
         <textarea
           placeholder="Describe the issue..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none transition"
+          className="w-full p-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-md border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-yellow-400 outline-none transition"
           rows="4"
         ></textarea>
-        <label className="cursor-pointer flex items-center gap-2 bg-gray-800 p-3 rounded-md border border-gray-700 hover:bg-gray-700 transition">
-          <FontAwesomeIcon icon={faImage} className="text-yellow-400" />
-          <span className="text-gray-300">Upload Image</span>
+        <label className="cursor-pointer flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-3 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+          <FontAwesomeIcon
+            icon={faImage}
+            className="text-blue-500 dark:text-yellow-400"
+          />
+          <span className="text-gray-700 dark:text-gray-300">Upload Image</span>
           <input
             type="file"
             accept="image/*"
@@ -96,9 +91,9 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
                 setImage(null)
                 setImagePreview(null)
               }}
-              className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 p-1 rounded-full"
+              className="absolute top-2 right-2 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 p-1 rounded-full"
             >
-              <FontAwesomeIcon icon={faTrash} className="text-red-400" />
+              <FontAwesomeIcon icon={faTrash} className="text-red-500" />
             </button>
           </div>
         )}
@@ -108,8 +103,8 @@ const NewTicketForm = ({ onSubmit = () => {} }) => {
           className={`w-full py-3 font-bold rounded-md transition flex items-center justify-center gap-2
             ${
               isSubmitting || !title.trim() || !content.trim()
-                ? 'bg-gray-600 cursor-not-allowed'
-                : 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
+                ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                : 'bg-blue-500 dark:bg-yellow-500 text-white hover:bg-blue-400 dark:hover:bg-yellow-400'
             }`}
         >
           {isSubmitting ? (

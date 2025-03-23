@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useParams } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faPen,
+  faCheck,
+  faTimes,
+  faPlusCircle,
+  faCommentDots,
+} from '@fortawesome/free-solid-svg-icons'
 import TicketNotFoundPage from './TicketNotFoundPage'
 import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
@@ -15,10 +23,10 @@ const TicketDetailPage = () => {
   const [editedContent, setEditedContent] = useState('')
   const [editedImage, setEditedImage] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
+  const [showComments, setShowComments] = useState(false)
 
   useEffect(() => {
     if (ticket) {
-      console.log('Ticket Data:', ticket)
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
@@ -27,7 +35,6 @@ const TicketDetailPage = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
-    console.log('Selected file:', file)
     if (file) {
       setEditedImage(file)
       setPreviewImage(URL.createObjectURL(file))
@@ -35,11 +42,6 @@ const TicketDetailPage = () => {
   }
 
   const saveChanges = async () => {
-    console.log('Saving:', {
-      title: editedTitle,
-      content: editedContent,
-      image: editedImage,
-    })
     try {
       await updateTicket(ticket.id, {
         title: editedTitle,
@@ -56,8 +58,9 @@ const TicketDetailPage = () => {
   if (!ticket) return <TicketNotFoundPage />
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="bg-gray-900 text-white p-6 rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      {/* Ticket Info Card */}
+      <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg border border-gray-300">
         {isEditing ? (
           <>
             <input
@@ -65,29 +68,28 @@ const TicketDetailPage = () => {
               placeholder="Enter title"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:border-yellow-400 focus:outline-none"
+              className="w-full p-3 bg-gray-100 text-gray-800 rounded-md border border-gray-400 focus:border-yellow-500 focus:outline-none"
             />
             <textarea
               placeholder="Edit your ticket"
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              className="w-full p-3 mt-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:border-yellow-400 focus:outline-none"
+              className="w-full p-3 mt-3 bg-gray-100 text-gray-800 rounded-md border border-gray-400 focus:border-yellow-500 focus:outline-none"
             />
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="mt-3 p-2 w-full text-sm text-gray-300 bg-gray-800 border border-gray-700 rounded-md cursor-pointer"
+              className="mt-3 p-2 w-full text-sm text-gray-600 bg-gray-100 border border-gray-400 rounded-md cursor-pointer"
             />
             {previewImage && (
               <img
                 src={previewImage}
                 alt="Ticket Preview"
                 className="mt-3 rounded-md shadow-lg max-h-72 w-full object-cover"
-                onError={() => console.error('Preview failed:', previewImage)}
               />
             )}
-            <div className="flex gap-4 mt-5">
+            <div className="flex justify-end gap-4 mt-5">
               <button
                 onClick={() => {
                   setIsEditing(false)
@@ -95,26 +97,26 @@ const TicketDetailPage = () => {
                   setEditedContent(ticket.content)
                   setPreviewImage(ticket.image || null)
                 }}
-                className="px-5 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition"
+                className="flex items-center gap-2 px-5 py-3 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition"
               >
-                Cancel
+                <FontAwesomeIcon icon={faTimes} /> Cancel
               </button>
               <button
                 onClick={saveChanges}
-                className="px-5 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition"
+                className="flex items-center gap-2 px-5 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition"
               >
-                Save Changes
+                <FontAwesomeIcon icon={faCheck} /> Save
               </button>
             </div>
           </>
         ) : (
           <>
-            <h5 className="text-3xl font-bold text-yellow-400">
+            <h5 className="text-3xl font-bold text-yellow-600">
               {ticket.title}
             </h5>
-            <p className="text-gray-300 mt-3 text-lg">{ticket.content}</p>
-            <p className="text-md text-gray-400 mt-2">
-              <span className="text-yellow-400 font-medium">Posted by:</span>{' '}
+            <p className="text-gray-700 mt-3 text-lg">{ticket.content}</p>
+            <p className="text-md text-gray-500 mt-2">
+              <span className="text-yellow-600 font-medium">Posted by:</span>{' '}
               {ticket.postedBy}
             </p>
             {ticket.image && (
@@ -122,23 +124,50 @@ const TicketDetailPage = () => {
                 src={ticket.image}
                 alt="Uploaded Ticket"
                 className="mt-4 rounded-md shadow-lg max-h-72 w-auto max-w-full mx-auto object-contain"
-                onError={(e) => {
-                  console.error('Image failed to load:', e.target.src)
-                  e.target.src = '/image.jpg'
-                }}
               />
             )}
-            <button
-              onClick={() => setIsEditing(true)}
-              className="mt-5 px-5 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition"
-            >
-              Edit
-            </button>
+            <div className="flex justify-between items-center mt-5">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 px-5 py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition"
+              >
+                <FontAwesomeIcon icon={faPen} /> Edit
+              </button>
+              <button
+                onClick={() => setShowComments(true)}
+                className="flex items-center gap-2 px-5 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-400 transition shadow-md"
+              >
+                <FontAwesomeIcon icon={faPlusCircle} /> Add / Show Response
+              </button>
+            </div>
           </>
         )}
       </div>
-      <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg">
-        <CommentSection ticketId={ticket.id} />
+
+      {/* Comment Section - Expanding with Animation */}
+      <div
+        className={`transition-all duration-300 ${
+          showComments
+            ? 'opacity-100 translate-y-0 scale-100'
+            : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
+        }`}
+      >
+        {showComments && (
+          <div className="bg-gray-100 text-gray-800 p-6 rounded-lg shadow-lg border border-gray-300">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold text-yellow-600 flex items-center gap-2">
+                <FontAwesomeIcon icon={faCommentDots} /> Responses
+              </h3>
+              <button
+                onClick={() => setShowComments(false)}
+                className="flex items-center gap-2 text-red-500 hover:text-red-400 transition text-sm font-bold"
+              >
+                <FontAwesomeIcon icon={faTimes} /> Close
+              </button>
+            </div>
+            <CommentSection ticketId={ticket.id} />
+          </div>
+        )}
       </div>
     </div>
   )

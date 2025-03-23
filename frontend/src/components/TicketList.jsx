@@ -12,12 +12,14 @@ const truncateText = (text, limit) => {
 const TicketList = ({ tickets, onRequestDelete }) => {
   return (
     <div className="mt-6 max-w-6xl mx-auto">
-      <h4 className="text-3xl font-bold text-yellow-400 mb-6 border-b-2 border-yellow-500 pb-2">
+      <h4 className="text-3xl font-bold text-blue-500 dark:text-yellow-400 mb-6 border-b-2 border-blue-600 dark:border-yellow-500 pb-2">
         My Tickets
       </h4>
 
       {tickets.length === 0 ? (
-        <p className="text-gray-400 text-center">No tickets available.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center">
+          No tickets available.
+        </p>
       ) : (
         <div className="space-y-6">
           {tickets.map((ticket) => (
@@ -26,16 +28,16 @@ const TicketList = ({ tickets, onRequestDelete }) => {
               key={ticket.id}
               className="block"
             >
-              <div className="relative border-l-4 border-yellow-500 pl-6 py-4 bg-gray-800/50 hover:bg-gray-800 transition rounded-lg shadow-md cursor-pointer">
+              <div className="relative border-l-4 border-blue-500 dark:border-yellow-500 pl-6 py-4 bg-white dark:bg-gray-800 hover:shadow-lg transition-all rounded-lg shadow-md cursor-pointer">
                 {/* Timeline Dot */}
-                <div className="absolute -left-2.5 top-6 w-4 h-4 bg-yellow-500 rounded-full shadow-md"></div>
+                <div className="absolute -left-2.5 top-6 w-4 h-4 bg-blue-500 dark:bg-yellow-500 rounded-full shadow-md"></div>
 
                 {/* Ticket Info */}
-                <h5 className="text-xl font-semibold text-yellow-300">
+                <h5 className="text-xl font-semibold text-blue-600 dark:text-yellow-300">
                   {ticket.title}
                 </h5>
 
-                <p className="text-gray-300 mt-1 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                   {truncateText(ticket.content, 20)}
                 </p>
 

@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom'
 const Dashboard = () => {
   const { tickets, createTicket, deleteTicket } = useContext(TicketContext)
   const [newTicketModalIsOpen, setNewTicketModalIsOpen] = useState(false)
-
   const [currentlyDeleteTicketId, setCurrentlyDeleteTicketId] = useState()
 
   const handleCreateTicket = ({ title, content, image }) => {
@@ -20,7 +19,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="relative flex min-h-screen bg-gray-900 text-white">
+    <div className="rounded-lg relative flex min-h-screen bg-gray-100 text-gray-900">
       {/* Main Content */}
       <div className="flex-1 p-6">
         {/* Modal for Adding New Ticket */}
@@ -48,7 +47,7 @@ const Dashboard = () => {
         <div className="absolute top-6 right-6">
           <button
             onClick={() => setNewTicketModalIsOpen(true)}
-            className="px-6 py-3 bg-yellow-500 text-gray-900 font-semibold rounded-lg shadow-lg hover:bg-yellow-400 transition-all duration-200"
+            className="px-6 py-3 bg-yellow-400 text-gray-900 font-semibold rounded-lg shadow-lg hover:bg-yellow-300 transition-all duration-200"
           >
             + Add New Issue
           </button>
