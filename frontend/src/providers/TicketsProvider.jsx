@@ -74,10 +74,9 @@ const TicketsProvider = ({ children }) => {
     const formData = new FormData()
     formData.append('title', title)
     formData.append('content', content)
+
     if (image instanceof File) {
       formData.append('image', image)
-    } else {
-      console.warn('Image is not a File object:', image)
     }
 
     console.log('Updating FormData:')
@@ -89,16 +88,19 @@ const TicketsProvider = ({ children }) => {
       const response = await axios.put(
         `http://localhost:8080/tickets/${id}`,
         formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       )
-      console.log('Update response:', response.data)
-      setTickets((prev) =>
-        prev.map((ticket) => (ticket.id === id ? response.data : ticket))
+
+      console.log('✅ Update response:', response.data)
+
+      // ✅ Ensure state updates immediately
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
+          ticket.id === id ? { ...ticket, ...response.data } : ticket
+        )
       )
     } catch (error) {
-      console.error('Error updating ticket:', error.response?.data || error)
+      console.error('❌ Error updating ticket:', error.response?.data || error)
     }
   }
 

@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 const truncateText = (text, limit) => {
+  if (!text) return '' // Handle null or undefined cases
   const words = text.split(' ')
   return words.length > limit ? words.slice(0, limit).join(' ') + '...' : text
 }
