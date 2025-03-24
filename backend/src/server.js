@@ -3,8 +3,12 @@ import cors from 'cors'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
+import * as admin from 'firebase-admin'
 import { initializeDbConnection } from './db.js'
 import { routes } from './routes/index.js'
+import credentials from '../credentials.json'
+
+admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
 const app = express()
 const PORT = process.env.PORT || 8080

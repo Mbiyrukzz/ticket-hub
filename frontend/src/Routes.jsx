@@ -6,6 +6,8 @@ import NotFoundPage from './pages/NotFoundPage'
 import NavBar from './components/NavBar'
 import SideBar from './components/SideBar'
 import Activites from './components/Activities'
+import LoginPage from './pages/LoginPage'
+import CreateAccountPage from './pages/CreateAccountPage'
 
 const MyRoutes = () => {
   return (
@@ -21,6 +23,8 @@ const MyRoutes = () => {
         {/* Main Content */}
         <div className="flex-1 p-6 transition-all duration-300">
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/create-account" element={<CreateAccountPage />} />
             <Route path="/" element={<Navigate to="/tickets" replace />} />
             <Route path="/tickets" element={<Dashboard />} />
             <Route path="/tickets/:ticketId" element={<TicketDetailPage />} />
