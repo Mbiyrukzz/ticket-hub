@@ -171,7 +171,7 @@ const CommentSection = ({ ticketId }) => {
       </div>
 
       {commentToDelete !== null && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-sm">
           <ConfirmDeleteResponse
             onConfirm={handleConfirmDelete}
             onDeny={() => setCommentToDelete(null)}

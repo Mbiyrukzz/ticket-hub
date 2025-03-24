@@ -104,18 +104,24 @@ const CommentProvider = ({ children }) => {
   const deleteComment = async (ticketId, commentId) => {
     try {
       console.log('Attempting to delete comment with ID:', commentId)
-      await axios.delete(
+      const response = await axios.delete(
         `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`
       )
+      console.log('✅ Delete response:', response.status) // Should log 204
       setComments((prev) => {
         const updated = prev.filter((comment) => comment.id !== commentId)
         localStorage.setItem('comments', JSON.stringify(updated))
         return updated
       })
       await fetchComments(ticketId) // Sync after delete
+      setError(null)
     } catch (error) {
-      console.error('❌ Error deleting comment:', error.response?.data || error)
+      console.error(
+        '❌ Error deleting comment:',
+        error.response?.data || error.message
+      )
       setError('Failed to delete comment.')
+      throw error
     }
   }
 
