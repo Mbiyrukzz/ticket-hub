@@ -60,45 +60,40 @@ const TicketsProvider = ({ children }) => {
           headers: { 'Content-Type': 'multipart/form-data' },
         }
       )
+
+      const newTicket = response.data
       console.log('✅ Ticket created:', response.data)
-      setTickets((prev) => [...prev, response.data])
+      setTickets(tickets.concat(newTicket))
     } catch (error) {
       console.error('❌ Error creating ticket:', error.response?.data || error)
     }
   }
 
   const updateTicket = async (id, { title, content, image }) => {
-    console.log('🚀 updateTicket function triggered!')
-    console.log('Image type:', image instanceof File ? 'File' : typeof image)
-
-    const formData = new FormData()
-    formData.append('title', title)
-    formData.append('content', content)
-
-    if (image instanceof File) {
-      formData.append('image', image)
-    }
-
-    console.log('Updating FormData:')
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value)
-    }
-
     try {
+      const formData = new FormData()
+      if (title) formData.append('title', title)
+      if (content) formData.append('content', content)
+      if (image instanceof File) formData.append('image', image)
+
       const response = await axios.put(
         `http://localhost:8080/tickets/${id}`,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
       )
 
       console.log('✅ Update response:', response.data)
 
-      // ✅ Ensure state updates immediately
-      setTickets((prevTickets) =>
-        prevTickets.map((ticket) =>
+      // ✅ Ensure state updates with a new reference
+      setTickets((prevTickets) => {
+        const newTickets = prevTickets.map((ticket) =>
           ticket.id === id ? { ...ticket, ...response.data } : ticket
         )
-      )
+        console.log('New tickets state:', newTickets)
+        return newTickets
+      })
     } catch (error) {
       console.error('❌ Error updating ticket:', error.response?.data || error)
     }

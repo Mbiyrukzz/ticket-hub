@@ -3,7 +3,7 @@ import cors from 'cors'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
-import { inititilizeDbConnection } from './db.js'
+import { initializeDbConnection } from './db.js'
 import { routes } from './routes/index.js'
 
 const app = express()
@@ -35,7 +35,7 @@ const upload = multer({ storage })
 // Database Connection & Routes
 const start = async () => {
   try {
-    await inititilizeDbConnection() // Properly placed inside try block
+    await initializeDbConnection() // Properly placed inside try block
 
     routes.forEach((route) => {
       if (route.middleware) {

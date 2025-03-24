@@ -26,7 +26,7 @@ const TicketList = ({ tickets, onRequestDelete }) => {
             <Link
               to={`/tickets/${ticket.id}`}
               key={ticket.id}
-              className="block"
+              className="block hover:text-blue-700 dark:hover:text-yellow-500"
             >
               <div className="relative border-l-4 border-blue-500 dark:border-yellow-500 pl-6 py-4 bg-white dark:bg-gray-800 hover:shadow-lg transition-all rounded-lg shadow-md cursor-pointer">
                 {/* Timeline Dot */}

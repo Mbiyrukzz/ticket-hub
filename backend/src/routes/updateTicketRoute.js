@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import multer from 'multer'
+import { ObjectId } from 'mongodb'
 import { ticketsCollection } from '../db.js'
 
 // Multer Storage Configuration
@@ -28,11 +29,16 @@ export const updateTicketRoute = {
     console.log('📸 Uploaded File:', req.file)
 
     try {
-      const { id } = req.params
+      let { id } = req.params
+      console.log('🆔 Received ID:', id, 'Type:', typeof id)
+
+      // Convert id if necessary
+      const objectId = ObjectId.isValid(id) ? new ObjectId(id) : id
+
       const { title, content } = req.body
 
-      // Query using UUID instead of MongoDB ObjectId
-      const ticket = await ticketsCollection.findOne({ id }) // ✅ Corrected to match UUID
+      // Find the existing ticket
+      const ticket = await ticketsCollection.findOne({ id: objectId })
       if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
 
       let updatedImage = ticket.image
@@ -49,15 +55,29 @@ export const updateTicketRoute = {
         updatedImage = `http://localhost:8080/uploads/${req.file.filename}`
       }
 
-      const updatedTicket = { title, content, image: updatedImage }
+      // Define updated fields dynamically (only update if provided)
+      const updatedFields = {}
+      if (title) updatedFields.title = title
+      if (content) updatedFields.content = content
+      if (req.file) updatedFields.image = updatedImage
 
-      // ✅ Update using UUID
-      await ticketsCollection.updateOne({ id }, { $set: updatedTicket })
+      // ✅ Update ticket in MongoDB
+      const updatedTicket = await ticketsCollection.findOneAndUpdate(
+        { id: objectId },
+        { $set: updatedFields },
+        { returnDocument: 'after', returnOriginal: false }
+      )
 
-      res.json({ id, ...updatedTicket })
+      console.log('🔄 Updated Ticket:', updatedTicket)
+      if (!updatedTicket)
+        return res.status(500).json({ error: 'Failed to update ticket' })
+
+      res.json(updatedTicket)
     } catch (error) {
-      console.error('❌ Error updating ticket:', error)
-      res.status(500).json({ error: 'Failed to update ticket' })
+      console.error('❌ Error updating ticket:', error.message, error.stack)
+      res
+        .status(500)
+        .json({ error: 'Failed to update ticket', details: error.message })
     }
   },
 }

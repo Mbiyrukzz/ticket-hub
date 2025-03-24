@@ -30,8 +30,16 @@ const TicketDetailPage = () => {
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
+
+      console.log('🔍 Ticket Data:', ticket)
+      console.log('✅ Comments:', ticket?.comments)
+
+      // ✅ Ensure ticket.comments is an array before checking length
+      if (Array.isArray(ticket.comments) && ticket.comments.length > 0) {
+        setShowComments(true)
+      }
     }
-  }, [ticket])
+  }, [ticket, tickets])
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
@@ -165,7 +173,10 @@ const TicketDetailPage = () => {
                 <FontAwesomeIcon icon={faTimes} /> Close
               </button>
             </div>
-            <CommentSection ticketId={ticket.id} />
+            <CommentSection
+              ticketId={ticket.id}
+              comments={ticket.comments || []}
+            />
           </div>
         )}
       </div>

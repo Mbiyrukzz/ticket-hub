@@ -37,10 +37,19 @@ export const createTicketRoute = {
         ? `http://localhost:8080/uploads/${req.file.filename}`
         : null
 
-      const newTicket = { id: uuidv4(), title, content, image } // Use _id
-      await ticketsCollection.insertOne(newTicket)
+      const newTicket = {
+        id: uuidv4(),
+        title,
+        content,
+        image,
+        comments: [], // ✅ Initialize empty comments array
+      }
+      // Use _id
+      const result = await ticketsCollection.insertOne(newTicket)
 
-      res.status(201).json(newTicket)
+      const mongoId = result.insertedId
+
+      res.status(201).json({ ...newTicket, _id: mongoId })
     } catch (error) {
       console.error('❌ Error creating ticket:', error)
       res.status(500).json({ error: 'Failed to create ticket' })
