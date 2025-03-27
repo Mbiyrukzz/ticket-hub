@@ -36,18 +36,32 @@ const CommentProvider = ({ children }) => {
     }
   }
 
-  const addComment = async (ticketId, text, user) => {
-    const newComment = { ticketId, content: text, author: user || 'Anonymous' }
+  const addComment = async (ticketId, text, user, imageFile) => {
     try {
+      // Create FormData object to handle both text and file upload
+      const formData = new FormData()
+      formData.append('content', text)
+      formData.append('author', user || 'Anonymous')
+      if (imageFile) {
+        formData.append('image', imageFile) // Add image file if provided
+      }
+
       const response = await axios.post(
         `http://localhost:8080/tickets/${ticketId}/comments`,
-        newComment
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Required for file uploads
+          },
+        }
       )
+
       setComments((prev) => {
         const updated = [...prev, response.data]
         localStorage.setItem('comments', JSON.stringify(updated))
         return updated
       })
+
       console.log('✅ Added comment:', response.data)
       await fetchComments(ticketId) // Fetch latest comments after adding
     } catch (error) {

@@ -34,12 +34,12 @@ const TicketDetailPage = () => {
       console.log('🔍 Ticket Data:', ticket)
       console.log('✅ Comments:', ticket?.comments)
 
-      // ✅ Ensure ticket.comments is an array before checking length
+      // Ensure ticket.comments is an array before checking length
       if (Array.isArray(ticket.comments) && ticket.comments.length > 0) {
         setShowComments(true)
       }
     }
-  }, [ticket, tickets])
+  }, [ticket])
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
@@ -51,12 +51,16 @@ const TicketDetailPage = () => {
 
   const saveChanges = async () => {
     try {
-      await updateTicket(ticket.id, {
-        title: editedTitle,
-        content: editedContent,
-        image: editedImage,
-      })
+      const formData = new FormData()
+      formData.append('title', editedTitle)
+      formData.append('content', editedContent)
+      if (editedImage) {
+        formData.append('image', editedImage)
+      }
+
+      await updateTicket(ticket.id, formData)
       setIsEditing(false)
+      setEditedImage(null) // Reset after successful save
     } catch (error) {
       console.error('Update failed:', error)
     }
@@ -88,7 +92,7 @@ const TicketDetailPage = () => {
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="mt-3 p-2 w-full text-sm text-gray-600 bg-gray-100 border border-gray-400 rounded-md cursor-pointer"
+              className="mt-3 p-2 w-full text-sm text-gray-600 bg-gray-100 border border-gray-400 rounded-md cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
             />
             {previewImage && (
               <img
@@ -104,6 +108,7 @@ const TicketDetailPage = () => {
                   setEditedTitle(ticket.title)
                   setEditedContent(ticket.content)
                   setPreviewImage(ticket.image || null)
+                  setEditedImage(null)
                 }}
                 className="flex items-center gap-2 px-5 py-3 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition"
               >
@@ -142,10 +147,11 @@ const TicketDetailPage = () => {
                 <FontAwesomeIcon icon={faPen} /> Edit
               </button>
               <button
-                onClick={() => setShowComments(true)}
+                onClick={() => setShowComments(!showComments)}
                 className="flex items-center gap-2 px-5 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-400 transition shadow-md"
               >
-                <FontAwesomeIcon icon={faPlusCircle} /> Add / Show Response
+                <FontAwesomeIcon icon={faPlusCircle} />{' '}
+                {showComments ? 'Hide' : 'Show'} Responses
               </button>
             </div>
           </>
@@ -173,10 +179,7 @@ const TicketDetailPage = () => {
                 <FontAwesomeIcon icon={faTimes} /> Close
               </button>
             </div>
-            <CommentSection
-              ticketId={ticket.id}
-              comments={ticket.comments || []}
-            />
+            <CommentSection ticketId={ticket.id} />
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 const { commentsCollection, usersCollection } = require('../db.js')
 
 const listCommentsRoute = {
-  path: '/users/:userId/comments',
+  path: '/users/:userId/:ticketId/comments',
   method: 'get',
   handler: async (req, res) => {
     try {

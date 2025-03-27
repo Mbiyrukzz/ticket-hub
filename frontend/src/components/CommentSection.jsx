@@ -14,22 +14,29 @@ const CommentSection = ({ ticketId }) => {
   const comments = getCommentsByTicketId(ticketId) || []
 
   const [newComment, setNewComment] = useState('')
+  const [newImage, setNewImage] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editedText, setEditedText] = useState('')
   const [commentToDelete, setCommentToDelete] = useState(null)
   const [error, setError] = useState(null)
 
-  const handleAddComment = async () => {
+  const handleAddComment = async (e) => {
+    e.preventDefault() // Prevent form submission default behavior
     if (newComment.trim()) {
       try {
-        await addComment(ticketId, newComment, 'User')
+        await addComment(ticketId, newComment, 'User', newImage)
         setNewComment('')
+        setNewImage(null)
         setError(null)
       } catch (error) {
         console.error('Failed to add comment:', error.message)
         setError('Failed to add comment.')
       }
     }
+  }
+
+  const handleImageChange = (e) => {
+    setNewImage(e.target.files[0])
   }
 
   const handleEdit = (commentId, text) => {
@@ -83,21 +90,39 @@ const CommentSection = ({ ticketId }) => {
 
       {error && <p className="text-red-500 mt-2">{error}</p>}
 
-      <div className="mt-4 flex items-center space-x-3 bg-white p-3 rounded-lg shadow-md">
-        <input
-          type="text"
-          placeholder="Write a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          className="flex-1 p-2 bg-gray-100 text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-        />
-        <button
-          onClick={handleAddComment}
-          className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition"
-        >
-          Comment
-        </button>
-      </div>
+      <form
+        onSubmit={handleAddComment}
+        className="mt-4 bg-white p-3 rounded-lg shadow-md"
+      >
+        <div className="flex items-center space-x-3">
+          <input
+            type="text"
+            placeholder="Write a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="flex-1 p-2 bg-gray-100 text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 transition"
+          >
+            Comment
+          </button>
+        </div>
+        <div className="mt-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          {newImage && (
+            <p className="text-sm text-gray-600 mt-1">
+              Selected: {newImage.name}
+            </p>
+          )}
+        </div>
+      </form>
 
       <div className="mt-4 space-y-6">
         {comments.length === 0 ? (
@@ -138,6 +163,13 @@ const CommentSection = ({ ticketId }) => {
                     <p className="text-gray-700 break-words overflow-hidden">
                       {comment.content}
                     </p>
+                    {comment.imageUrl && (
+                      <img
+                        src={comment.imageUrl}
+                        alt="Comment attachment"
+                        className="mt-2 max-w-xs rounded-md"
+                      />
+                    )}
                     <div className="flex items-center gap-4 mt-3 text-gray-500 text-sm">
                       <button className="flex items-center space-x-1 hover:text-blue-500">
                         <FontAwesomeIcon icon={faThumbsUp} /> <span>Like</span>
