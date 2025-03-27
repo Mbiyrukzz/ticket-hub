@@ -1,38 +1,30 @@
-const { commentsCollection, usersCollection } = require('../db.js')
+const { commentsCollection } = require('../db.js')
 
 const listCommentsRoute = {
-  path: '/users/:userId/:ticketId/comments',
+  path: '/tickets/:ticketId/comments', // More logical URL
   method: 'get',
   handler: async (req, res) => {
     try {
-      const { userId } = req.params
-      const users = usersCollection()
+      const { ticketId } = req.params
       const comments = commentsCollection()
 
-      if (!users || !comments) {
+      if (!comments) {
         console.error('❌ Database not initialized')
         return res.status(500).json({ error: 'Database not initialized' })
       }
 
-      // Fetch the user
-      const user = await users.findOne({ id: userId })
-      if (!user || !user.comments || user.comments.length === 0) {
-        console.log('⚠️ No comments found for userId:', userId)
-        return res.status(404).json({ error: 'User or comments not found' })
+      // Fetch comments for the given ticketId
+      const commentList = await comments.find({ ticketId }).toArray()
+
+      if (!commentList || commentList.length === 0) {
+        console.log('⚠️ No comments found for ticketId:', ticketId)
+        return res
+          .status(404)
+          .json({ error: 'No comments found for this ticket' })
       }
 
-      // Fetch comments using Promise.all()
-      const commentList = await Promise.all(
-        user.comments.map(async (commentId) => {
-          return comments.findOne({ id: commentId })
-        })
-      )
-
-      // Filter out null values (if comments were not found)
-      const filteredComments = commentList.filter((comment) => comment !== null)
-
-      console.log('✅ Sending comments:', filteredComments)
-      res.status(200).json(filteredComments)
+      console.log('✅ Sending comments:', commentList)
+      res.status(200).json(commentList)
     } catch (error) {
       console.error('❌ Error fetching comments:', error)
       res.status(500).json({ error: 'Failed to fetch comments' })
