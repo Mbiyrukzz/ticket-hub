@@ -1,6 +1,6 @@
-import { commentsCollection } from '../db.js'
+const { commentsCollection } = require('../db.js')
 
-export const updateCommentRoute = {
+const updateCommentRoute = {
   path: '/tickets/:ticketId/comments/:commentId', // Use consistent parameter names
   method: 'put',
   handler: async (req, res) => {
@@ -8,7 +8,8 @@ export const updateCommentRoute = {
     let { content } = req.body
 
     try {
-      if (!commentsCollection) {
+      const comments = commentsCollection() // Call the function if using the first db.js version
+      if (!comments) {
         return res.status(500).json({ error: 'Database not initialized' })
       }
 
@@ -20,14 +21,14 @@ export const updateCommentRoute = {
       console.log('🔎 Searching for comment with:', { ticketId, commentId })
 
       const filter = { id: commentId.trim(), ticketId: ticketId.trim() }
-      const existingComment = await commentsCollection.findOne(filter)
+      const existingComment = await comments.findOne(filter)
 
       if (!existingComment) {
         console.log('⚠️ Comment not found for:', filter)
         return res.status(404).json({ error: 'Comment not found', filter })
       }
 
-      const result = await commentsCollection.findOneAndUpdate(
+      const result = await comments.findOneAndUpdate(
         filter,
         {
           $set: {
@@ -53,3 +54,5 @@ export const updateCommentRoute = {
     }
   },
 }
+
+module.exports = { updateCommentRoute }

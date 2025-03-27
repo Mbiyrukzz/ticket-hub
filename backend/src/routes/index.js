@@ -1,13 +1,13 @@
-import { createCommentRoute } from './createCommentRoute.js'
-import { createTicketRoute } from './createTicketRoute.js'
-import { deleteCommentRoute } from './deleteCommentRoute.js'
-import { deleteTicketRoute } from './deleteTicketRoute.js'
-import { listCommentsRoute } from './listCommentsRoute.js'
-import { ticketslistRoutes } from './ticketslistRoutes.js' // Use correct filename
-import { updateCommentRoute } from './updateCommentRoute.js'
-import { updateTicketRoute } from './updateTicketRoute.js'
+const { createCommentRoute } = require('./createCommentRoute.js')
+const { createTicketRoute } = require('./createTicketRoute.js')
+const { deleteCommentRoute } = require('./deleteCommentRoute.js')
+const { deleteTicketRoute } = require('./deleteTicketRoute.js')
+const { listCommentsRoute } = require('./listCommentsRoute.js')
+const { ticketslistRoutes } = require('./ticketslistRoutes.js') // Use correct filename
+const { updateCommentRoute } = require('./updateCommentRoute.js')
+const { updateTicketRoute } = require('./updateTicketRoute.js')
 
-export const routes = [
+const routes = [
   ticketslistRoutes,
   createTicketRoute,
   updateTicketRoute,
@@ -18,3 +18,5 @@ export const routes = [
   createCommentRoute,
   updateCommentRoute,
 ]
+
+module.exports = { routes }

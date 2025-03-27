@@ -1,53 +1,70 @@
-import { v4 as uuidv4 } from 'uuid'
-import { ticketsCollection } from '../db.js'
-import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
+const { v4: uuidv4 } = require('uuid')
+const { ticketsCollection, usersCollection } = require('../db.js')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(process.cwd(), 'uploads')
-    if (!fs.existsSync(uploadPath))
+    const uploadPath = path.join(__dirname, '..', 'uploads') // ✅ Moves out of 'routes' to main folder
+    if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
+    }
     cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`)
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    cb(null, `${uniqueSuffix}-${file.originalname}`)
   },
 })
 
 const upload = multer({ storage })
 
-export const createTicketRoute = {
-  path: '/tickets',
+const createTicketRoute = {
+  path: '/users/:userId/tickets',
   method: 'post',
-  middleware: [upload.single('image')], // Properly apply Multer
+  middleware: [upload.single('image')],
   handler: async (req, res) => {
     try {
+      const tickets = ticketsCollection()
+      if (!tickets) {
+        console.error('❌ Database not initialized')
+        return res.status(500).json({ error: 'Database not initialized' })
+      }
+
       console.log('📥 Incoming Data:', req.body)
       console.log('📸 Uploaded File:', req.file)
 
+      const { userId } = req.params
       const { title, content } = req.body
       if (!title || !content) {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
+      const newTicketId = uuidv4()
       const image = req.file
         ? `http://localhost:8080/uploads/${req.file.filename}`
         : null
 
       const newTicket = {
-        id: uuidv4(),
+        id: newTicketId,
         title,
         content,
         image,
-        comments: [], // ✅ Initialize empty comments array
+        createdBy: userId,
+        comments: [],
       }
-      // Use _id
-      const result = await ticketsCollection.insertOne(newTicket)
 
+      // Insert the new ticket
+      const result = await tickets.insertOne(newTicket)
       const mongoId = result.insertedId
+
+      // Update user with the new ticket
+      await usersCollection().updateOne(
+        { id: userId },
+        { $push: { tickets: newTicketId } }
+      )
 
       res.status(201).json({ ...newTicket, _id: mongoId })
     } catch (error) {
@@ -56,3 +73,5 @@ export const createTicketRoute = {
     }
   },
 }
+
+module.exports = { createTicketRoute }

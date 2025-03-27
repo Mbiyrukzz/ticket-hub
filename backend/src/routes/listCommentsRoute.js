@@ -1,19 +1,43 @@
-import { commentsCollection } from '../db.js'
+const { commentsCollection, usersCollection } = require('../db.js')
 
-export const listCommentsRoute = {
-  path: '/tickets/:ticketId/comments',
+const listCommentsRoute = {
+  path: '/users/:userId/comments',
   method: 'get',
   handler: async (req, res) => {
     try {
-      const { ticketId } = req.params
-      const comments = await commentsCollection.find({ ticketId }).toArray()
+      const { userId } = req.params
+      const users = usersCollection()
+      const comments = commentsCollection()
 
-      console.log('✅ Sending comments:', comments) // ✅ Debugging
+      if (!users || !comments) {
+        console.error('❌ Database not initialized')
+        return res.status(500).json({ error: 'Database not initialized' })
+      }
 
-      res.status(200).json(comments)
+      // Fetch the user
+      const user = await users.findOne({ id: userId })
+      if (!user || !user.comments || user.comments.length === 0) {
+        console.log('⚠️ No comments found for userId:', userId)
+        return res.status(404).json({ error: 'User or comments not found' })
+      }
+
+      // Fetch comments using Promise.all()
+      const commentList = await Promise.all(
+        user.comments.map(async (commentId) => {
+          return comments.findOne({ id: commentId })
+        })
+      )
+
+      // Filter out null values (if comments were not found)
+      const filteredComments = commentList.filter((comment) => comment !== null)
+
+      console.log('✅ Sending comments:', filteredComments)
+      res.status(200).json(filteredComments)
     } catch (error) {
       console.error('❌ Error fetching comments:', error)
       res.status(500).json({ error: 'Failed to fetch comments' })
     }
   },
 }
+
+module.exports = { listCommentsRoute }

@@ -1,11 +1,12 @@
-import { MongoClient } from 'mongodb'
+const { MongoClient } = require('mongodb')
 
 let client = null
 
-export let ticketsCollection = null
-export let commentsCollection = null
+let ticketsCollection = null
+let commentsCollection = null
+let usersCollection = null
 
-export const initializeDbConnection = async () => {
+const initializeDbConnection = async () => {
   client = new MongoClient('mongodb://localhost:27017')
   try {
     await client.connect()
@@ -14,6 +15,13 @@ export const initializeDbConnection = async () => {
     console.error('❌ Error connecting to MongoDB:', error)
   }
   ticketsCollection = client.db('tickets-app-db').collection('tickets')
-
   commentsCollection = client.db('tickets-app-db').collection('comments')
+  usersCollection = client.db('tickets-app-db').collection('users')
+}
+
+module.exports = {
+  initializeDbConnection,
+  ticketsCollection: () => ticketsCollection,
+  commentsCollection: () => commentsCollection,
+  usersCollection: () => usersCollection,
 }

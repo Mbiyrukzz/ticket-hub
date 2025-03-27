@@ -1,14 +1,16 @@
-import express from 'express'
-import cors from 'cors'
-import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
-import * as admin from 'firebase-admin'
-import { initializeDbConnection } from './db.js'
-import { routes } from './routes/index.js'
-import credentials from '../credentials.json'
+const express = require('express')
+const cors = require('cors')
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+const admin = require('firebase-admin')
+const { initializeDbConnection } = require('./db.js')
+const { routes } = require('./routes/index.js')
+const credentials = require('../credentials.json')
 
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
+
+console.log('Firebase Credentials:', credentials)
 
 const app = express()
 const PORT = process.env.PORT || 8080
@@ -18,19 +20,23 @@ app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true })) // ✅ Supports form-data requests
 
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(process.cwd(), 'uploads')
+    const uploadPath = path.join(__dirname, 'uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
+    console.log('📂 Saving file to:', uploadPath) // Debug log
     cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`)
+    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${
+      file.originalname
+    }`
+    console.log('📸 Filename:', filename) // Debug log
+    cb(null, filename)
   },
 })
 

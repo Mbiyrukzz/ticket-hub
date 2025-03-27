@@ -1,12 +1,13 @@
-import { commentsCollection } from '../db.js'
-import { v4 as uuidv4 } from 'uuid' // Import UUID
+const { commentsCollection } = require('../db.js')
+const { v4: uuidv4 } = require('uuid') // Require UUID
 
-export const createCommentRoute = {
+const createCommentRoute = {
   path: '/tickets/:ticketId/comments',
   method: 'post',
   handler: async (req, res) => {
     try {
-      if (!commentsCollection) {
+      const comments = commentsCollection() // Call the function if using the first db.js version
+      if (!comments) {
         console.error('❌ Database not initialized')
         return res.status(500).json({ error: 'Database not initialized' })
       }
@@ -42,7 +43,7 @@ export const createCommentRoute = {
 
       console.log('📝 Creating new comment:', newComment)
 
-      const result = await commentsCollection.insertOne(newComment)
+      const result = await comments.insertOne(newComment)
 
       if (!result.acknowledged) {
         console.error('❌ MongoDB insert failed')
@@ -63,3 +64,5 @@ export const createCommentRoute = {
     }
   },
 }
+
+module.exports = { createCommentRoute }

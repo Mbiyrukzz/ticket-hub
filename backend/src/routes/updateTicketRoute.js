@@ -1,8 +1,8 @@
-import path from 'path'
-import fs from 'fs'
-import multer from 'multer'
-import { ObjectId } from 'mongodb'
-import { ticketsCollection } from '../db.js'
+const path = require('path')
+const fs = require('fs')
+const multer = require('multer')
+const { ObjectId } = require('mongodb')
+const { ticketsCollection } = require('../db.js')
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-export const updateTicketRoute = {
+const updateTicketRoute = {
   path: '/tickets/:id',
   method: 'put',
   middleware: [upload.single('image')],
@@ -29,6 +29,12 @@ export const updateTicketRoute = {
     console.log('📸 Uploaded File:', req.file)
 
     try {
+      const tickets = ticketsCollection() // Call the function if using the first db.js version
+      if (!tickets) {
+        console.error('❌ Database not initialized')
+        return res.status(500).json({ error: 'Database not initialized' })
+      }
+
       let { id } = req.params
       console.log('🆔 Received ID:', id, 'Type:', typeof id)
 
@@ -38,7 +44,7 @@ export const updateTicketRoute = {
       const { title, content } = req.body
 
       // Find the existing ticket
-      const ticket = await ticketsCollection.findOne({ id: objectId })
+      const ticket = await tickets.findOne({ id: objectId })
       if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
 
       let updatedImage = ticket.image
@@ -46,12 +52,22 @@ export const updateTicketRoute = {
         // Delete old image if it exists
         if (ticket.image) {
           const oldImagePath = path.join(
-            process.cwd(),
+            __dirname,
             'uploads',
             path.basename(ticket.image)
           )
-          if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath)
+          fs.access(oldImagePath, fs.constants.F_OK, (err) => {
+            if (!err) {
+              fs.unlink(oldImagePath, (unlinkErr) => {
+                if (unlinkErr)
+                  console.error('❌ Error deleting old image:', unlinkErr)
+                else console.log('🗑️ Old image deleted successfully')
+              })
+            }
+          })
         }
+
+        // Save new image URL
         updatedImage = `http://localhost:8080/uploads/${req.file.filename}`
       }
 
@@ -62,7 +78,7 @@ export const updateTicketRoute = {
       if (req.file) updatedFields.image = updatedImage
 
       // ✅ Update ticket in MongoDB
-      const updatedTicket = await ticketsCollection.findOneAndUpdate(
+      const updatedTicket = await tickets.findOneAndUpdate(
         { id: objectId },
         { $set: updatedFields },
         { returnDocument: 'after', returnOriginal: false }
@@ -81,3 +97,5 @@ export const updateTicketRoute = {
     }
   },
 }
+
+module.exports = { updateTicketRoute }
