@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage })
 
 const createCommentRoute = {
-  path: '/tickets/:ticketId/comments',
+  path: '/users/:userId/tickets/:ticketId/comments',
   method: 'post',
   handler: [
     upload.single('image'),

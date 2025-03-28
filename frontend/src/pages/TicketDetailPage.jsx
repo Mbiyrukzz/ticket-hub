@@ -51,16 +51,15 @@ const TicketDetailPage = () => {
 
   const saveChanges = async () => {
     try {
-      const formData = new FormData()
-      formData.append('title', editedTitle)
-      formData.append('content', editedContent)
-      if (editedImage) {
-        formData.append('image', editedImage)
+      const updatedTicketData = {
+        title: editedTitle,
+        content: editedContent,
+        image: editedImage || undefined, // Ensure it's either a File or undefined
       }
 
-      await updateTicket(ticket.id, formData)
+      await updateTicket(ticket.createdBy, ticket.id, updatedTicketData) // Pass userId and ticketId
       setIsEditing(false)
-      setEditedImage(null) // Reset after successful save
+      setEditedImage(null)
     } catch (error) {
       console.error('Update failed:', error)
     }

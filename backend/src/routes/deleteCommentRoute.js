@@ -1,4 +1,6 @@
 const { commentsCollection, usersCollection } = require('../db.js')
+const fs = require('fs')
+const path = require('path')
 
 const deleteCommentRoute = {
   path: '/tickets/:ticketId/comments/:commentId',
@@ -16,32 +18,53 @@ const deleteCommentRoute = {
       const { ticketId, commentId } = req.params
       console.log('🧐 Attempting to delete comment:', { ticketId, commentId })
 
-      // Find the comment
-      const comment = await comments.findOne({ id: commentId, ticketId })
+      // Log all comments to debug
+      const allComments = await comments.find({}).toArray()
+      console.log('All comments in DB:', allComments)
+
+      // Find the comment - ensure we're using the correct field name
+      const comment = await comments.findOne({
+        id: commentId,
+        ticketId: ticketId, // Adding ticketId to ensure we're deleting from correct ticket
+      })
+
       if (!comment) {
         console.log('⚠️ Comment not found:', { ticketId, commentId })
         return res.status(404).json({ error: 'Comment not found' })
       }
 
-      // Delete the comment from the comments collection
-      const result = await comments.findOneAndDelete({
+      // Delete the comment
+      const result = await comments.deleteOne({
         id: commentId,
-        ticketId,
+        ticketId: ticketId,
       })
-      const deletedComment = result.value
 
-      if (!deletedComment) {
-        console.log('⚠️ Comment was not found in database after delete attempt')
-        return res.status(404).json({ error: 'Comment not found' })
+      if (result.deletedCount === 0) {
+        return res.status(500).json({ error: 'Failed to delete comment' })
       }
 
-      // Remove the comment from the user's comments array
+      // Remove image file if it exists
+      if (comment.imageUrl) {
+        const imagePath = path.join(
+          __dirname,
+          '..',
+          'uploads',
+          path.basename(comment.imageUrl)
+        )
+
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath)
+          console.log('🗑️ Image file deleted:', imagePath)
+        }
+      }
+
+      // Update user's comments array
       await users.updateOne(
-        { id: deletedComment.createdBy },
-        { $pull: { comments: { id: commentId } } } // Ensure correct structure
+        { id: comment.createdBy },
+        { $pull: { comments: commentId } }
       )
 
-      console.log('✅ Successfully deleted comment:', deletedComment)
+      console.log('✅ Successfully deleted comment:', comment)
       res
         .status(200)
         .json({ message: 'Comment deleted successfully', id: commentId })

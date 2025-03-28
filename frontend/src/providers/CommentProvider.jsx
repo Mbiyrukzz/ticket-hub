@@ -10,13 +10,13 @@ const CommentProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const fetchComments = async (ticketId) => {
-    if (!ticketId) return
+  const fetchComments = async (userId, ticketId) => {
+    if (!userId || !ticketId) return
     setLoading(true)
     setError(null)
     try {
       const response = await axios.get(
-        `http://localhost:8080/tickets/${ticketId}/comments`
+        `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`
       )
       setComments((prev) => {
         const otherComments = prev.filter((c) => c.ticketId !== ticketId)
@@ -36,51 +36,50 @@ const CommentProvider = ({ children }) => {
     }
   }
 
-  const addComment = async (ticketId, text, user, imageFile) => {
+  const addComment = async (userId, ticketId, text, user, imageFile) => {
     try {
-      // Create FormData object to handle both text and file upload
       const formData = new FormData()
       formData.append('content', text)
       formData.append('author', user || 'Anonymous')
       if (imageFile) {
-        formData.append('image', imageFile) // Add image file if provided
+        formData.append('image', imageFile)
       }
 
       const response = await axios.post(
-        `http://localhost:8080/tickets/${ticketId}/comments`,
+        `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data', // Required for file uploads
+            'Content-Type': 'multipart/form-data',
           },
         }
       )
 
-      setComments((prev) => {
-        const updated = [...prev, response.data]
-        localStorage.setItem('comments', JSON.stringify(updated))
-        return updated
-      })
-
+      setComments((prev) => [...prev, response.data])
       console.log('✅ Added comment:', response.data)
-      await fetchComments(ticketId) // Fetch latest comments after adding
+      await fetchComments(userId, ticketId) // Sync with backend
     } catch (error) {
       console.error('❌ Error adding comment:', error.response?.data || error)
       setError('Failed to add comment.')
     }
   }
 
-  const editComment = async (ticketId, commentId, updatedData) => {
+  const editComment = async (userId, ticketId, commentId, updatedData) => {
     try {
-      console.log('✏️ Editing comment:', { ticketId, commentId, updatedData })
+      console.log('✏️ Editing comment:', {
+        userId,
+        ticketId,
+        commentId,
+        updatedData,
+      })
 
-      if (!ticketId || !commentId || !updatedData?.content?.trim()) {
+      if (!userId || !ticketId || !commentId || !updatedData?.content?.trim()) {
         console.error('❌ Missing required fields')
         throw new Error('Missing required fields')
       }
 
       const response = await fetch(
-        `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`,
+        `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments/${commentId}`,
         {
           method: 'PUT',
           headers: {
@@ -105,9 +104,7 @@ const CommentProvider = ({ children }) => {
         )
       )
 
-      // Optional: Refetch to ensure sync with backend
-      await fetchComments(ticketId)
-
+      await fetchComments(userId, ticketId) // Sync with backend
       return updatedComment
     } catch (error) {
       console.error('❌ Failed to edit comment:', error.message)
@@ -115,27 +112,28 @@ const CommentProvider = ({ children }) => {
     }
   }
 
-  const deleteComment = async (ticketId, commentId) => {
+  const deleteComment = async (userId, ticketId, commentId) => {
+    if (!userId || !ticketId || !commentId) return
+    setLoading(true)
+    setError(null)
     try {
-      console.log('Attempting to delete comment with ID:', commentId)
       const response = await axios.delete(
-        `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`
+        `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments/${commentId}`
       )
-      console.log('✅ Delete response:', response.status) // Should log 204
-      setComments((prev) => {
-        const updated = prev.filter((comment) => comment.id !== commentId)
-        localStorage.setItem('comments', JSON.stringify(updated))
-        return updated
-      })
-      await fetchComments(ticketId) // Sync after delete
-      setError(null)
+
+      if (response.status === 200 || response.status === 204) {
+        setComments((prev) => {
+          const updatedComments = prev.filter((c) => c.id !== commentId)
+          localStorage.setItem('comments', JSON.stringify(updatedComments))
+          return updatedComments
+        })
+        console.log('✅ Comment deleted successfully:', commentId)
+      }
     } catch (error) {
-      console.error(
-        '❌ Error deleting comment:',
-        error.response?.data || error.message
-      )
+      console.error('❌ Error deleting comment:', error.response?.data || error)
       setError('Failed to delete comment.')
-      throw error
+    } finally {
+      setLoading(false)
     }
   }
 

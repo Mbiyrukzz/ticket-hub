@@ -88,7 +88,11 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
-  const updateTicket = async (id, { title, content, image }) => {
+  const updateTicket = async (
+    userId,
+    ticketId,
+    { title, content, image } = {}
+  ) => {
     try {
       const formData = new FormData()
       if (title) formData.append('title', title)
@@ -96,22 +100,26 @@ const TicketsProvider = ({ children }) => {
       if (image instanceof File) formData.append('image', image)
 
       const response = await axios.put(
-        `http://localhost:8080/tickets/${id}`,
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
+        `http://localhost:8080/users/${userId}/tickets/${ticketId}`,
+        formData
       )
 
       console.log('✅ Update response:', response.data)
 
       setTickets((prevTickets) =>
         prevTickets.map((ticket) =>
-          ticket.id === id ? { ...ticket, ...response.data } : ticket
+          ticket.id === ticketId
+            ? { ...ticket, ...response.data }
+            : { ...ticket }
         )
       )
+
+      return { success: true, data: response.data }
     } catch (error) {
       console.error('❌ Error updating ticket:', error.response?.data || error)
+      const errorMessage =
+        error.response?.data?.error || 'Failed to update ticket'
+      return { success: false, error: errorMessage }
     }
   }
 

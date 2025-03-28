@@ -1,96 +1,85 @@
 const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
-const { ObjectId } = require('mongodb')
 const { ticketsCollection } = require('../db.js')
 
-// Multer Storage Configuration
+// Multer Storage Configuration (same as create)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(process.cwd(), 'uploads')
+    const uploadPath = path.join(__dirname, '..', 'uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
     cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`)
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    cb(null, `${uniqueSuffix}-${file.originalname}`)
   },
 })
 
 const upload = multer({ storage })
 
 const updateTicketRoute = {
-  path: '/tickets/:id',
+  path: '/users/:userId/tickets/:ticketId', // Changed to match create pattern
   method: 'put',
   middleware: [upload.single('image')],
   handler: async (req, res) => {
-    console.log('📥 Incoming Data:', req.body)
-    console.log('📸 Uploaded File:', req.file)
-
     try {
-      const tickets = ticketsCollection() // Call the function if using the first db.js version
-      if (!tickets) {
-        console.error('❌ Database not initialized')
+      const tickets = ticketsCollection()
+      if (!tickets)
         return res.status(500).json({ error: 'Database not initialized' })
-      }
 
-      let { id } = req.params
-      console.log('🆔 Received ID:', id, 'Type:', typeof id)
-
-      // Convert id if necessary
-      const objectId = ObjectId.isValid(id) ? new ObjectId(id) : id
-
+      const { userId, ticketId } = req.params // Now extracting userId too
       const { title, content } = req.body
 
-      // Find the existing ticket
-      const ticket = await tickets.findOne({ id: objectId })
-      if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
+      // Find ticket by ticketId and verify it belongs to userId
+      const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
+      if (!ticket)
+        return res
+          .status(404)
+          .json({ error: 'Ticket not found or not owned by user' })
 
-      let updatedImage = ticket.image
+      const updateFields = {}
+      if (title && title !== ticket.title) updateFields.title = title
+      if (content && content !== ticket.content) updateFields.content = content
+
       if (req.file) {
-        // Delete old image if it exists
         if (ticket.image) {
           const oldImagePath = path.join(
             __dirname,
+            '..',
             'uploads',
-            path.basename(ticket.image)
+            path.basename(
+              ticket.image.replace('http://localhost:8080/uploads/', '')
+            )
           )
-          fs.access(oldImagePath, fs.constants.F_OK, (err) => {
-            if (!err) {
-              fs.unlink(oldImagePath, (unlinkErr) => {
-                if (unlinkErr)
-                  console.error('❌ Error deleting old image:', unlinkErr)
-                else console.log('🗑️ Old image deleted successfully')
-              })
-            }
-          })
+          if (fs.existsSync(oldImagePath)) {
+            await fs.promises.unlink(oldImagePath)
+            console.log('🗑️ Old image deleted')
+          } else {
+            console.warn('⚠️ Old image not found at:', oldImagePath)
+          }
         }
-
-        // Save new image URL
-        updatedImage = `http://localhost:8080/uploads/${req.file.filename}`
+        updateFields.image = `http://localhost:8080/uploads/${req.file.filename}`
       }
 
-      // Define updated fields dynamically (only update if provided)
-      const updatedFields = {}
-      if (title) updatedFields.title = title
-      if (content) updatedFields.content = content
-      if (req.file) updatedFields.image = updatedImage
+      if (Object.keys(updateFields).length === 0)
+        return res.status(200).json(ticket)
 
-      // ✅ Update ticket in MongoDB
-      const updatedTicket = await tickets.findOneAndUpdate(
-        { id: objectId },
-        { $set: updatedFields },
-        { returnDocument: 'after', returnOriginal: false }
+      const result = await tickets.updateOne(
+        { id: ticketId, createdBy: userId }, // Ensure user owns ticket
+        { $set: updateFields }
       )
 
-      console.log('🔄 Updated Ticket:', updatedTicket)
-      if (!updatedTicket)
-        return res.status(500).json({ error: 'Failed to update ticket' })
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ error: 'Ticket not found during update' })
+      }
 
-      res.json(updatedTicket)
+      const updatedTicket = await tickets.findOne({ id: ticketId })
+      res.status(200).json(updatedTicket)
     } catch (error) {
-      console.error('❌ Error updating ticket:', error.message, error.stack)
+      console.error('❌ Error updating ticket:', error)
       res
         .status(500)
         .json({ error: 'Failed to update ticket', details: error.message })
