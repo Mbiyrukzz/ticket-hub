@@ -3,7 +3,7 @@ const fs = require('fs')
 const { ticketsCollection, usersCollection } = require('../db.js')
 
 const deleteTicketRoute = {
-  path: '/tickets/:id',
+  path: '/users/:userId/tickets/:ticketId', // Ensure route is correctly defined
   method: 'delete',
   handler: async (req, res) => {
     try {
@@ -14,13 +14,13 @@ const deleteTicketRoute = {
         return res.status(500).json({ error: 'Database not initialized' })
       }
 
-      const { id } = req.params
-      console.log('🔍 Attempting to delete ticket with ID:', id)
+      const { ticketId, userId } = req.params // ✅ Extract correct params
+      console.log('🔍 Attempting to delete ticket with ID:', ticketId)
 
       // Find the ticket
-      const ticket = await tickets.findOne({ id })
+      const ticket = await tickets.findOne({ id: ticketId }) // ✅ Use ticketId
       if (!ticket) {
-        console.log('⚠️ Ticket not found for ID:', id)
+        console.log('⚠️ Ticket not found for ID:', ticketId)
         return res.status(404).json({ error: 'Ticket not found' })
       }
       console.log('✅ Found ticket:', ticket)
@@ -44,9 +44,9 @@ const deleteTicketRoute = {
       }
 
       // Delete the ticket
-      const result = await tickets.findOneAndDelete({ id })
+      const result = await tickets.findOneAndDelete({ id: ticketId }) // ✅ Use ticketId
       if (!result || !result.value) {
-        console.log('⚠️ Ticket not found during deletion:', id)
+        console.log('⚠️ Ticket not found during deletion:', ticketId)
         return res.status(404).json({ error: 'Ticket not found' })
       }
       const deletedTicket = result.value
@@ -54,20 +54,20 @@ const deleteTicketRoute = {
 
       // Remove the ticket ID from the user's tickets array
       const userUpdateResult = await users.updateOne(
-        { id: ticket.createdBy },
-        { $pull: { tickets: ticket.id } }
+        { id: userId }, // ✅ Use userId from params
+        { $pull: { tickets: ticketId } }
       )
 
       if (userUpdateResult.modifiedCount === 0) {
         console.warn(
           '⚠️ No user updated or ticket ID not found in user.tickets for user:',
-          ticket.createdBy
+          userId
         )
       } else {
-        console.log('✅ Updated user tickets array for user:', ticket.createdBy)
+        console.log('✅ Updated user tickets array for user:', userId)
       }
 
-      res.json({ message: '✅ Ticket deleted successfully', id })
+      res.json({ message: '✅ Ticket deleted successfully', ticketId })
     } catch (error) {
       console.error('❌ Error deleting ticket:', error)
       res.status(500).json({ error: 'Failed to delete ticket' })

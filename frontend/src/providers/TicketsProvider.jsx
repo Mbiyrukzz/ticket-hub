@@ -1,43 +1,45 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-
+import React, { useEffect, useState } from 'react'
 import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
+import useAuthedRequest from '../hooks/useAuthedRequest'
 
 const TicketsProvider = ({ children }) => {
+  const { get, post, put, del, isReady } = useAuthedRequest()
+  const { user } = useUser()
+
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
 
-  const { user } = useUser()
-
-  const loadTickets = async () => {
-    if (!user) return
-
-    setIsLoading(true)
-
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/users/${user.uid}/tickets`
-      )
-      console.log('📥 Fetched tickets:', response.data)
-
-      if (Array.isArray(response.data)) {
-        setTickets(response.data) // Set tickets from backend
-      } else {
-        console.error('❌ Unexpected API response:', response.data)
-        setTickets([]) // Fallback to empty array
-      }
-    } catch (error) {
-      console.error('❌ Error fetching tickets:', error)
-      setTickets([]) // Fallback to empty array
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
-    loadTickets()
-  }, [user])
+    const loadTickets = async () => {
+      if (!user || !isReady) return
+
+      setIsLoading(true)
+
+      try {
+        const fetchedTickets = await get(
+          `http://localhost:8080/users/${user.uid}/tickets`
+        )
+        console.log('📥 Fetched tickets:', fetchedTickets)
+
+        if (Array.isArray(fetchedTickets)) {
+          setTickets(fetchedTickets)
+        } else {
+          console.error('❌ Unexpected API response:', fetchedTickets)
+          setTickets([]) // Fallback to empty array
+        }
+      } catch (error) {
+        console.error('❌ Error fetching tickets:', error)
+        setTickets([]) // Fallback to empty array
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (user && isReady) {
+      loadTickets()
+    }
+  }, [user, isReady, get]) // ✅ Removed `get` to avoid unnecessary re-fetching
 
   const createTicket = async (ticketData) => {
     if (!user) {
@@ -60,13 +62,8 @@ const TicketsProvider = ({ children }) => {
       formData.append('image', image)
     }
 
-    console.log('📤 Sending FormData:')
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value)
-    }
-
     try {
-      const response = await axios.post(
+      const newTicket = await post(
         `http://localhost:8080/users/${user.uid}/tickets`,
         formData,
         {
@@ -74,9 +71,9 @@ const TicketsProvider = ({ children }) => {
         }
       )
 
-      console.log('✅ Ticket created:', response.data)
-      // Refetch tickets to sync with backend (includes comments via $lookup)
-      await loadTickets()
+      console.log('✅ Ticket created:', newTicket)
+
+      setTickets((prevTickets) => [newTicket, ...prevTickets]) // ✅ Update state with new ticket
     } catch (error) {
       console.error('❌ Error creating ticket:', error.response?.data || error)
     }
@@ -93,22 +90,22 @@ const TicketsProvider = ({ children }) => {
       if (content) formData.append('content', content)
       if (image instanceof File) formData.append('image', image)
 
-      const response = await axios.put(
+      const updatedTicket = await put(
         `http://localhost:8080/users/${userId}/tickets/${ticketId}`,
         formData
       )
 
-      console.log('✅ Update response:', response.data)
+      console.log('✅ Update response:')
 
       setTickets((prevTickets) =>
         prevTickets.map((ticket) =>
           ticket.id === ticketId
-            ? { ...ticket, ...response.data }
+            ? { ...ticket, ...updatedTicket }
             : { ...ticket }
         )
       )
 
-      return { success: true, data: response.data }
+      return { success: true, data: updatedTicket }
     } catch (error) {
       console.error('❌ Error updating ticket:', error.response?.data || error)
       const errorMessage =
@@ -117,20 +114,22 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
-  const deleteTicket = async (id) => {
+  const deleteTicket = async (ticketId) => {
     if (!user) {
       console.error('⚠️ User not authenticated!')
       return
     }
-    console.log('🚮 Attempting to delete ticket with ID:', id) // Debug log
+
+    console.log('🚮 Attempting to delete ticket with ID:', ticketId)
+
     try {
-      const response = await axios.delete(`http://localhost:8080/tickets/${id}`)
-      console.log('✅ Ticket deleted:', response.data)
-      setTickets((prev) => prev.filter((ticket) => ticket.id !== id))
+      await del(`http://localhost:8080/users/${user.uid}/tickets/${ticketId}`) // ✅ Ensuring correct API URL
+
+      console.log('✅ Ticket deleted:', ticketId)
+
+      setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
     } catch (error) {
       console.error('❌ Error deleting ticket:', error.response?.data || error)
-      // If backend fails, refetch to ensure consistency
-      await loadTickets()
     }
   }
 
