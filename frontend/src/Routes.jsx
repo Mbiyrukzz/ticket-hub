@@ -5,35 +5,76 @@ import TicketDetailPage from './pages/TicketDetailPage'
 import NotFoundPage from './pages/NotFoundPage'
 import NavBar from './components/NavBar'
 import SideBar from './components/SideBar'
-import Activites from './components/Activities'
+import Activities from './components/Activities'
 import LoginPage from './pages/LoginPage'
 import CreateAccountPage from './pages/CreateAccountPage'
+import ProtectedRoute from './components/ProtectedRoute'
+import { useUser } from './hooks/useUser'
 
 const MyRoutes = () => {
+  const { user, isLoading } = useUser()
+  const isLoggedIn = !!user
+
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col">
-      {/* Navbar at the top */}
       <NavBar />
 
-      {/* Sidebar + Content Layout */}
       <div className="flex flex-1">
-        {/* Sidebar on the left */}
-        <SideBar className="w-64 border-r border-gray-300 bg-gray-100 shadow-md" />
+        {isLoggedIn && (
+          <SideBar className="w-64 border-r border-gray-300 bg-gray-100 shadow-md" />
+        )}
 
-        {/* Main Content */}
-        <div className="flex-1 p-6 transition-all duration-300">
+        <div
+          className={`flex-1 p-6 transition-all duration-300 ${
+            !isLoggedIn ? 'w-full' : ''
+          }`}
+        >
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/create-account" element={<CreateAccountPage />} />
+            {/* Public Routes */}
+            <Route
+              path="/login"
+              element={
+                isLoggedIn ? <Navigate to="/tickets" replace /> : <LoginPage />
+              }
+            />
+            <Route
+              path="/create-account"
+              element={
+                isLoggedIn ? (
+                  <Navigate to="/tickets" replace />
+                ) : (
+                  <CreateAccountPage />
+                )
+              }
+            />
+
+            {/* Protected Routes */}
+            <Route
+              element={
+                <ProtectedRoute
+                  canAccess={isLoggedIn}
+                  isLoading={isLoading}
+                  redirectTo="/login"
+                />
+              }
+            >
+              <Route path="/tickets" element={<Dashboard />} />
+              <Route path="/tickets/:ticketId" element={<TicketDetailPage />} />
+            </Route>
+
+            {/* Default Redirect */}
             <Route path="/" element={<Navigate to="/tickets" replace />} />
-            <Route path="/tickets" element={<Dashboard />} />
-            <Route path="/tickets/:ticketId" element={<TicketDetailPage />} />
+
+            {/* Not Found Page */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
-        <div className="mt-6">
-          <Activites />
-        </div>
+
+        {isLoggedIn && (
+          <div className="mt-6">
+            <Activities />
+          </div>
+        )}
       </div>
     </div>
   )

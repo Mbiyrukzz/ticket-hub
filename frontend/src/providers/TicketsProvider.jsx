@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { onAuthStateChanged, getAuth } from 'firebase/auth'
+
 import TicketContext from '../contexts/TicketContext'
+import { useUser } from '../hooks/useUser'
 
 const TicketsProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
-  const [user, setUser] = useState(null)
 
-  useEffect(() => {
-    const auth = getAuth()
-    const cancelSubscription = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
-    })
-    return cancelSubscription
-  }, [])
+  const { user } = useUser()
 
   const loadTickets = async () => {
     if (!user) return
