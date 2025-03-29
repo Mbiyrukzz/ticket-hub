@@ -1,11 +1,13 @@
 const path = require('path')
 const fs = require('fs')
-const admin = require('firebase-admin')
+
 const { ticketsCollection, usersCollection } = require('../db.js')
+const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const deleteTicketRoute = {
   path: '/users/:userId/tickets/:ticketId',
   method: 'delete',
+  middleware: [verifyAuthToken],
   handler: async (req, res) => {
     try {
       const authUser = req.user

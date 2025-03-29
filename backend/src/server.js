@@ -49,15 +49,15 @@ const start = async () => {
     await initializeDbConnection() // Properly placed inside try block
 
     routes.forEach((route) => {
-      if (route.middleware) {
-        app[route.method](
-          route.path,
-          ...route.middleware,
-          verifyAuthToken,
-          route.handler
+      console.log(
+        `🚀 Registering route: ${route.method.toUpperCase()} ${route.path}`
+      )
+
+      if (route.middleware && Array.isArray(route.middleware)) {
+        console.log(
+          `   🔹 With middleware: ${route.middleware.length} functions`
         )
-      } else {
-        app[route.method](route.path, verifyAuthToken, route.handler)
+        app[route.method](route.path, ...route.middleware, route.handler)
       }
     })
 

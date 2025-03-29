@@ -3,10 +3,12 @@ const {
   usersCollection,
   commentsCollection,
 } = require('../db.js')
+const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const ticketslistRoutes = {
   path: '/users/:userId/tickets',
   method: 'get',
+  middleware: [verifyAuthToken],
   handler: async (req, res) => {
     const { userId } = req.params
     const authUser = req.user

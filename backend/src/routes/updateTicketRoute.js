@@ -2,8 +2,8 @@ const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
 
-const admin = require('firebase-admin')
 const { ticketsCollection } = require('../db.js')
+const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 // Multer Storage Configuration (same as create)
 const storage = multer.diskStorage({
@@ -25,7 +25,7 @@ const upload = multer({ storage })
 const updateTicketRoute = {
   path: '/users/:userId/tickets/:ticketId', // Changed to match create pattern
   method: 'put',
-  middleware: [upload.single('image')],
+  middleware: [upload.single('image'), verifyAuthToken],
   handler: async (req, res) => {
     try {
       const authUser = req.user

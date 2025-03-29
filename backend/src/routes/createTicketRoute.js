@@ -1,9 +1,10 @@
 const { v4: uuidv4 } = require('uuid')
-const admin = require('firebase-admin')
+
 const { ticketsCollection, usersCollection } = require('../db.js')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
@@ -25,7 +26,7 @@ const upload = multer({ storage })
 const createTicketRoute = {
   path: '/users/:userId/tickets',
   method: 'post',
-  middleware: [upload.single('image')],
+  middleware: [upload.single('image'), verifyAuthToken],
   handler: async (req, res) => {
     try {
       const authUser = req.user
