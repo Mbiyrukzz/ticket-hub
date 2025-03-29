@@ -7,6 +7,7 @@ const admin = require('firebase-admin')
 const { initializeDbConnection } = require('./db.js')
 const { routes } = require('./routes/index.js')
 const credentials = require('../credentials.json')
+const { verifyAuthToken } = require('./middleware/verifyAuthToken.js')
 
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
@@ -49,9 +50,14 @@ const start = async () => {
 
     routes.forEach((route) => {
       if (route.middleware) {
-        app[route.method](route.path, ...route.middleware, route.handler)
+        app[route.method](
+          route.path,
+          ...route.middleware,
+          verifyAuthToken,
+          route.handler
+        )
       } else {
-        app[route.method](route.path, route.handler)
+        app[route.method](route.path, verifyAuthToken, route.handler)
       }
     })
 

@@ -28,9 +28,7 @@ const createTicketRoute = {
   middleware: [upload.single('image')],
   handler: async (req, res) => {
     try {
-      const authtoken = req.headers.authtoken
-
-      const authUser = await admin.auth().verifyIdToken(authtoken)
+      const authUser = req.user
       const tickets = ticketsCollection()
       if (!tickets) {
         console.error('❌ Database not initialized')

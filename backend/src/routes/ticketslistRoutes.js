@@ -1,4 +1,3 @@
-const admin = require('firebase-admin')
 const {
   ticketsCollection,
   usersCollection,
@@ -10,18 +9,10 @@ const ticketslistRoutes = {
   method: 'get',
   handler: async (req, res) => {
     const { userId } = req.params
-    const authtoken = req.headers.authtoken // ✅ Extract only the auth token
+    const authUser = req.user
 
     try {
-      if (!authtoken) {
-        console.error('❌ No auth token provided')
-        return res.status(401).json({ error: 'Unauthorized' })
-      }
-
-      // ✅ Verify Firebase token
-      const decodedToken = await admin.auth().verifyIdToken(authtoken)
-
-      if (decodedToken.uid !== userId) {
+      if (authUser.uid !== userId) {
         console.error('❌ Forbidden - User ID mismatch')
         return res.status(403).json({ error: 'Forbidden' })
       }

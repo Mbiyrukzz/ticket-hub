@@ -8,17 +8,7 @@ const deleteTicketRoute = {
   method: 'delete',
   handler: async (req, res) => {
     try {
-      // Extract token from Authorization header
-      const authtoken = req.headers.authtoken?.replace('Bearer ', '')
-      if (!authtoken) {
-        console.log('No auth token provided in headers:', req.headers)
-        return res
-          .status(401)
-          .json({ error: 'No authentication token provided' })
-      }
-
-      console.log('🔍 Verifying token:', authtoken)
-      const authUser = await admin.auth().verifyIdToken(authtoken)
+      const authUser = req.user
 
       const tickets = ticketsCollection()
       const users = usersCollection()
