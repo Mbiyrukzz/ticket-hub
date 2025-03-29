@@ -1,6 +1,8 @@
 const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
+
+const admin = require('firebase-admin')
 const { ticketsCollection } = require('../db.js')
 
 // Multer Storage Configuration (same as create)
@@ -26,6 +28,9 @@ const updateTicketRoute = {
   middleware: [upload.single('image')],
   handler: async (req, res) => {
     try {
+      const authtoken = req.headers.authtoken
+
+      const authUser = await admin.auth().verifyIdToken(authtoken)
       const tickets = ticketsCollection()
       if (!tickets)
         return res.status(500).json({ error: 'Database not initialized' })
@@ -35,10 +40,8 @@ const updateTicketRoute = {
 
       // Find ticket by ticketId and verify it belongs to userId
       const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
-      if (!ticket)
-        return res
-          .status(404)
-          .json({ error: 'Ticket not found or not owned by user' })
+      if (ticket.createdBy !== authUser.uid)
+        return res.status(403).json({ error: 'Ticket not owned by user' })
 
       const updateFields = {}
       if (title && title !== ticket.title) updateFields.title = title

@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid')
+const admin = require('firebase-admin')
 const { ticketsCollection, usersCollection } = require('../db.js')
 const multer = require('multer')
 const path = require('path')
@@ -27,6 +28,9 @@ const createTicketRoute = {
   middleware: [upload.single('image')],
   handler: async (req, res) => {
     try {
+      const authtoken = req.headers.authtoken
+
+      const authUser = await admin.auth().verifyIdToken(authtoken)
       const tickets = ticketsCollection()
       if (!tickets) {
         console.error('❌ Database not initialized')
@@ -37,6 +41,10 @@ const createTicketRoute = {
       console.log('📸 Uploaded File:', req.file)
 
       const { userId } = req.params
+
+      if (authUser.uid !== userId) {
+        return resStatus(403)
+      }
       const { title, content } = req.body
       if (!title || !content) {
         return res.status(400).json({ error: 'Title and content are required' })
