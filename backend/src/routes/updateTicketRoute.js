@@ -4,6 +4,7 @@ const multer = require('multer')
 
 const { ticketsCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
+const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
 
 // Multer Storage Configuration (same as create)
 const storage = multer.diskStorage({
@@ -23,28 +24,31 @@ const storage = multer.diskStorage({
 const upload = multer({ storage })
 
 const updateTicketRoute = {
-  path: '/users/:userId/tickets/:ticketId', // Changed to match create pattern
+  path: '/users/:userId/tickets/:ticketId',
   method: 'put',
-  middleware: [upload.single('image'), verifyAuthToken],
+  middleware: [upload.single('image'), verifyAuthToken, userOwnsTicket],
   handler: async (req, res) => {
     try {
-      const authUser = req.user
       const tickets = ticketsCollection()
-      if (!tickets)
+      if (!tickets) {
         return res.status(500).json({ error: 'Database not initialized' })
+      }
 
-      const { userId, ticketId } = req.params // Now extracting userId too
+      const { userId, ticketId } = req.params
       const { title, content } = req.body
 
-      // Find ticket by ticketId and verify it belongs to userId
+      // ✅ Fetch the ticket first
       const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
-      if (ticket.createdBy !== authUser.uid)
-        return res.status(403).json({ error: 'Ticket not owned by user' })
+      if (!ticket) {
+        return res.status(404).json({ error: 'Ticket not found' })
+      }
 
+      // ✅ Build updateFields object dynamically
       const updateFields = {}
       if (title && title !== ticket.title) updateFields.title = title
       if (content && content !== ticket.content) updateFields.content = content
 
+      // ✅ Handle image update
       if (req.file) {
         if (ticket.image) {
           const oldImagePath = path.join(
@@ -65,11 +69,13 @@ const updateTicketRoute = {
         updateFields.image = `http://localhost:8080/uploads/${req.file.filename}`
       }
 
-      if (Object.keys(updateFields).length === 0)
-        return res.status(200).json(ticket)
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(200).json(ticket) // ✅ No updates needed
+      }
 
+      // ✅ Perform update
       const result = await tickets.updateOne(
-        { id: ticketId, createdBy: userId }, // Ensure user owns ticket
+        { id: ticketId },
         { $set: updateFields }
       )
 
@@ -77,6 +83,7 @@ const updateTicketRoute = {
         return res.status(404).json({ error: 'Ticket not found during update' })
       }
 
+      // ✅ Fetch and return the updated ticket
       const updatedTicket = await tickets.findOne({ id: ticketId })
       res.status(200).json(updatedTicket)
     } catch (error) {

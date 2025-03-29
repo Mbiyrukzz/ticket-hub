@@ -3,17 +3,19 @@ const fs = require('fs')
 
 const { ticketsCollection, usersCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
+const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
 
 const deleteTicketRoute = {
   path: '/users/:userId/tickets/:ticketId',
   method: 'delete',
-  middleware: [verifyAuthToken],
+  middleware: [verifyAuthToken, userOwnsTicket],
   handler: async (req, res) => {
     try {
-      const authUser = req.user
-
       const tickets = ticketsCollection()
       const users = usersCollection()
+      if (!tickets || !users) {
+        return res.status(500).json({ error: 'Database not initialized' })
+      }
 
       const { ticketId, userId } = req.params
       console.log('🔍 Delete Request Details:', {
@@ -22,15 +24,13 @@ const deleteTicketRoute = {
         timestamp: new Date().toISOString(),
       })
 
-      const ticket = await tickets.findOne({ id: ticketId })
+      // ✅ Fetch the ticket first
+      const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
       if (!ticket) {
         return res.status(404).json({ error: 'Ticket not found' })
       }
 
-      if (ticket.createdBy !== authUser.uid) {
-        return res.sendStatus(403)
-      }
-
+      // ✅ Delete image if exists
       if (ticket.image) {
         const imagePath = path.join(
           __dirname,
@@ -51,12 +51,14 @@ const deleteTicketRoute = {
         }
       }
 
+      // ✅ Delete the ticket from the collection
       await tickets.deleteOne({ id: ticketId })
       console.log('✅ Ticket deleted from collection')
 
+      // ✅ Remove ticket reference from user
       const userUpdateResult = await users.updateOne(
-        { id: ticket.createdBy },
-        { $pull: { tickets: ticket.id } }
+        { id: userId },
+        { $pull: { tickets: ticketId } }
       )
 
       res.json({
