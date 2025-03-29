@@ -1,3 +1,4 @@
+const admin = require('firebase-admin')
 const {
   ticketsCollection,
   usersCollection,
@@ -9,8 +10,23 @@ const ticketslistRoutes = {
   method: 'get',
   handler: async (req, res) => {
     const { userId } = req.params
+    const authtoken = req.headers.authtoken // ✅ Extract only the auth token
+
     try {
-      // Ensure collections are initialized
+      if (!authtoken) {
+        console.error('❌ No auth token provided')
+        return res.status(401).json({ error: 'Unauthorized' })
+      }
+
+      // ✅ Verify Firebase token
+      const decodedToken = await admin.auth().verifyIdToken(authtoken)
+
+      if (decodedToken.uid !== userId) {
+        console.error('❌ Forbidden - User ID mismatch')
+        return res.status(403).json({ error: 'Forbidden' })
+      }
+
+      // ✅ Ensure database collections are initialized
       const users = usersCollection()
       const tickets = ticketsCollection()
       const comments = commentsCollection()
@@ -19,23 +35,22 @@ const ticketslistRoutes = {
         return res.status(500).json({ error: 'Database not initialized' })
       }
 
-      // Fetch the user
+      // ✅ Fetch the user
       const user = await users.findOne({ id: userId })
       if (!user || !user.tickets || user.tickets.length === 0) {
         console.log('⚠️ No tickets found for userId:', userId)
         return res.status(200).json([]) // Return empty array instead of 404
       }
 
-      // Fetch tickets using Promise.all()
+      // ✅ Fetch tickets and comments in parallel
       const ticketPromises = user.tickets.map(async (ticketId) => {
         console.log(`🔍 Checking ticket ID: ${ticketId}`)
-        const ticket = await tickets.findOne({ id: ticketId }) // Use ticketId directly
+        const ticket = await tickets.findOne({ id: ticketId })
         if (!ticket) {
           console.log(`⚠️ Ticket not found for ID: ${ticketId}`)
           return null
         }
 
-        // Fetch comments for this ticket
         const ticketComments = await comments
           .find({ ticketId: ticketId })
           .toArray()
@@ -45,7 +60,7 @@ const ticketslistRoutes = {
 
       const ticketsWithComments = await Promise.all(ticketPromises)
 
-      // Filter out any null values (if tickets were not found)
+      // ✅ Filter out any null values
       const filteredTickets = ticketsWithComments.filter(
         (ticket) => ticket !== null
       )
