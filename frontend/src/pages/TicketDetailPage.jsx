@@ -178,7 +178,7 @@ const TicketDetailPage = () => {
                 <FontAwesomeIcon icon={faTimes} /> Close
               </button>
             </div>
-            <CommentSection ticketId={ticket.id} />
+            <CommentSection ticketId={ticket?.id} />
           </div>
         )}
       </div>

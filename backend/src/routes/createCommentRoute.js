@@ -2,103 +2,136 @@ const { commentsCollection, ticketsCollection } = require('../db.js')
 const { v4: uuidv4 } = require('uuid')
 const multer = require('multer')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs').promises
+const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
-// Multer Storage Configuration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads') // ✅ Ensure images are in main 'uploads' folder
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true })
+  destination: async (req, file, cb) => {
+    try {
+      const uploadPath = path.join(__dirname, '..', 'uploads')
+      await fs.mkdir(uploadPath, { recursive: true })
+      cb(null, uploadPath)
+    } catch (error) {
+      cb(error)
     }
-    cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    cb(null, `${uniqueSuffix}-${file.originalname}`)
+    const ext = path.extname(file.originalname)
+    cb(null, `${uniqueSuffix}${ext}`)
   },
 })
 
-const upload = multer({ storage })
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    )
+    const mimetype = filetypes.test(file.mimetype)
+    if (extname && mimetype) return cb(null, true)
+    cb(new Error('Only images (jpeg, jpg, png) are allowed'))
+  },
+})
+
+const validateComment = (req, res, next) => {
+  const { content } = req.body
+  if (!content?.trim()) {
+    return res.status(400).json({ error: 'Comment content is required' })
+  }
+  next()
+}
 
 const createCommentRoute = {
   path: '/users/:userId/tickets/:ticketId/comments',
   method: 'post',
-  handler: [
-    upload.single('image'),
-    async (req, res) => {
-      try {
-        const comments = commentsCollection()
-        const tickets = ticketsCollection()
+  middleware: [upload.single('image'), verifyAuthToken, validateComment],
+  handler: async (req, res) => {
+    let tempFile
+    try {
+      const authUser = req.user
+      const { userId, ticketId } = req.params
+      const { content, author } = req.body
 
-        if (!comments || !tickets) {
-          console.error('❌ Database not initialized')
-          return res.status(500).json({ error: 'Database not initialized' })
-        }
-
-        const { ticketId } = req.params
-        const { content, author } = req.body
-        const imageUrl = req.file
-          ? `http://localhost:8080/uploads/${req.file.filename}`
-          : null
-
-        console.log('🔹 Incoming request to add comment:', {
-          ticketId,
-          content,
-          author,
-          imageUrl,
-        })
-
-        // Validate that the ticket exists
-        const ticket = await tickets.findOne({ id: ticketId })
-        if (!ticket) {
-          return res.status(404).json({ error: 'Ticket not found' })
-        }
-
-        if (!content || typeof content !== 'string' || content.trim() === '') {
-          return res
-            .status(400)
-            .json({ error: 'Comment content must be a non-empty string' })
-        }
-
-        const newComment = {
-          id: uuidv4(),
-          ticketId, // ✅ Now correctly associates with ticket IDs
-          content: content.trim(),
-          author: author || 'Anonymous',
-          imageUrl,
-          createdAt: new Date().toISOString(),
-        }
-
-        console.log('📝 Creating new comment:', newComment)
-
-        const result = await comments.insertOne(newComment)
-
-        if (!result.acknowledged) {
-          console.error('❌ MongoDB insert failed')
-          return res.status(500).json({ error: 'Failed to save comment' })
-        }
-
-        // Update ticket with the new comment ID
-        await tickets.updateOne(
-          { id: ticketId },
-          { $push: { comments: newComment.id } }
-        )
-
-        console.log('✅ Comment created:', {
-          _id: result.insertedId,
-          ...newComment,
-        })
-
-        res.status(201).json({ _id: result.insertedId, ...newComment })
-      } catch (error) {
-        console.error('❌ Error creating comment:', error.message, error.stack)
-        res
-          .status(500)
-          .json({ error: 'Failed to create comment', details: error.message })
+      if (!authUser || authUser.uid !== userId) {
+        return res.status(403).json({ error: 'Forbidden' })
       }
-    },
-  ],
+
+      const comments = commentsCollection()
+      const tickets = ticketsCollection()
+      if (!comments || !tickets) {
+        throw new Error('Database connection not initialized')
+      }
+
+      const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
+      if (!ticket) {
+        return res.status(404).json({
+          error: "Ticket not found or you don't have permission",
+        })
+      }
+
+      tempFile = req.file?.path
+      const imageUrl = req.file
+        ? `${process.env.BASE_URL || 'http://localhost:8080'}/uploads/${
+            req.file.filename
+          }`
+        : null
+
+      const newComment = {
+        id: uuidv4(),
+        ticketId,
+        content: content.trim(),
+        author: author || authUser.displayName || 'Anonymous',
+        imageUrl,
+        createdAt: new Date(),
+        createdBy: userId,
+      }
+
+      const session = comments.client.startSession()
+      try {
+        await session.withTransaction(async () => {
+          const result = await comments.insertOne(newComment)
+          await tickets.updateOne(
+            { id: ticketId },
+            { $push: { comments: newComment.id } }
+          )
+
+          const response = {
+            _id: result.insertedId.toString(), // Convert ObjectId to string
+            ...newComment,
+            createdAt: newComment.createdAt.toISOString(),
+          }
+
+          console.log('✅ Comment created:', response)
+          res.status(201).json(response)
+        })
+      } finally {
+        await session.endSession()
+      }
+    } catch (error) {
+      if (
+        tempFile &&
+        (await fs
+          .access(tempFile)
+          .then(() => true)
+          .catch(() => false))
+      ) {
+        await fs.unlink(tempFile)
+      }
+      console.error('❌ Error creating comment:', error.stack)
+      if (error instanceof multer.MulterError) {
+        return res
+          .status(400)
+          .json({ error: 'File upload error', details: error.message })
+      }
+      res.status(error.status || 500).json({
+        error: 'Failed to create comment',
+        details: error.message,
+      })
+    }
+  },
 }
 
 module.exports = { createCommentRoute }

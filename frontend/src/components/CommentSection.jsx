@@ -7,10 +7,12 @@ import {
   faReply,
   faEllipsisH,
 } from '@fortawesome/free-solid-svg-icons'
+import { useUser } from '../hooks/useUser'
 
 const CommentSection = ({ ticketId }) => {
   const { getCommentsByTicketId, addComment, editComment, deleteComment } =
     useContext(CommentContext)
+  const { user } = useUser()
   const comments = getCommentsByTicketId(ticketId) || []
 
   const [newComment, setNewComment] = useState('')
@@ -21,10 +23,20 @@ const CommentSection = ({ ticketId }) => {
   const [error, setError] = useState(null)
 
   const handleAddComment = async (e) => {
-    e.preventDefault() // Prevent form submission default behavior
+    e.preventDefault()
+    if (!user?.uid) {
+      setError('You must be logged in to comment.')
+      return
+    }
+
     if (newComment.trim()) {
       try {
-        await addComment(ticketId, newComment, 'User', newImage)
+        console.log('Adding comment:', {
+          userId: user.uid,
+          ticketId,
+          text: newComment,
+        })
+        await addComment(user.uid, ticketId, newComment, newImage)
         setNewComment('')
         setNewImage(null)
         setError(null)
@@ -46,17 +58,22 @@ const CommentSection = ({ ticketId }) => {
   }
 
   const handleSaveEdit = async (commentId) => {
+    if (!user?.uid) {
+      setError('You must be logged in to edit a comment.')
+      return
+    }
+
     if (editedText.trim()) {
       try {
-        console.log(
-          '🔍 Saving edit - ticketId:',
+        console.log('Editing comment:', {
+          userId: user.uid,
           ticketId,
-          'commentId:',
           commentId,
-          'text:',
-          editedText
-        )
-        await editComment(ticketId, commentId, { content: editedText })
+          text: editedText,
+        })
+        await editComment(user.uid, ticketId, commentId, {
+          content: editedText,
+        })
         setEditingId(null)
         setEditedText('')
         setError(null)
@@ -72,8 +89,18 @@ const CommentSection = ({ ticketId }) => {
   }
 
   const handleConfirmDelete = async () => {
+    if (!user?.uid) {
+      setError('You must be logged in to delete a comment.')
+      return
+    }
+
     try {
-      await deleteComment(ticketId, commentToDelete)
+      console.log('Deleting comment:', {
+        userId: user.uid,
+        ticketId,
+        commentId: commentToDelete,
+      })
+      await deleteComment(user.uid, ticketId, commentToDelete)
       setCommentToDelete(null)
       setError(null)
     } catch (error) {
@@ -203,12 +230,10 @@ const CommentSection = ({ ticketId }) => {
       </div>
 
       {commentToDelete !== null && (
-        <div className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-sm">
-          <ConfirmDeleteResponse
-            onConfirm={handleConfirmDelete}
-            onDeny={() => setCommentToDelete(null)}
-          />
-        </div>
+        <ConfirmDeleteResponse
+          onConfirm={handleConfirmDelete}
+          onDeny={() => setCommentToDelete(null)}
+        />
       )}
     </div>
   )
