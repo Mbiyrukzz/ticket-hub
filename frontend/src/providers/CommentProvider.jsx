@@ -44,16 +44,35 @@ const CommentProvider = ({ children }) => {
         const formData = new FormData()
         formData.append('content', text)
         formData.append('author', user?.displayName || 'Anonymous')
-        if (imageFile) formData.append('image', imageFile)
+        if (imageFile) {
+          console.log(
+            'Adding image:',
+            imageFile.name,
+            imageFile.size,
+            imageFile.type
+          )
+          formData.append('image', imageFile)
+        }
+        console.log(
+          'Sending comment to:',
+          `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`
+        )
         const response = await post(
           `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`,
           formData
         )
+        console.log('Add comment response:', response)
         await fetchComments(userId, ticketId)
         return response
       } catch (error) {
-        console.error('❌ Error adding comment:', error)
-        setError('Failed to add comment: ' + error.message)
+        console.error(
+          '❌ Error adding comment:',
+          error.response?.data || error.message
+        )
+        setError(
+          'Failed to add comment: ' +
+            (error.response?.data?.message || error.message)
+        )
         throw error
       } finally {
         setLoading(false)

@@ -178,7 +178,11 @@ const TicketDetailPage = () => {
                 <FontAwesomeIcon icon={faTimes} /> Close
               </button>
             </div>
-            <CommentSection ticketId={ticket?.id} />
+            <CommentSection
+              comments={ticket?.comments}
+              ticketId={ticket?.id}
+              userId={ticket?.createdBy}
+            />
           </div>
         )}
       </div>

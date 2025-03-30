@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import CommentContext from '../contexts/CommentContext'
 import ConfirmDeleteResponse from './ConfirmDeleteResponse'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -9,11 +9,18 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useUser } from '../hooks/useUser'
 
-const CommentSection = ({ ticketId }) => {
-  const { getCommentsByTicketId, addComment, editComment, deleteComment } =
-    useContext(CommentContext)
+const CommentSection = ({ ticketId, comments: propComments }) => {
+  const {
+    getCommentsByTicketId,
+    addComment,
+    editComment,
+    deleteComment,
+    fetchComments,
+  } = useContext(CommentContext)
   const { user } = useUser()
-  const comments = getCommentsByTicketId(ticketId) || []
+
+  // Use propComments if provided, otherwise fall back to CommentContext
+  const comments = propComments || getCommentsByTicketId(ticketId) || []
 
   const [newComment, setNewComment] = useState('')
   const [newImage, setNewImage] = useState(null)
@@ -22,20 +29,22 @@ const CommentSection = ({ ticketId }) => {
   const [commentToDelete, setCommentToDelete] = useState(null)
   const [error, setError] = useState(null)
 
+  // Optional: Fetch comments if propComments isn’t provided
+  useEffect(() => {
+    if (!propComments && user?.uid && ticketId) {
+      console.log('Fetching comments with:', { userId: user.uid, ticketId })
+      fetchComments(user.uid, ticketId)
+    }
+  }, [user, ticketId, fetchComments, propComments])
+
   const handleAddComment = async (e) => {
     e.preventDefault()
     if (!user?.uid) {
       setError('You must be logged in to comment.')
       return
     }
-
     if (newComment.trim()) {
       try {
-        console.log('Adding comment:', {
-          userId: user.uid,
-          ticketId,
-          text: newComment,
-        })
         await addComment(user.uid, ticketId, newComment, newImage)
         setNewComment('')
         setNewImage(null)
