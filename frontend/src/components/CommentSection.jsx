@@ -165,9 +165,9 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
           <p className="text-gray-500 text-center">No comments yet.</p>
         ) : (
           comments.map((comment, index) => (
-            <div key={comment.id} className="relative flex space-x-3">
+            <div key={comment.id || index} className="relative flex space-x-3">
               <div className="relative z-10 min-w-[40px] w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 text-white font-bold text-sm">
-                {comment.author[0]}
+                {comment.author?.[0] || '?'}
               </div>
               {index !== 0 && (
                 <div className="absolute left-5 top-3 h-full w-0.5 bg-gray-300"></div>

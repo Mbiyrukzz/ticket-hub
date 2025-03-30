@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faHome,
@@ -12,77 +12,66 @@ import {
 
 const SideBar = () => {
   return (
-    <div className="w-64 min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-300 shadow-lg flex flex-col border-r border-gray-300 dark:border-gray-700">
+    <div className="w-72 min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-300 shadow-2xl flex flex-col border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out">
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6">
-        <ul className="space-y-3">
-          <li>
-            <Link
-              to="/"
-              className="flex items-center gap-3 text-lg px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              <FontAwesomeIcon
-                icon={faHome}
-                className="text-blue-500 dark:text-blue-400"
-              />
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/tickets"
-              className="flex items-center gap-3 text-lg px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              <FontAwesomeIcon
-                icon={faTicketAlt}
-                className="text-blue-500 dark:text-blue-400"
-              />
-              Tickets
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/analytics"
-              className="flex items-center gap-3 text-lg px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              <FontAwesomeIcon
-                icon={faChartBar}
-                className="text-blue-500 dark:text-blue-400"
-              />
-              Analytics
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/solved"
-              className="flex items-center gap-3 text-lg px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              <FontAwesomeIcon
-                icon={faCheckCircle}
-                className="text-green-500 dark:text-green-400"
-              />
-              Solved
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/unsolved"
-              className="flex items-center gap-3 text-lg px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              <FontAwesomeIcon
-                icon={faExclamationCircle}
-                className="text-red-500 dark:text-red-400"
-              />
-              Unsolved
-            </Link>
-          </li>
+      <nav className="flex-1 px-6 py-6">
+        <ul className="space-y-4">
+          {[
+            {
+              to: '/',
+              icon: faHome,
+              label: 'Home',
+              color: 'text-blue-500 dark:text-blue-400',
+            },
+            {
+              to: '/tickets',
+              icon: faTicketAlt,
+              label: 'Tickets',
+              color: 'text-blue-500 dark:text-blue-400',
+            },
+            {
+              to: '/analytics',
+              icon: faChartBar,
+              label: 'Analytics',
+              color: 'text-blue-500 dark:text-blue-400',
+            },
+            {
+              to: '/solved',
+              icon: faCheckCircle,
+              label: 'Solved',
+              color: 'text-green-500 dark:text-green-400',
+            },
+            {
+              to: '/unsolved',
+              icon: faExclamationCircle,
+              label: 'Unsolved',
+              color: 'text-red-500 dark:text-red-400',
+            },
+          ].map((item, index) => (
+            <li key={index}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 text-lg font-semibold px-6 py-3 rounded-xl transition-all duration-300 ease-in-out hover:bg-gray-100 dark:hover:bg-gray-800 hover:shadow-lg hover:-translate-y-1 ${
+                    isActive ? 'bg-gray-200 dark:bg-gray-700' : ''
+                  }`
+                }
+              >
+                <FontAwesomeIcon
+                  icon={item.icon}
+                  className={`${item.color} text-xl`}
+                />
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-300 dark:border-gray-700">
-        <button className="flex items-center gap-3 w-full text-lg px-4 py-2 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 hover:text-red-700 dark:hover:text-white rounded-lg transition">
-          <FontAwesomeIcon icon={faSignOutAlt} />
+      <div className="p-6 border-t border-gray-200 dark:border-gray-800">
+        <button className="flex items-center gap-4 w-full text-lg font-semibold px-6 py-3 text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-800 hover:bg-red-200 dark:hover:bg-red-700 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
+          <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
           Logout
         </button>
       </div>
