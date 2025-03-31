@@ -20,61 +20,70 @@ const MyRoutes = () => {
       <NavBar />
 
       <div className="flex flex-1">
+        {/* Sidebar for logged-in users */}
         {isLoggedIn && (
-          <SideBar className="w-64 border-r border-gray-300 bg-gray-100 shadow-md" />
+          <SideBar className="w-60 border-r border-gray-300 bg-gray-100 shadow-md" />
         )}
 
-        <div
-          className={`flex-1 p-6 transition-all duration-300 ${
-            !isLoggedIn ? 'w-full' : ''
-          }`}
-        >
-          <Routes>
-            {/* Public Routes */}
-            <Route
-              path="/login"
-              element={
-                isLoggedIn ? <Navigate to="/tickets" replace /> : <LoginPage />
-              }
-            />
-            <Route
-              path="/create-account"
-              element={
-                isLoggedIn ? (
-                  <Navigate to="/tickets" replace />
-                ) : (
-                  <CreateAccountPage />
-                )
-              }
-            />
+        {/* Main content and activities */}
+        <div className="flex flex-1">
+          {/* Routes Section (Takes up more space) */}
+          <div className="flex-grow p-4 transition-all duration-300">
+            <Routes>
+              {/* Public Routes */}
+              <Route
+                path="/login"
+                element={
+                  isLoggedIn ? (
+                    <Navigate to="/tickets" replace />
+                  ) : (
+                    <LoginPage />
+                  )
+                }
+              />
+              <Route
+                path="/create-account"
+                element={
+                  isLoggedIn ? (
+                    <Navigate to="/tickets" replace />
+                  ) : (
+                    <CreateAccountPage />
+                  )
+                }
+              />
 
-            {/* Protected Routes */}
-            <Route
-              element={
-                <ProtectedRoute
-                  canAccess={isLoggedIn}
-                  isLoading={isLoading}
-                  redirectTo="/login"
+              {/* Protected Routes */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    canAccess={isLoggedIn}
+                    isLoading={isLoading}
+                    redirectTo="/login"
+                  />
+                }
+              >
+                <Route path="/tickets" element={<Dashboard />} />
+                <Route
+                  path="/tickets/:ticketId"
+                  element={<TicketDetailPage />}
                 />
-              }
-            >
-              <Route path="/tickets" element={<Dashboard />} />
-              <Route path="/tickets/:ticketId" element={<TicketDetailPage />} />
-            </Route>
+              </Route>
 
-            {/* Default Redirect */}
-            <Route path="/" element={<Navigate to="/tickets" replace />} />
+              {/* Default Redirect */}
+              <Route path="/" element={<Navigate to="/tickets" replace />} />
 
-            {/* Not Found Page */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </div>
-
-        {isLoggedIn && (
-          <div className="mt-6">
-            <Activities />
+              {/* Not Found Page */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
           </div>
-        )}
+
+          {/* Activities Section (Takes up less space) */}
+          {isLoggedIn && (
+            <div className="w-1/3 p-4">
+              <Activities />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -6,8 +6,11 @@ import Modal from '../components/Modal'
 import NewTicketForm from '../components/NewTicketForm'
 import ConfirmDeleteTicket from '../components/ConfirmDeleteTicket'
 import Loading from '../components/Loading'
+import ActivityContext from '../contexts/ActivityContext'
 
 const Dashboard = () => {
+  const { addActivity } = useContext(ActivityContext)
+
   const { isLoading, tickets, createTicket, deleteTicket } =
     useContext(TicketContext)
   const [newTicketModalIsOpen, setNewTicketModalIsOpen] = useState(false)
@@ -21,6 +24,7 @@ const Dashboard = () => {
   const handleCreateTicket = async ({ title, content, image }) => {
     try {
       await createTicket({ title, content, image })
+      addActivity('created-ticket', `Created a new ticket: "${title}"`)
       setNewTicketModalIsOpen(false) // Close only after successful creation
     } catch (error) {
       console.error('❌ Failed to create ticket:', error)
@@ -29,7 +33,8 @@ const Dashboard = () => {
 
   const handleDeleteTicket = async (id) => {
     try {
-      await deleteTicket(id) // Delete from backend and update state
+      await deleteTicket(id)
+      addActivity('deleted-ticket', `Deleted ticket #${id}`) // Delete from backend and update state
       setCurrentlyDeleteTicketId(null) // Close modal immediately
     } catch (error) {
       console.error('❌ Failed to delete ticket:', error)

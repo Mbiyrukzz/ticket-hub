@@ -1,36 +1,25 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faClock,
   faCheckCircle,
   faExclamationTriangle,
+  faTrash,
+  faComment,
+  faTicketAlt,
 } from '@fortawesome/free-solid-svg-icons'
-
-const activityData = [
-  {
-    id: 1,
-    type: 'created',
-    message: 'Created a new ticket: "Login issue"',
-    time: '5 mins ago',
-  },
-  {
-    id: 2,
-    type: 'updated',
-    message: 'Updated ticket status to "In Progress"',
-    time: '1 hour ago',
-  },
-  {
-    id: 3,
-    type: 'resolved',
-    message: 'Resolved ticket: "Payment failure"',
-    time: 'Yesterday',
-  },
-]
+import ActivityContext from '../contexts/ActivityContext'
 
 const getActivityIcon = (type) => {
   switch (type) {
-    case 'created':
-      return <FontAwesomeIcon icon={faClock} className="text-blue-500" />
+    case 'created-ticket':
+      return <FontAwesomeIcon icon={faTicketAlt} className="text-blue-500" />
+    case 'deleted-ticket':
+      return <FontAwesomeIcon icon={faTrash} className="text-red-500" />
+    case 'created-comment':
+      return <FontAwesomeIcon icon={faComment} className="text-blue-500" />
+    case 'deleted-comment':
+      return <FontAwesomeIcon icon={faTrash} className="text-red-500" />
     case 'updated':
       return (
         <FontAwesomeIcon
@@ -41,20 +30,22 @@ const getActivityIcon = (type) => {
     case 'resolved':
       return <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
     default:
-      return null
+      return <FontAwesomeIcon icon={faClock} className="text-gray-500" />
   }
 }
 
 const Activities = () => {
+  const { activities, formatTime } = useContext(ActivityContext)
+
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-1xl mx-auto">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
         Recent Activities
       </h2>
 
-      {activityData.length > 0 ? (
+      {activities.length > 0 ? (
         <ul className="space-y-4">
-          {activityData.map((activity) => (
+          {activities.map((activity) => (
             <li
               key={activity.id}
               className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
@@ -64,7 +55,9 @@ const Activities = () => {
                 <p className="text-gray-800 dark:text-gray-300">
                   {activity.message}
                 </p>
-                <span className="text-xs text-gray-500">{activity.time}</span>
+                <span className="text-xs text-gray-500">
+                  {formatTime(activity.time)}
+                </span>
               </div>
             </li>
           ))}

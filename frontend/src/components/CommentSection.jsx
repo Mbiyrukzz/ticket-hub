@@ -8,6 +8,7 @@ import {
   faEllipsisH,
 } from '@fortawesome/free-solid-svg-icons'
 import { useUser } from '../hooks/useUser'
+import ActivityContext from '../contexts/ActivityContext'
 
 const CommentSection = ({ ticketId, comments: propComments }) => {
   const {
@@ -17,6 +18,9 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
     deleteComment,
     fetchComments,
   } = useContext(CommentContext)
+
+  const { addActivity } = useContext(ActivityContext)
+
   const { user } = useUser()
 
   const comments = propComments || getCommentsByTicketId(ticketId) || []
@@ -43,6 +47,12 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
     if (newComment.trim()) {
       try {
         await addComment(user.uid, ticketId, newComment, newImage)
+
+        addActivity(
+          'created-comment',
+          `Added a new comment to ticket #${ticketId}`
+        )
+
         setNewComment('')
         setNewImage(null)
         setError(null)
@@ -92,6 +102,12 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
     }
     try {
       await deleteComment(user.uid, ticketId, commentToDelete)
+
+      addActivity(
+        'deleted-comment',
+        `Deleted a comment from ticket #${ticketId}`
+      )
+
       setCommentToDelete(null)
       setError(null)
     } catch (error) {
