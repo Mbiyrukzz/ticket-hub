@@ -47,7 +47,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
         setNewImage(null)
         setError(null)
       } catch (error) {
-        setError('Failed to add comment.' + error)
+        setError('Failed to add comment.')
       }
     }
   }
@@ -95,42 +95,42 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
       setCommentToDelete(null)
       setError(null)
     } catch (error) {
-      setError('Failed to delete comment.' + error)
+      setError('Failed to delete comment.')
     }
   }
 
   return (
-    <div className="mt-8 max-w-3xl mx-auto bg-white rounded-xl p-4">
-      <h4 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+    <div className="mt-8 max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <h4 className="text-2xl font-bold text-gray-900 pb-3 border-b-2 border-gray-200">
         Comments ({comments.length})
       </h4>
 
       {error && (
-        <p className="text-red-500 mt-3 bg-red-50 p-2 rounded-md">{error}</p>
+        <p className="text-red-500 mt-3 bg-red-50 p-3 rounded-md">{error}</p>
       )}
 
       <form
         onSubmit={handleAddComment}
-        className="mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200"
+        className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200 transition-all hover:shadow-md"
       >
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3">
           <input
             type="text"
             placeholder="Write a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="w-full p-2 bg-white text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+            className="w-full p-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
           />
           <div className="flex items-center justify-between">
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
             <button
               type="submit"
-              className="px-4 py-1 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
+              className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
             >
               Add Comment
             </button>
@@ -138,47 +138,49 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
         </div>
       </form>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-6 space-y-6">
         {comments.length === 0 ? (
-          <p className="text-gray-500 text-center py-6 bg-gray-50 rounded-lg">
+          <p className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">
             No comments yet. Be the first to comment!
           </p>
         ) : (
           comments.map((comment, index) => (
             <div
               key={comment.id || index}
-              className={`flex space-x-3 p-3 rounded-lg ${
-                comment.userId === user?.uid ? 'bg-indigo-50' : 'bg-white'
+              className={`relative flex space-x-4 p-5 rounded-xl border shadow-sm transition-all hover:shadow-md ${
+                comment.userId === user?.uid
+                  ? 'bg-indigo-50 border-indigo-100'
+                  : 'bg-gray-50 border-gray-200'
               }`}
             >
-              <div className="min-w-[40px] w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold text-sm">
+              <div className="min-w-[40px] w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold text-lg shadow-md">
                 {comment.author?.[0]?.toUpperCase() || '?'}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <p className="text-gray-800 font-medium">{comment.author}</p>
+                  <p className="text-gray-800 font-semibold">{comment.author}</p>
                   <FontAwesomeIcon
                     icon={faEllipsisH}
                     className="cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                   />
                 </div>
                 {editingId === comment.id ? (
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <textarea
                       value={editedText}
                       onChange={(e) => setEditedText(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px]"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
                     />
-                    <div className="mt-2 flex space-x-2">
+                    <div className="mt-3 flex space-x-3">
                       <button
                         onClick={() => handleSaveEdit(comment.id)}
-                        className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
                       >
                         Cancel
                       </button>
@@ -186,36 +188,37 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-700 mt-1 break-words">
-                      {comment.content}
-                    </p>
+                    <p className="text-gray-700 mt-1 break-words">{comment.content}</p>
                     {comment.imageUrl && (
                       <img
                         src={comment.imageUrl}
                         alt="Comment attachment"
-                        className="mt-2 max-w-xs rounded-md border border-gray-200"
+                        className="mt-3 max-w-sm rounded-lg border border-gray-200 shadow-sm"
                       />
                     )}
-                    <div className="flex items-center gap-4 mt-2 text-sm">
+                    <div className="flex items-center gap-6 mt-4 text-sm">
                       <button className="flex items-center space-x-1 text-gray-500 hover:text-indigo-600 transition-colors">
                         <FontAwesomeIcon icon={faThumbsUp} /> <span>Like</span>
                       </button>
                       <button className="flex items-center space-x-1 text-gray-500 hover:text-indigo-600 transition-colors">
                         <FontAwesomeIcon icon={faReply} /> <span>Reply</span>
                       </button>
-                      {/* Temporarily removing the user check to ensure buttons are visible */}
-                      <button
-                        onClick={() => handleEdit(comment.id, comment.content)}
-                        className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(comment.id)}
-                        className="text-red-600 hover:text-red-700 font-medium transition-colors"
-                      >
-                        Delete
-                      </button>
+                      {comment.userId === user?.uid && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(comment.id, comment.content)}
+                            className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(comment.id)}
+                            className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </>
                 )}

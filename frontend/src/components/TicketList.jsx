@@ -2,6 +2,8 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import TicketStatusChart from './TickeStatusChart'
+import TotalTickets from './TotalTickets'
 
 const truncateText = (text, limit) => {
   if (!text) return '' // Handle null or undefined cases
@@ -10,11 +12,24 @@ const truncateText = (text, limit) => {
 }
 
 const TicketList = ({ tickets, onRequestDelete }) => {
+  const ticketStatusData = {
+    open: tickets.filter((ticket) => ticket.status === 'open').length,
+    closed: tickets.filter((ticket) => ticket.status === 'closed').length,
+    inProgress: tickets.filter((ticket) => ticket.status === 'inProgress')
+      .length,
+  }
+
+  const totalTickets = tickets.length
   return (
     <div className="mt-8 max-w-6xl mx-auto">
       <h4 className="text-3xl font-bold text-blue-600 dark:text-yellow-400 mb-8 border-b-4 border-blue-600 dark:border-yellow-500 pb-3">
         My Tickets
       </h4>
+
+      <div className="flex flex-col md:flex-row -mx-4">
+        <TicketStatusChart ticketData={ticketStatusData} />
+        <TotalTickets total={totalTickets} />
+      </div>
 
       {tickets.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400 text-center text-lg">
