@@ -4,7 +4,7 @@ import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
 const ActivityProviders = ({ children }) => {
-  const { get } = useAuthedRequest() // Call the hook as a function
+  const { get, del } = useAuthedRequest() // Call the hook as a function
   const { user } = useUser()
   const [activities, setActivities] = useState([])
 
@@ -35,6 +35,18 @@ const ActivityProviders = ({ children }) => {
     fetchActivities()
   }, [get, user]) // Add user as a dependency
 
+  const clearActivities = async () => {
+    try {
+      console.log('🔍 Clearing activities for user:', user.uid)
+      await del('/activities')
+      setActivities([]) // Clear the local state
+      console.log('✅ Activities cleared successfully')
+    } catch (error) {
+      console.error('❌ Error clearing activities:', error)
+      throw error // Let the component handle the error
+    }
+  }
+
   // Format the time for display (e.g., "5 mins ago")
   const formatTime = (timestamp) => {
     const now = new Date()
@@ -56,7 +68,7 @@ const ActivityProviders = ({ children }) => {
 
   return (
     <ActivityContext.Provider
-      value={{ activities, formatTime, refreshActivities }}
+      value={{ activities, formatTime, refreshActivities, clearActivities }}
     >
       {children}
     </ActivityContext.Provider>

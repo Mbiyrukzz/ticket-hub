@@ -1,0 +1,79 @@
+/* Scrollbar for Sidebar */
+
+/* Remove global scrollbar */
+/* html, body {
+  overflow: hidden;
+} */
+
+/* Sidebar Scroll */
+.custom-sidebar-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #4a90e2;
+  border-radius: 10px;
+}
+.custom-sidebar-scroll::-webkit-scrollbar-track {
+  background: #e3e3e3;
+}
+
+/* Routes Section Scroll */
+.custom-routes-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-routes-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ff6b6b, #ff4757);
+  border-radius: 10px;
+}
+.custom-routes-scroll::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+/* Activities Scroll */
+.custom-activities-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-activities-scroll::-webkit-scrollbar-thumb {
+  background: #28a745;
+  border-radius: 10px;
+}
+.custom-activities-scroll::-webkit-scrollbar-track {
+  background: #d4edda;
+}
+
+
+.custom-sidebar-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #4a90e2;
+    border-radius: 10px;
+  }
+  .custom-sidebar-scroll::-webkit-scrollbar-track {
+    background: #e3e3e3;
+  }
+  
+  /* Scrollbar for Routes Section */
+  .custom-routes-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  .custom-routes-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #3B60E4, #6a7282);
+    border-radius: 10px;
+  }
+  .custom-routes-scroll::-webkit-scrollbar-track {
+    background: #d4edda;
+  }
+  
+  /* Scrollbar for Activities Section */
+  .custom-activities-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-activities-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #3B60E4, #6a7282);
+    border-radius: 10px;
+  }
+  .custom-activities-scroll::-webkit-scrollbar-track {
+    background: #d4edda;
+  }
+  

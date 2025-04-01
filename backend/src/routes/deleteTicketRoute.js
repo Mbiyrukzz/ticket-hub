@@ -1,9 +1,13 @@
 const path = require('path')
 const fs = require('fs')
-
-const { ticketsCollection, usersCollection } = require('../db.js')
+const {
+  ticketsCollection,
+  usersCollection,
+  commentsCollection,
+} = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
+const logActivity = require('../middleware/logActivity.js') // Import logActivity
 
 const deleteTicketRoute = {
   path: '/users/:userId/tickets/:ticketId',
@@ -13,24 +17,35 @@ const deleteTicketRoute = {
     try {
       const tickets = ticketsCollection()
       const users = usersCollection()
-      if (!tickets || !users) {
-        return res.status(500).json({ error: 'Database not initialized' })
+      const comments = commentsCollection()
+
+      if (!tickets || !users || !comments) {
+        console.log('⚠️ Database connection not initialized')
+        return res
+          .status(500)
+          .json({ error: 'Database connection not initialized' })
       }
 
       const { ticketId, userId } = req.params
-      console.log('🔍 Delete Request Details:', {
+      console.log('🔍 Delete Ticket Request Details:', {
         userId,
         ticketId,
         timestamp: new Date().toISOString(),
       })
 
-      // ✅ Fetch the ticket first
+      // Fetch the ticket first (already done by userOwnsTicket middleware, but we’ll fetch again for clarity)
       const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
       if (!ticket) {
-        return res.status(404).json({ error: 'Ticket not found' })
+        console.log('⚠️ Ticket not found or unauthorized:', {
+          ticketId,
+          userId,
+        })
+        return res
+          .status(404)
+          .json({ error: 'Ticket not found or you don’t have permission' })
       }
 
-      // ✅ Delete image if exists
+      // Delete image if exists
       if (ticket.image) {
         const imagePath = path.join(
           __dirname,
@@ -51,17 +66,61 @@ const deleteTicketRoute = {
         }
       }
 
-      // ✅ Delete the ticket from the collection
-      await tickets.deleteOne({ id: ticketId })
-      console.log('✅ Ticket deleted from collection')
+      const session = tickets.client.startSession()
+      let userUpdateResult
+      try {
+        await session.withTransaction(async () => {
+          // Delete all comments associated with the ticket
+          const commentsDeleteResult = await comments.deleteMany({
+            ticketId: ticketId,
+          })
+          console.log('✅ Deleted comments:', {
+            ticketId,
+            deletedCount: commentsDeleteResult.deletedCount,
+          })
 
-      // ✅ Remove ticket reference from user
-      const userUpdateResult = await users.updateOne(
-        { id: userId },
-        { $pull: { tickets: ticketId } }
-      )
+          // Delete the ticket from the collection
+          const ticketDeleteResult = await tickets.deleteOne({
+            id: ticketId,
+            createdBy: userId,
+          })
+          if (ticketDeleteResult.deletedCount === 0) {
+            console.log('⚠️ No ticket was deleted:', { ticketId, userId })
+            throw new Error('Failed to delete ticket')
+          }
+          console.log('✅ Ticket deleted from collection')
 
-      res.json({
+          // Remove ticket reference from user
+          userUpdateResult = await users.updateOne(
+            { id: userId },
+            { $pull: { tickets: ticketId } }
+          )
+          if (userUpdateResult.modifiedCount === 0) {
+            console.log(
+              '⚠️ Failed to update user by removing ticket reference:',
+              { userId, ticketId }
+            )
+            throw new Error(
+              'Failed to update user by removing ticket reference'
+            )
+          }
+          console.log('✅ User updated by removing ticket reference')
+
+          // Log the activity after the ticket and comments are deleted
+          await logActivity(
+            'deleted-ticket',
+            `Deleted ticket #${ticketId}`,
+            userId,
+            ticketId
+          )
+          console.log('✅ Activity logged for deleted ticket')
+        })
+      } finally {
+        await session.endSession()
+      }
+
+      console.log('✅ Ticket deleted successfully')
+      res.status(200).json({
         message: '✅ Ticket deleted successfully',
         ticketId,
         userUpdated: userUpdateResult.modifiedCount > 0,

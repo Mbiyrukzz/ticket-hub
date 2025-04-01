@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import CreateAccountPage from './pages/CreateAccountPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useUser } from './hooks/useUser'
+import './customScroll.css' // Import custom styles
 
 const MyRoutes = () => {
   const { user, isLoading } = useUser()
@@ -20,15 +21,15 @@ const MyRoutes = () => {
       <NavBar />
 
       <div className="flex flex-1">
-        {/* Sidebar for logged-in users */}
+        {/* Sidebar (Sticky, Unique Scroll) */}
         {isLoggedIn && (
-          <SideBar className="w-60 border-r border-gray-300 bg-gray-100 shadow-md" />
+          <SideBar className="sticky top-0 h-screen w-60 border-r border-gray-300 bg-gray-100 shadow-md overflow-y-auto custom-sidebar-scroll" />
         )}
 
         {/* Main content and activities */}
-        <div className="flex flex-1">
-          {/* Routes Section (Takes up more space) */}
-          <div className="flex-grow p-4 transition-all duration-300">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Routes Section (Unique Scroll Style) */}
+          <div className="flex-grow p-4 overflow-y-auto max-h-screen custom-routes-scroll">
             <Routes>
               {/* Public Routes */}
               <Route
@@ -77,9 +78,9 @@ const MyRoutes = () => {
             </Routes>
           </div>
 
-          {/* Activities Section (Takes up less space) */}
+          {/* Activities Section (Smaller Unique Scroll) */}
           {isLoggedIn && (
-            <div className="w-1/3 p-4">
+            <div className="w-2/6 p-4 overflow-y-auto max-h-screen custom-activities-scroll">
               <Activities />
             </div>
           )}

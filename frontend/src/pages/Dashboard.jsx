@@ -36,7 +36,7 @@ const Dashboard = () => {
   const handleDeleteTicket = async (id) => {
     try {
       await deleteTicket(id)
-      // addActivity('deleted-ticket', `Deleted ticket #${id}`) // Delete from backend and update state
+      await refreshActivities()
       setCurrentlyDeleteTicketId(null) // Close modal immediately
     } catch (error) {
       console.error('❌ Failed to delete ticket:', error)
@@ -44,7 +44,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="rounded-lg relative flex min-h-screen bg-gray-100 text-gray-900">
+    <div className="rounded-lg relative flex min-h-screen overflow-hidden bg-gray-100 text-gray-900">
       {/* Main Content */}
       <div className="flex-1 p-6">
         {/* Modal for Adding New Ticket */}
