@@ -1,18 +1,39 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import ActivityContext from '../contexts/ActivityContext'
+import useAuthedRequest from '../hooks/useAuthedRequest'
+import { useUser } from '../hooks/useUser'
 
 const ActivityProviders = ({ children }) => {
+  const { get } = useAuthedRequest() // Call the hook as a function
+  const { user } = useUser()
   const [activities, setActivities] = useState([])
 
-  const addActivity = useCallback((type, message) => {
-    const newActivity = {
-      id: Date.now(), // Use timestamp as a unique ID
-      type,
-      message,
-      time: new Date().toISOString(), // Store the exact timestamp
+  // Fetch activities from the backend
+  const fetchActivities = async () => {
+    if (!user) {
+      console.log('⚠️ User not authenticated, skipping fetchActivities')
+      setActivities([]) // Clear activities if user is not authenticated
+      return
     }
-    setActivities((prev) => [newActivity, ...prev].slice(0, 10)) // Keep only the latest 10 activities
-  }, [])
+
+    try {
+      console.log('🔍 Fetching activities from backend')
+      const response = await get('http://localhost:8080/activities')
+      setActivities(response)
+      console.log('✅ Activities fetched successfully:', response)
+    } catch (error) {
+      console.error('❌ Error fetching activities:', {
+        message: error.message,
+        response: error.response?.data,
+      })
+      setActivities([]) // Clear activities on error
+    }
+  }
+
+  // Fetch activities on mount and when user changes
+  useEffect(() => {
+    fetchActivities()
+  }, [get, user]) // Add user as a dependency
 
   // Format the time for display (e.g., "5 mins ago")
   const formatTime = (timestamp) => {
@@ -28,8 +49,15 @@ const ActivityProviders = ({ children }) => {
     return 'Yesterday'
   }
 
+  // Provide a refresh function to allow components to trigger a fetch
+  const refreshActivities = async () => {
+    await fetchActivities()
+  }
+
   return (
-    <ActivityContext.Provider value={{ activities, addActivity, formatTime }}>
+    <ActivityContext.Provider
+      value={{ activities, formatTime, refreshActivities }}
+    >
       {children}
     </ActivityContext.Provider>
   )

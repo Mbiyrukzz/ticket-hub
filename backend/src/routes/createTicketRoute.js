@@ -1,15 +1,15 @@
 const { v4: uuidv4 } = require('uuid')
-
 const { ticketsCollection, usersCollection } = require('../db.js')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
+const logActivity = require('../middleware/logActivity.js') // Import logActivity
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads') // ✅ Moves out of 'routes' to main folder
+    const uploadPath = path.join(__dirname, '..', 'uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
@@ -31,52 +31,107 @@ const createTicketRoute = {
     try {
       const authUser = req.user
       const tickets = ticketsCollection()
-      if (!tickets) {
-        console.error('❌ Database not initialized')
-        return res.status(500).json({ error: 'Database not initialized' })
-      }
+      const users = usersCollection()
 
-      console.log('📥 Incoming Data:', req.body)
-      console.log('📸 Uploaded File:', req.file)
+      if (!tickets || !users) {
+        console.log('⚠️ Database connection not initialized')
+        return res
+          .status(500)
+          .json({ error: 'Database connection not initialized' })
+      }
 
       const { userId } = req.params
 
       if (authUser.uid !== userId) {
-        return resStatus(403)
+        console.log('⚠️ Unauthorized access attempt:', {
+          userId,
+          authUserId: authUser.uid,
+        })
+        return res.status(403).json({ error: 'Forbidden' })
       }
+
       const { title, content } = req.body
-      if (!title || !content) {
+      if (!title?.trim() || !content?.trim()) {
+        console.log('⚠️ Validation failed:', { title, content })
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
+      console.log('🔍 Create Ticket Request Details:', {
+        userId,
+        title,
+        content,
+        timestamp: new Date().toISOString(),
+      })
+      console.log('📸 Uploaded File:', req.file)
+
       const newTicketId = uuidv4()
       const image = req.file
-        ? `http://localhost:8080/uploads/${req.file.filename}`
+        ? `${process.env.BASE_URL || 'http://localhost:8080'}/uploads/${
+            req.file.filename
+          }`
         : null
 
       const newTicket = {
         id: newTicketId,
-        title,
-        content,
+        title: title.trim(),
+        content: content.trim(),
         image,
         createdBy: userId,
+        createdAt: new Date(), // Added createdAt for consistency
         comments: [],
       }
 
-      // Insert the new ticket
-      const result = await tickets.insertOne(newTicket)
-      const mongoId = result.insertedId
+      const session = tickets.client.startSession()
+      let response
+      try {
+        await session.withTransaction(async () => {
+          // Insert the new ticket
+          const result = await tickets.insertOne(newTicket)
+          const mongoId = result.insertedId
 
-      // Update user with the new ticket
-      await usersCollection().updateOne(
-        { id: userId },
-        { $push: { tickets: newTicketId } }
-      )
+          // Update user with the new ticket
+          const userUpdateResult = await users.updateOne(
+            { id: userId },
+            { $push: { tickets: newTicketId } }
+          )
+          if (userUpdateResult.modifiedCount === 0) {
+            console.log('⚠️ Failed to update user with new ticket:', {
+              userId,
+              ticketId: newTicketId,
+            })
+            throw new Error('Failed to update user with new ticket')
+          }
 
-      res.status(201).json({ ...newTicket, _id: mongoId })
+          // Log the activity after the ticket is created
+          await logActivity(
+            'created-ticket',
+            `Created a new ticket #${newTicketId}`,
+            userId,
+            newTicketId
+          )
+
+          response = {
+            ...newTicket,
+            _id: mongoId.toString(), // Convert ObjectId to string
+            createdAt: newTicket.createdAt.toISOString(),
+          }
+
+          console.log('✅ Ticket created successfully:', response)
+        })
+      } finally {
+        await session.endSession()
+      }
+
+      res.status(201).json(response)
     } catch (error) {
-      console.error('❌ Error creating ticket:', error)
-      res.status(500).json({ error: 'Failed to create ticket' })
+      console.error('❌ Error in create ticket route:', {
+        message: error.message,
+        stack: error.stack,
+      })
+      res.status(500).json({
+        error: 'Failed to create ticket',
+        details: error.message,
+      })
     }
   },
 }

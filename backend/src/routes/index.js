@@ -1,3 +1,4 @@
+const getActivitiesRoute = require('./activitiesRoutes.js')
 const { createCommentRoute } = require('./createCommentRoute.js')
 const { createTicketRoute } = require('./createTicketRoute.js')
 const { deleteCommentRoute } = require('./deleteCommentRoute.js')
@@ -17,6 +18,8 @@ const routes = [
   deleteCommentRoute,
   createCommentRoute,
   updateCommentRoute,
+
+  getActivitiesRoute,
 ]
 
 module.exports = { routes }

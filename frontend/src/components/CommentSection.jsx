@@ -19,7 +19,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
     fetchComments,
   } = useContext(CommentContext)
 
-  const { addActivity } = useContext(ActivityContext)
+  const { refreshActivities } = useContext(ActivityContext)
 
   const { user } = useUser()
 
@@ -48,10 +48,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
       try {
         await addComment(user.uid, ticketId, newComment, newImage)
 
-        addActivity(
-          'created-comment',
-          `Added a new comment to ticket #${ticketId}`
-        )
+        await refreshActivities()
 
         setNewComment('')
         setNewImage(null)
@@ -103,10 +100,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
     try {
       await deleteComment(user.uid, ticketId, commentToDelete)
 
-      addActivity(
-        'deleted-comment',
-        `Deleted a comment from ticket #${ticketId}`
-      )
+      await refreshActivities()
 
       setCommentToDelete(null)
       setError(null)

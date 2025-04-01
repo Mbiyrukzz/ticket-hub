@@ -4,6 +4,7 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs').promises
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
+const logActivity = require('../middleware/logActivity.js') // Import logActivity
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -56,6 +57,10 @@ const createCommentRoute = {
       const { content, author } = req.body
 
       if (!authUser || authUser.uid !== userId) {
+        console.log('⚠️ Unauthorized access attempt:', {
+          userId,
+          authUserId: authUser.uid,
+        })
         return res.status(403).json({ error: 'Forbidden' })
       }
 
@@ -67,10 +72,21 @@ const createCommentRoute = {
 
       const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
       if (!ticket) {
+        console.log('⚠️ Ticket not found or unauthorized:', {
+          ticketId,
+          userId,
+        })
         return res.status(404).json({
           error: "Ticket not found or you don't have permission",
         })
       }
+
+      console.log('🔍 Create Comment Request Details:', {
+        userId,
+        ticketId,
+        content,
+        timestamp: new Date().toISOString(),
+      })
 
       tempFile = req.file?.path
       const imageUrl = req.file
@@ -90,6 +106,7 @@ const createCommentRoute = {
       }
 
       const session = comments.client.startSession()
+      let response
       try {
         await session.withTransaction(async () => {
           const result = await comments.insertOne(newComment)
@@ -98,18 +115,27 @@ const createCommentRoute = {
             { $push: { comments: newComment.id } }
           )
 
-          const response = {
+          // Log the activity after the comment is created
+          await logActivity(
+            'created-comment',
+            `Added a new comment to ticket #${ticketId}`,
+            userId,
+            ticketId
+          )
+
+          response = {
             _id: result.insertedId.toString(), // Convert ObjectId to string
             ...newComment,
             createdAt: newComment.createdAt.toISOString(),
           }
 
-          console.log('✅ Comment created:', response)
-          res.status(201).json(response)
+          console.log('✅ Comment created successfully:', response)
         })
       } finally {
         await session.endSession()
       }
+
+      res.status(201).json(response)
     } catch (error) {
       if (
         tempFile &&
@@ -120,7 +146,10 @@ const createCommentRoute = {
       ) {
         await fs.unlink(tempFile)
       }
-      console.error('❌ Error creating comment:', error.stack)
+      console.error('❌ Error in create comment route:', {
+        message: error.message,
+        stack: error.stack,
+      })
       if (error instanceof multer.MulterError) {
         return res
           .status(400)
