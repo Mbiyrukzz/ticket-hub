@@ -7,8 +7,8 @@ import {
   faChartBar,
   faCheckCircle,
   faExclamationCircle,
-  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons'
+import LogoutButton from './LogoutButton'
 
 const SideBar = () => {
   return (
@@ -70,10 +70,7 @@ const SideBar = () => {
 
       {/* Logout Button */}
       <div className="p-6 border-t border-gray-200 dark:border-gray-800">
-        <button className="flex items-center gap-4 w-full text-lg font-semibold px-6 py-3 text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-800 hover:bg-red-200 dark:hover:bg-red-700 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-1">
-          <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
-          Logout
-        </button>
+        <LogoutButton />
       </div>
     </div>
   )

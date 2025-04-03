@@ -48,16 +48,28 @@ const start = async () => {
   try {
     await initializeDbConnection() // Properly placed inside try block
 
-    routes.forEach((route) => {
-      console.log(
-        `🚀 Registering route: ${route.method.toUpperCase()} ${route.path}`
-      )
+    // routes.forEach((route) => {
+    //   if (route.middleware && Array.isArray(route.middleware)) {
+    //     console.log(
+    //       `   🔹 With middleware: ${route.middleware.length} functions`
+    //     )
+    //     app[route.method](route.path, ...route.middleware, route.handler)
+    //   }
+    // })
 
-      if (route.middleware && Array.isArray(route.middleware)) {
-        console.log(
-          `   🔹 With middleware: ${route.middleware.length} functions`
-        )
+    routes.forEach((route) => {
+      if (!route.path || !route.method || !route.handler) {
+        console.error('❌ Invalid route definition:', route)
+        return
+      }
+
+      console.log(
+        `✅ Registering route: ${route.method.toUpperCase()} ${route.path}`
+      )
+      if (route.middleware) {
         app[route.method](route.path, ...route.middleware, route.handler)
+      } else {
+        app[route.method](route.path, route.handler)
       }
     })
 

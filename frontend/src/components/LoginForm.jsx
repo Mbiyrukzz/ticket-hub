@@ -5,67 +5,79 @@ const LoginForm = ({ onSubmit }) => {
   const [password, setPassword] = useState('')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-gray-200">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          Welcome Back
-        </h2>
-        <form className="space-y-6">
-          {/* Email Input */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-600 mb-1"
-            >
-              Email
-            </label>
-            <input
-              type="email" // Changed to type="email" for better validation
-              id="email"
-              placeholder="example@mail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none transition-all duration-200 placeholder-gray-400"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-600 mb-1"
-            >
-              Password
-            </label>
-            <input
-              type="password" // Changed to type="password" for security
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none transition-all duration-200 placeholder-gray-400"
-            />
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="button"
-            onClick={() => onSubmit(email, password)}
-            className="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-400 focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 transition-all duration-200 shadow-md"
-          >
-            Login
-          </button>
-        </form>
-
-        {/* Optional: Add a link for forgot password or signup */}
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Forgot your password?{' '}
-          <a href="#" className="text-blue-500 hover:text-blue-400">
-            Reset it
-          </a>
-        </p>
+    <form className="space-y-4">
+      {/* Email Input */}
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-600 mb-1"
+        >
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 bg-gray-100 text-gray-900 rounded-lg border border-gray-300 
+                    focus:ring-2 focus:ring-purple-400 focus:border-purple-500 outline-none transition-all duration-300"
+        />
       </div>
-    </div>
+
+      {/* Password Input */}
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-600 mb-1"
+        >
+          Password
+        </label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-3 bg-gray-100 text-gray-900 rounded-lg border border-gray-300 
+                    focus:ring-2 focus:ring-purple-400 focus:border-purple-500 outline-none transition-all duration-300"
+        />
+      </div>
+
+      {/* Remember Me + Forgot Password */}
+      <div className="flex items-center justify-between text-sm text-gray-600">
+        <label className="flex items-center">
+          <input type="checkbox" className="mr-2" />
+          Remember for 30 days
+        </label>
+        <a href="#" className="text-purple-600 hover:text-purple-500">
+          Forgot password?
+        </a>
+      </div>
+
+      {/* Login Button */}
+      <button
+        type="button"
+        onClick={() => onSubmit(email, password)}
+        className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-all duration-300"
+      >
+        Sign in
+      </button>
+
+      {/* Sign in with Google */}
+      <button
+        type="button"
+        className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-2
+                  hover:bg-gray-100 transition-all duration-300"
+      >
+        <img
+          src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
+          alt="Google"
+          className="w-5 h-5"
+        />
+        Sign in with Google
+      </button>
+    </form>
   )
 }
 
