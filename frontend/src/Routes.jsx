@@ -11,6 +11,7 @@ import CreateAccountPage from './pages/CreateAccountPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useUser } from './hooks/useUser'
 import './customScroll.css' // Import custom styles
+import UsersProfilePage from './pages/UsersProfilePage'
 
 const MyRoutes = () => {
   const { user, isLoading } = useUser()
@@ -63,6 +64,8 @@ const MyRoutes = () => {
                   />
                 }
               >
+                {' '}
+                <Route path="/profile" element={<UsersProfilePage />}></Route>
                 <Route path="/tickets" element={<Dashboard />} />
                 <Route
                   path="/tickets/:ticketId"
