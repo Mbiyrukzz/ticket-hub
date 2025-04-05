@@ -1,14 +1,31 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import CreateAccountForm from '../components/CreateAccountForm'
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
 import Loading from '../components/Loading'
+import './CreateAccountPage.css'
 
 const CreateAccountPage = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [bubbles, setBubbles] = useState([])
+
+  // Generate bubbles on mount
+  useEffect(() => {
+    const generateBubbles = () => {
+      const newBubbles = Array.from({ length: 10 }).map(() => ({
+        id: Math.random(),
+        size: Math.random() * 60 + 20, // Sizes between 20px and 80px
+        left: Math.random() * 90, // Random horizontal position
+        duration: Math.random() * 6 + 4, // Duration between 4s and 10s
+        delay: Math.random() * 3, // Delay up to 3s
+      }))
+      setBubbles(newBubbles)
+    }
+    generateBubbles()
+  }, [])
 
   const createAccount = async (name, email, password, confirmPassword) => {
     if (password !== confirmPassword) {
@@ -17,7 +34,7 @@ const CreateAccountPage = () => {
     }
 
     setLoading(true)
-    setError(null) // Reset error state
+    setError(null)
 
     try {
       const result = await createUserWithEmailAndPassword(
@@ -25,7 +42,7 @@ const CreateAccountPage = () => {
         email,
         password
       )
-      const token = await result.user.getIdToken() // Ensure you await the token retrieval
+      const token = await result.user.getIdToken()
 
       await axios.post(
         'http://localhost:8080/users',
@@ -36,35 +53,70 @@ const CreateAccountPage = () => {
       navigate('/tickets')
     } catch (err) {
       console.error('Error creating account:', err)
-      setError(err.message || 'Failed to create account')
+      setError(err.code) // Using err.code for consistency with Firebase error handling
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-200 animate-fadeIn">
-        {/* Page Heading */}
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-12 overflow-hidden relative">
+      {/* Animated Bubbles */}
+      {bubbles.map((bubble) => (
+        <div
+          key={bubble.id}
+          className="bubble absolute rounded-full bg-blue-200 opacity-30"
+          style={{
+            width: `${bubble.size}px`,
+            height: `${bubble.size}px`,
+            left: `${bubble.left}%`,
+            bottom: '-100px',
+            animation: `floatUp ${bubble.duration}s infinite ease-in-out`,
+            animationDelay: `${bubble.delay}s`,
+          }}
+        />
+      ))}
+
+      {/* Animated Cubes */}
+      <div
+        className="cube absolute bg-blue-300 opacity-20"
+        style={{
+          width: '60px',
+          height: '60px',
+          top: '15%',
+          left: '10%',
+          animation: 'rotateCube 10s infinite linear',
+        }}
+      />
+      <div
+        className="cube absolute bg-purple-300 opacity-20"
+        style={{
+          width: '45px',
+          height: '45px',
+          bottom: '20%',
+          right: '15%',
+          animation: 'rotateCube 12s infinite linear',
+          animationDelay: '2s',
+        }}
+      />
+
+      {/* Main Content */}
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-200 animate-fadeIn relative z-10">
         <h4 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Create An Account
         </h4>
 
-        {/* Error Message */}
-        {error && (
-          <p className="text-red-600 bg-red-100 p-3 rounded-md text-center mb-4 animate-fadeIn">
-            {error}
-          </p>
-        )}
-
-        {/* Form or Loading State */}
         {loading ? (
-          <div className="flex flex-col items-center space-y-3">
+          <div className="flex flex-col items-center space-y-4 animate-pulse">
             <Loading />
-            <p className="text-lg text-gray-600">Creating account...</p>
+            <p className="text-lg text-gray-600">Creating your account...</p>
           </div>
         ) : (
-          <CreateAccountForm onSubmit={createAccount} disabled={loading} />
+          <CreateAccountForm
+            error={error}
+            onSubmit={createAccount}
+            disabled={loading}
+          />
         )}
       </div>
     </div>

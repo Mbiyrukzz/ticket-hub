@@ -5,11 +5,17 @@ import LoginForm from '../components/LoginForm'
 import './LoginPage.css'
 
 const LoginPage = () => {
+  const [error, setError] = useState(null)
+
   const navigate = useNavigate()
 
   const logIn = async (email, password) => {
-    await signInWithEmailAndPassword(getAuth(), email, password)
-    navigate('/tickets')
+    try {
+      await signInWithEmailAndPassword(getAuth(), email, password)
+      navigate('/tickets')
+    } catch (err) {
+      setError(err.code)
+    }
   }
 
   const [bubbles, setBubbles] = useState([])
@@ -51,7 +57,7 @@ const LoginPage = () => {
         <div className="login-form-section">
           <h3>Welcome back</h3>
           <p>Please enter your details to continue.</p>
-          <LoginForm onSubmit={logIn} />
+          <LoginForm error={error} onSubmit={logIn} />
           <p className="signup-text">
             Don't have an account?{' '}
             <Link to="/create-account" className="signup-link">

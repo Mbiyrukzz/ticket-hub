@@ -1,0 +1,35 @@
+/* CreateAccountForm.css */
+@keyframes floatUp {
+    0% {
+      transform: translateY(0);
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      transform: translateY(-100vh);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes rotateCube {
+    0% {
+      transform: rotate(0deg) rotateX(0deg) rotateY(0deg);
+    }
+    100% {
+      transform: rotate(360deg) rotateX(360deg) rotateY(360deg);
+    }
+  }
+  
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none; /* Prevent interaction with bubbles */
+  }
+  
+  .cube {
+    position: absolute;
+    transform-style: preserve-3d;
+    pointer-events: none; /* Prevent interaction with cubes */
+  }

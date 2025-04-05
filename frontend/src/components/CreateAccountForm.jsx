@@ -1,10 +1,34 @@
 import React, { useState } from 'react'
 
-const CreateAccountForm = ({ onSubmit }) => {
+const signUpErrorMessageMap = {
+  'Firebase: Error (auth/email-already-in-use)':
+    'This email is already in use. Try logging in instead.',
+  'Firebase: Error (auth/invalid-email)':
+    'The email address you entered is invalid.',
+  'Firebase: Error (auth/operation-not-allowed)':
+    'Email/password sign-up is currently disabled. Please contact support.',
+  'Firebase: Error (auth/weak-password)':
+    'Your password is too weak. It should be at least 6 characters long.',
+  'Firebase: Error (auth/missing-email)': 'Please enter an email address.',
+  'Firebase: Error (auth/missing-password)': 'Please enter a password.',
+  'Firebase: Error  (auth/internal-error)':
+    'An internal error occurred. Please try again later.',
+  'Firebase: Error (auth/network-request-failed)':
+    'Network error. Please check your internet connection.',
+  'Firebase: Error (auth/too-many-requests)':
+    'Too many attempts. Please wait and try again later.',
+}
+
+const CreateAccountForm = ({ error, onSubmit }) => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  const errorMessage = error
+    ? signUpErrorMessageMap[`Firebase: Error (${error})`] ||
+      'An unexpected error occurred. Please try again.'
+    : null
 
   const handleSubmit = () => {
     if (password === confirmPassword) {
@@ -20,6 +44,25 @@ const CreateAccountForm = ({ onSubmit }) => {
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Create Your Account
         </h2>
+
+        {errorMessage && (
+          <div className="flex items-center gap-2 bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg shadow-sm">
+            <svg
+              className="w-5 h-5 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01m-.01-10a9 9 0 100 18 9 9 0 000-18z"
+              />
+            </svg>
+            <span className="text-sm font-medium">{errorMessage}</span>
+          </div>
+        )}
         <form className="space-y-6">
           {/* Name Input */}
           <div>
