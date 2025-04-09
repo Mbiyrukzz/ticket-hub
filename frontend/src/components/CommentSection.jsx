@@ -110,45 +110,45 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
   }
 
   return (
-    <div className="mt-8 max-w-3xl mx-auto bg-white rounded-xl p-4">
-      <h4 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+    <div className="mt-8 max-w-3xl mx-auto rounded-2xl bg-white shadow-xl p-6 space-y-6">
+      <h4 className="text-xl font-semibold text-gray-900">
         Comments ({comments.length})
       </h4>
 
       {error && (
-        <p className="text-red-500 mt-3 bg-red-50 p-2 rounded-md">{error}</p>
+        <p className="text-red-500 bg-red-50 p-2 rounded-md">{error}</p>
       )}
 
+      {/* Comment Input */}
       <form
         onSubmit={handleAddComment}
-        className="mt-4 bg-gray-50 p-3 rounded-lg border border-gray-200"
+        className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3"
       >
-        <div className="flex flex-col space-y-2">
+        <input
+          type="text"
+          placeholder="Share your mind..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          className="w-full p-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+        />
+        <div className="flex items-center justify-between">
           <input
-            type="text"
-            placeholder="Write a comment..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="w-full p-2 bg-white text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
           />
-          <div className="flex items-center justify-between">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
-            <button
-              type="submit"
-              className="px-4 py-1 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
-            >
-              Add Comment
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition"
+          >
+            Post
+          </button>
         </div>
       </form>
 
-      <div className="mt-4 space-y-4">
+      {/* Comments */}
+      <div className="space-y-6">
         {comments.length === 0 ? (
           <p className="text-gray-500 text-center py-6 bg-gray-50 rounded-lg">
             No comments yet. Be the first to comment!
@@ -157,72 +157,71 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
           comments.map((comment, index) => (
             <div
               key={comment.id || index}
-              className={`flex space-x-3 p-3 rounded-lg ${
-                comment.userId === user?.uid ? 'bg-indigo-50' : 'bg-white'
-              }`}
+              className="flex items-start space-x-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
             >
-              <div className="min-w-[40px] w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold text-sm">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-semibold">
                 {comment.author?.[0]?.toUpperCase() || '?'}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-gray-800 font-medium">{comment.author}</p>
+
+              <div className="flex-1 space-y-1">
+                <div className="flex justify-between items-center">
+                  <p className="font-semibold text-gray-900">
+                    {comment.author}
+                  </p>
                   <FontAwesomeIcon
                     icon={faEllipsisH}
-                    className="cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
                   />
                 </div>
+
                 {editingId === comment.id ? (
-                  <div className="mt-2">
+                  <>
                     <textarea
                       value={editedText}
                       onChange={(e) => setEditedText(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px]"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
                     />
-                    <div className="mt-2 flex space-x-2">
+                    <div className="flex gap-2 mt-2">
                       <button
                         onClick={() => handleSaveEdit(comment.id)}
-                        className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                        className="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                        className="px-4 py-1 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                       >
                         Cancel
                       </button>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <>
-                    <p className="text-gray-700 mt-1 break-words">
-                      {comment.content}
-                    </p>
+                    <p className="text-gray-700">{comment.content}</p>
                     {comment.imageUrl && (
                       <img
                         src={comment.imageUrl}
-                        alt="Comment attachment"
+                        alt="Comment"
                         className="mt-2 max-w-xs rounded-md border border-gray-200"
                       />
                     )}
-                    <div className="flex items-center gap-4 mt-2 text-sm">
-                      <button className="flex items-center space-x-1 text-gray-500 hover:text-indigo-600 transition-colors">
-                        <FontAwesomeIcon icon={faThumbsUp} /> <span>Like</span>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
+                      <button className="flex items-center gap-1 hover:text-indigo-600 transition">
+                        <FontAwesomeIcon icon={faThumbsUp} /> Like
                       </button>
-                      <button className="flex items-center space-x-1 text-gray-500 hover:text-indigo-600 transition-colors">
-                        <FontAwesomeIcon icon={faReply} /> <span>Reply</span>
+                      <button className="flex items-center gap-1 hover:text-indigo-600 transition">
+                        <FontAwesomeIcon icon={faReply} /> Reply
                       </button>
-                      {/* Temporarily removing the user check to ensure buttons are visible */}
                       <button
                         onClick={() => handleEdit(comment.id, comment.content)}
-                        className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                        className="text-indigo-600 hover:text-indigo-700 font-medium"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteClick(comment.id)}
-                        className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                        className="text-red-600 hover:text-red-700 font-medium"
                       >
                         Delete
                       </button>
@@ -234,6 +233,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
           ))
         )}
       </div>
+
       {commentToDelete !== null && (
         <ConfirmDeleteResponse
           onConfirm={handleConfirmDelete}

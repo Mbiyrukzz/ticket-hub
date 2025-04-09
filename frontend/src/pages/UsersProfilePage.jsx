@@ -1,11 +1,6 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faUser,
-  faCog,
-  faSignOutAlt,
-  faBars,
-} from '@fortawesome/free-solid-svg-icons'
+import { faUser, faCog, faBars } from '@fortawesome/free-solid-svg-icons'
 
 const UsersProfilePage = () => {
   return (

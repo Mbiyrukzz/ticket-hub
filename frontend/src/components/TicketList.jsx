@@ -1,90 +1,88 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import TicketStatusChart from './TickeStatusChart'
-import TotalTickets from './TotalTickets'
+import {
+  faCommentDots,
+  faHashtag,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons'
+
+const getPriorityBadge = (priority) => {
+  switch (priority) {
+    case 'Urgent':
+      return 'bg-red-100 text-red-700'
+    case 'Medium':
+      return 'bg-blue-100 text-blue-700'
+    case 'Low':
+      return 'bg-green-100 text-green-700'
+    default:
+      return 'bg-gray-200 text-gray-600'
+  }
+}
 
 const truncateText = (text, limit) => {
-  if (!text) return '' // Handle null or undefined cases
+  if (!text) return ''
   const words = text.split(' ')
   return words.length > limit ? words.slice(0, limit).join(' ') + '...' : text
 }
 
 const TicketList = ({ tickets, onRequestDelete }) => {
-  const ticketStatusData = {
-    open: tickets.filter((ticket) => ticket.status === 'open').length,
-    closed: tickets.filter((ticket) => ticket.status === 'closed').length,
-    inProgress: tickets.filter((ticket) => ticket.status === 'inProgress')
-      .length,
-  }
-
-  const totalTickets = tickets.length
   return (
-    <div className="mt-8 max-w-6xl mx-auto">
-      <h4 className="text-3xl font-bold text-blue-600 dark:text-yellow-400 mb-8 border-b-4 border-blue-600 dark:border-yellow-500 pb-3">
-        My Tickets
-      </h4>
-
-      <div className="flex flex-col md:flex-row -mx-4">
-        <TicketStatusChart ticketData={ticketStatusData} />
-        <TotalTickets total={totalTickets} />
-      </div>
-
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
       {tickets.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-center text-lg">
+        <p className="text-gray-500 text-center text-lg">
           No tickets available.
         </p>
       ) : (
-        <div className="space-y-6">
-          {tickets.map((ticket) => (
-            <Link
-              to={`/tickets/${ticket.id}`}
-              key={ticket.id}
-              className="block group"
-            >
-              <div className="relative border-l-4 border-blue-600 dark:border-yellow-500 pl-6 py-5 bg-white dark:bg-gray-800 hover:shadow-2xl transition-all rounded-xl shadow-md cursor-pointer transform group-hover:-translate-y-1 duration-300">
-                {/* Timeline Dot */}
-                <div className="absolute -left-2.5 top-6 w-5 h-5 bg-blue-600 dark:bg-yellow-500 rounded-full shadow-md border-2 border-white dark:border-gray-800"></div>
-
-                {/* Ticket Info */}
-                <h5 className="text-2xl font-semibold text-blue-700 dark:text-yellow-300 group-hover:text-blue-800 dark:group-hover:text-yellow-400">
+        tickets.map((ticket) => (
+          <Link
+            to={`/tickets/${ticket.id}`}
+            key={ticket.id}
+            className="block bg-white border border-gray-200 rounded-xl shadow hover:shadow-md transition-all p-5 hover:bg-gray-50"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
                   {ticket.title}
-                </h5>
-
-                <p className="text-gray-600 dark:text-gray-300 mt-2 leading-relaxed group-hover:text-gray-800 dark:group-hover:text-gray-100">
-                  {truncateText(ticket.content, 20)}
+                </h3>
+                <p className="text-gray-600 text-sm mb-2">
+                  {truncateText(ticket.content, 18)}
                 </p>
-
-                {/* Show Image Preview if Available */}
-                {ticket.image && (
-                  <div className="mt-4 rounded-lg overflow-hidden shadow-lg">
-                    <img
-                      src={ticket.image}
-                      alt="Ticket Preview"
-                      className="object-cover w-full h-36 transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="mt-4 flex justify-between items-center">
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation() // Prevent navigation when clicking delete
-                      event.preventDefault() // Prevent `Link` from triggering
-                      onRequestDelete(ticket.id)
-                    }}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-all flex items-center gap-2 text-lg font-medium transform hover:scale-105"
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                  <span
+                    className={`px-2 py-1 rounded-full font-medium ${getPriorityBadge(
+                      ticket.priority
+                    )}`}
                   >
-                    <FontAwesomeIcon icon={faTrash} />
-                    Delete
-                  </button>
+                    {ticket.priority}
+                  </span>
+                  <span className="text-gray-500 flex items-center gap-1">
+                    <FontAwesomeIcon icon={faHashtag} />
+                    {ticket.id}
+                  </span>
+                  <span className="text-gray-500 flex items-center gap-1">
+                    <FontAwesomeIcon icon={faCommentDots} />
+                    {ticket.comments?.length || 0}
+                  </span>
                 </div>
               </div>
-            </Link>
-          ))}
-        </div>
+
+              <div className="flex flex-col items-end justify-between h-full text-sm text-gray-500">
+                <span>{ticket.timestamp || 'Just now'}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onRequestDelete(ticket.id)
+                  }}
+                  className="mt-2 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition text-xs"
+                >
+                  <FontAwesomeIcon icon={faTrash} /> Delete
+                </button>
+              </div>
+            </div>
+          </Link>
+        ))
       )}
     </div>
   )

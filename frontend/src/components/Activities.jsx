@@ -9,6 +9,7 @@ import {
   faTicketAlt,
 } from '@fortawesome/free-solid-svg-icons'
 import ActivityContext from '../contexts/ActivityContext'
+import { Link } from 'react-router-dom'
 
 const getActivityIcon = (type) => {
   switch (type) {
@@ -38,35 +39,41 @@ const Activities = () => {
   const { activities, formatTime } = useContext(ActivityContext)
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-1xl mx-auto">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-        Recent Activities
-      </h2>
+    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 w-full">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        Recent activity
+      </h3>
 
       {activities.length > 0 ? (
-        <ul className="space-y-4">
+        <ul className="space-y-3">
           {activities.map((activity) => (
-            <li
+            <Link
               key={activity.id}
-              className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
+              to={activity.link || '#'}
+              className="flex items-start gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition"
             >
-              <div className="text-lg">{getActivityIcon(activity.type)}</div>
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                {getActivityIcon(activity.type)}
+              </div>
               <div className="flex-1">
-                <p className="text-gray-800 dark:text-gray-300">
+                <p className="text-sm text-gray-800 dark:text-gray-300 leading-snug">
                   {activity.message}
                 </p>
                 <span className="text-xs text-gray-500">
                   {formatTime(activity.time)}
                 </span>
               </div>
-            </li>
+            </Link>
           ))}
         </ul>
       ) : (
-        <p className="text-gray-600 dark:text-gray-400 text-center">
+        <p className="text-gray-500 text-sm text-center">
           No recent activities yet.
         </p>
       )}
+      <button className="mt-4 text-sm text-blue-600 hover:underline block mx-auto">
+        Show more
+      </button>
     </div>
   )
 }
