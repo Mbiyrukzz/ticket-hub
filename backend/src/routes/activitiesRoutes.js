@@ -44,4 +44,4 @@ const getActivitiesRoute = {
   },
 }
 
-module.exports = getActivitiesRoute
+module.exports = { getActivitiesRoute }
