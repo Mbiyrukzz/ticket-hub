@@ -6,7 +6,8 @@ import TicketNotFoundPage from './TicketNotFoundPage'
 import SharedEmails from '../components/SharedEmails'
 
 const TicketSharingPage = () => {
-  const { tickets, isLoading } = useContext(TicketContext)
+  const { tickets, isLoading, shareTicket, unShareTicket } =
+    useContext(TicketContext)
   const { ticketId } = useParams()
   const navigate = useNavigate()
   const ticket = tickets.find((t) => t.id === ticketId)
@@ -23,17 +24,27 @@ const TicketSharingPage = () => {
         >
           Back
         </button>
-        {/* Page Header */}
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Share Ticket "{ticket.title}"
         </h1>
 
-        {/* Share Ticket Form */}
+        {(!ticket.sharedWithEmails || ticket.sharedWithEmails.length === 0) && (
+          <p className="text-gray-500 mb-4">
+            Ticket not shared with anyone. Only you and admins can view.
+          </p>
+        )}
+
         <SharedEmails
-          onAdd={(email) => alert(`Adding ${email} to shared users`)}
-          onDelete={(email) => alert(`Deleting ${email} from shared users`)}
-          emails={['mbiyrukzz@gmail.com', 'ali@mail.com']}
-          optionalMessages={['Optional message 1', 'Optional message 2']}
+          onAdd={(email, optionalMessage) =>
+            shareTicket(ticketId, email, optionalMessage)
+          }
+          onDelete={(email) => unShareTicket(ticketId, email)}
+          emails={ticket.sharedWithEmails || []}
+          optionalMessages={
+            ticket.sharedWithEmails
+              ?.map((item) => item.optionalMessage)
+              .filter(Boolean) || []
+          }
         />
       </div>
     </div>

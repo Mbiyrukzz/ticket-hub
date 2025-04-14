@@ -39,8 +39,7 @@ const TicketsProvider = ({ children }) => {
     if (user && isReady) {
       loadTickets()
     }
-  }, [user, isReady, get]) // ✅ Removed `get` to avoid unnecessary re-fetching
-
+  }, [user, isReady, get])
   const createTicket = async (ticketData) => {
     if (!user) {
       console.error('⚠️ User not authenticated!')
@@ -133,9 +132,50 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
+  const shareTicket = async (ticketId, email, optionalMessage) => {
+    setTickets((prevTickets) =>
+      prevTickets.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              sharedWithEmails: [
+                ...(ticket.sharedWithEmails || []).filter(
+                  (e) => e.email !== email
+                ),
+                { email, optionalMessage },
+              ],
+            }
+          : ticket
+      )
+    )
+  }
+
+  const unShareTicket = async (ticketId, email) => {
+    setTickets((prevTickets) =>
+      prevTickets.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              sharedWithEmails: (ticket.sharedWithEmails || []).filter(
+                (sharedEmail) => sharedEmail.email !== email
+              ),
+            }
+          : ticket
+      )
+    )
+  }
+
   return (
     <TicketContext.Provider
-      value={{ tickets, isLoading, createTicket, deleteTicket, updateTicket }}
+      value={{
+        tickets,
+        isLoading,
+        createTicket,
+        deleteTicket,
+        updateTicket,
+        shareTicket,
+        unShareTicket,
+      }}
     >
       {children}
     </TicketContext.Provider>
