@@ -46,17 +46,7 @@ const upload = multer({ storage })
 // Database Connection & Routes
 const start = async () => {
   try {
-    await initializeDbConnection() // Properly placed inside try block
-
-    // routes.forEach((route) => {
-    //   if (route.middleware && Array.isArray(route.middleware)) {
-    //     console.log(
-    //       `   🔹 With middleware: ${route.middleware.length} functions`
-    //     )
-    //     app[route.method](route.path, ...route.middleware, route.handler)
-    //   }
-    // })
-
+    await initializeDbConnection()
     routes.forEach((route) => {
       if (!route.path || !route.method || !route.handler) {
         console.error('❌ Invalid route definition:', route)

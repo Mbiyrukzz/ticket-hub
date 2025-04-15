@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
 import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
@@ -132,37 +133,97 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
-  const shareTicket = async (ticketId, email, optionalMessage) => {
-    setTickets((prevTickets) =>
-      prevTickets.map((ticket) =>
-        ticket.id === ticketId
-          ? {
-              ...ticket,
-              sharedWithEmails: [
-                ...(ticket.sharedWithEmails || []).filter(
-                  (e) => e.email !== email
-                ),
-                { email, optionalMessage },
-              ],
-            }
-          : ticket
+  const shareTicket = async (
+    ticketId,
+    email,
+    optionalMessage,
+    setTickets,
+    setError,
+    setLoading
+  ) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await post(
+        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/share-ticket`,
+        { email, optionalMessage }
       )
-    )
+
+      const updatedEmails = response.data
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
+          ticket.id === ticketId
+            ? {
+                ...ticket,
+                sharedWith: updatedEmails,
+              }
+            : ticket
+        )
+      )
+
+      return updatedEmails
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        'Failed to share ticket. Please try again.'
+      setError(errorMessage)
+      throw new Error(errorMessage) // Rethrow for the calling component to handle
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const unShareTicket = async (ticketId, email) => {
+  const unShareTicket = async (
+    ticketId,
+    email,
+    setLocalError,
+    setLocalLoading
+  ) => {
+    setLocalLoading(true)
+    setLocalError(null)
+
+    const previousTickets = tickets
     setTickets((prevTickets) =>
       prevTickets.map((ticket) =>
         ticket.id === ticketId
           ? {
               ...ticket,
-              sharedWithEmails: (ticket.sharedWithEmails || []).filter(
-                (sharedEmail) => sharedEmail.email !== email
+              sharedWith: (ticket.sharedWith || []).filter(
+                (shared) => shared.email !== email
               ),
             }
           : ticket
       )
     )
+
+    try {
+      const response = await del(
+        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket`,
+        { email } // DELETE requests can have a body, though it's not common; alternatively, pass email in query params
+      )
+
+      const updatedEmails = response.data
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
+          ticket.id === ticketId
+            ? { ...ticket, sharedWith: updatedEmails }
+            : ticket
+        )
+      )
+      toast.success('Ticket unshared successfully!')
+      return updatedEmails
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        'Failed to unshare ticket. Please try again.'
+      setLocalError(errorMessage)
+      setTickets(previousTickets)
+      toast.error(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setLocalLoading(false)
+    }
   }
 
   return (

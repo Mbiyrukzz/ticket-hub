@@ -1,29 +1,117 @@
-const { ticketsCollection, usersCollection } = require('../db.js')
+const {
+  ticketsCollection,
+  usersCollection,
+  activitiesCollection,
+} = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
+const { sendEmail } = require('../utils/sendEmail.js')
+const sanitizeHtml = require('sanitize-html')
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const sharedTicketRoute = {
-  path: '/tickets/:ticketId/share-ticket',
+  path: '/users/:userId/tickets/:ticketId/share-ticket',
   method: 'post',
   middleware: [verifyAuthToken, userOwnsTicket],
   handler: async (req, res) => {
     const { ticketId } = req.params
-    const { email, name } = req.body
+    const { email, optionalMessage } = req.body
+    const user = req.user // From verifyAuthToken middleware
 
-    const userWithEmail = await usersCollection().findOne({ email })
-
-    if (!userWithEmail) {
-      return res.status(404).json({ message: 'User not found' })
+    // Validate request body
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' })
     }
 
-    const result = await ticketsCollection().findOneAndUpdate(
-      { id: ticketId },
-      { $push: { sharedWith: email } }
-    )
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' })
+    }
 
-    const updatedNote = result.value
+    // Prevent self-sharing
+    if (email === user.email) {
+      return res
+        .status(400)
+        .json({ message: 'You cannot share the ticket with yourself' })
+    }
 
-    res.json(updatedNote.sharedWith)
+    // Sanitize optionalMessage to prevent XSS
+    const sanitizedMessage = optionalMessage
+      ? sanitizeHtml(optionalMessage, {
+          allowedTags: [], // Disallow all HTML tags
+          allowedAttributes: {}, // Disallow all attributes
+        })
+      : undefined
+
+    try {
+      // Check if the user with the email exists
+      const userWithEmail = await usersCollection().findOne({ email })
+      if (!userWithEmail) {
+        return res
+          .status(404)
+          .json({ message: `User with email ${email} not found` })
+      }
+
+      // Extract name, default to email if name is missing
+      const name = userWithEmail.name || email
+
+      // Update the ticket
+      const result = await ticketsCollection().findOneAndUpdate(
+        { id: ticketId },
+        {
+          $addToSet: {
+            sharedWith: { email, optionalMessage: sanitizedMessage, name },
+          },
+        },
+        { returnDocument: 'after' }
+      )
+
+      if (!result.value) {
+        return res
+          .status(404)
+          .json({ message: `Ticket with ID ${ticketId} not found` })
+      }
+
+      const updatedTicket = result.value
+
+      // Log the sharing action
+      await activitiesCollection().insertOne({
+        userId: user.uid,
+        ticketId,
+        action: 'share',
+        targetEmail: email,
+        optionalMessage: sanitizedMessage,
+        timestamp: new Date(),
+      })
+
+      // Send email notification to the shared user
+      const ticketLink = `${process.env.APP_URL}/tickets/${ticketId}`
+      await sendEmail({
+        to: email,
+        subject: 'A Ticket Has Been Shared With You',
+        text: `You have been shared a ticket.\n\n${
+          sanitizedMessage ? `Message: ${sanitizedMessage}\n\n` : ''
+        }View the ticket here: ${ticketLink}`,
+        html: `
+          <h2>A Ticket Has Been Shared With You</h2>
+          ${
+            sanitizedMessage
+              ? `<p><strong>Message:</strong> ${sanitizedMessage}</p>`
+              : ''
+          }
+          <p><a href="${ticketLink}">View the ticket</a></p>
+        `,
+      })
+
+      res.status(200).json(updatedTicket.sharedWith || [])
+    } catch (error) {
+      console.error('Error sharing ticket:', error)
+      res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Failed to share ticket',
+        details: error.message,
+      })
+    }
   },
 }
 

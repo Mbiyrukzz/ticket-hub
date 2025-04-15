@@ -11,6 +11,7 @@ const { listCommentsRoute } = require('./listCommentsRoute.js')
 const { sharedTicketRoute } = require('./sharedTicketRoute.js')
 
 const { ticketslistRoutes } = require('./ticketslistRoutes.js')
+const { unShareTicketRoute } = require('./unshareTicketRoute.js')
 const { updateCommentRoute } = require('./updateCommentRoute.js')
 const { updateTicketRoute } = require('./updateTicketRoute.js')
 
@@ -23,6 +24,7 @@ const routes = [
   deleteTicketRoute,
 
   sharedTicketRoute,
+  unShareTicketRoute,
 
   listCommentsRoute,
   deleteCommentRoute,
