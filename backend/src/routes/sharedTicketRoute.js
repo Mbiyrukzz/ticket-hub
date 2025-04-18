@@ -15,9 +15,9 @@ const sharedTicketRoute = {
   method: 'post',
   middleware: [verifyAuthToken, userOwnsTicket],
   handler: async (req, res) => {
+    const user = req.user
     const { ticketId } = req.params
     const { email, optionalMessage } = req.body
-    const user = req.user // From verifyAuthToken middleware
 
     // Validate request body
     if (!email) {
@@ -72,7 +72,7 @@ const sharedTicketRoute = {
           .json({ message: `Ticket with ID ${ticketId} not found` })
       }
 
-      const updatedTicket = result.value
+      const updatedEmails = result.value
 
       // Log the sharing action
       await activitiesCollection().insertOne({
@@ -103,7 +103,7 @@ const sharedTicketRoute = {
         `,
       })
 
-      res.status(200).json(updatedTicket.sharedWith || [])
+      res.status(200).json(updatedEmails.sharedWith || [])
     } catch (error) {
       console.error('Error sharing ticket:', error)
       res.status(500).json({

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Loading from '../components/Loading'
 import TicketNotFoundPage from './TicketNotFoundPage'
 import SharedEmails from '../components/SharedEmails'
-import { useUser } from '../hooks/useUser' // Import useUser hook
+import { useUser } from '../hooks/useUser'
 
 const TicketSharingPage = () => {
   const {
@@ -18,26 +18,28 @@ const TicketSharingPage = () => {
   } = useContext(TicketContext)
   const { ticketId } = useParams()
   const navigate = useNavigate()
-  const { user } = useUser() // Access user from useUser hook
-  const [localError, setLocalError] = useState(null)
-  const [shareLoading, setShareLoading] = useState(false) // Separate loading for sharing
-  const [unshareLoading, setUnshareLoading] = useState(false) // Separate loading for unsharing
+  const { user } = useUser()
+  const [shareLoading, setShareLoading] = useState(false)
+  const [unshareLoading, setUnshareLoading] = useState(false)
   const [fetchingTicket, setFetchingTicket] = useState(false)
 
-  // Find the ticket directly from the tickets array
   const ticket = tickets.find((t) => t.id === ticketId)
 
   useEffect(() => {
-    let isMounted = true // Prevent race conditions
+    let isMounted = true
 
     const loadTicket = async () => {
       if (!ticket && !isLoading && isMounted) {
         setFetchingTicket(true)
         try {
-          await fetchTicketById(ticketId)
+          const fetchedTicket = await fetchTicketById(ticketId)
+          if (!fetchedTicket && isMounted) {
+            setTickets((prev) => prev.filter((t) => t.id !== ticketId))
+          }
         } catch (error) {
           if (isMounted) {
-            setLocalError('Failed to fetch ticket. Please try again.')
+            console.error('Fetch ticket error:', error)
+            setTickets((prev) => prev.filter((t) => t.id !== ticketId))
           }
         } finally {
           if (isMounted) {
@@ -50,23 +52,27 @@ const TicketSharingPage = () => {
     loadTicket()
 
     return () => {
-      isMounted = false // Cleanup on unmount
+      isMounted = false
     }
-  }, [ticket, ticketId, isLoading, fetchTicketById])
+  }, [ticket, ticketId, isLoading, fetchTicketById, setTickets])
 
   if (isLoading || fetchingTicket) return <Loading />
   if (!ticket) {
     return (
       <>
-        {contextError && <p className="text-red-500 mb-4">{contextError}</p>}
+        {contextError && (
+          <p className="text-red-500 mb-4">{contextError} (Context Error)</p>
+        )}
         <TicketNotFoundPage />
       </>
     )
   }
 
   if (!user) {
-    return <Loading /> // Wait for user to be available
+    return <Loading />
   }
+
+  console.log('TicketSharingPage user:', { userId: user?.uid, ticketId })
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 md:p-10">
@@ -81,18 +87,13 @@ const TicketSharingPage = () => {
           Share Ticket "{ticket.title}"
         </h1>
 
-        {(contextError || localError) && (
+        {contextError && (
           <div className="mb-4">
-            {contextError && (
-              <p className="text-red-500">{contextError} (Context Error)</p>
-            )}
-            {localError && (
-              <p className="text-red-500">{localError} (Local Error)</p>
-            )}
+            <p className="text-red-500">{contextError} (Context Error)</p>
           </div>
         )}
 
-        {(!ticket.sharedWith || ticket.sharedWith.length === 0) && (
+        {ticket.sharedWith?.length === 0 && (
           <p className="text-gray-500 mb-4">
             Ticket not shared with anyone. Only you and admins can view.
           </p>
@@ -105,17 +106,15 @@ const TicketSharingPage = () => {
               email,
               optionalMessage,
               setTickets,
-              setLocalError,
-              setShareLoading // Use shareLoading
+              setShareLoading
             )
           }
-          onDelete={
-            (email) =>
-              unShareTicket(ticketId, email, setLocalError, setUnshareLoading) // Use unshareLoading
+          onDelete={(email) =>
+            unShareTicket(ticketId, email, setUnshareLoading)
           }
           emails={ticket.sharedWith || []}
-          shareLoading={shareLoading} // Pass shareLoading to SharedEmails
-          unshareLoading={unshareLoading} // Pass unshareLoading to SharedEmails
+          shareLoading={shareLoading}
+          unshareLoading={unshareLoading}
         />
       </div>
     </div>

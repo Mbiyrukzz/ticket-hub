@@ -138,19 +138,23 @@ const TicketsProvider = ({ children }) => {
     email,
     optionalMessage,
     setTickets,
-    setError,
-    setLoading
+    setShareLoading
   ) => {
-    setLoading(true)
-    setError(null)
-
     try {
+      setShareLoading(true)
+      console.log('Sending share request:', {
+        ticketId,
+        email,
+        optionalMessage,
+      })
+
       const response = await post(
         `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/share-ticket`,
         { email, optionalMessage }
       )
 
       const updatedEmails = response.data
+
       setTickets((prevTickets) =>
         prevTickets.map((ticket) =>
           ticket.id === ticketId
@@ -162,28 +166,28 @@ const TicketsProvider = ({ children }) => {
         )
       )
 
-      return updatedEmails
+      return { success: true }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        'Failed to share ticket. Please try again.'
-      setError(errorMessage)
-      throw new Error(errorMessage) // Rethrow for the calling component to handle
+      console.error('Error sharing ticket:', error)
+
+      const message = error?.response?.data?.message || 'Failed to share ticket'
+
+      // Optional: show toast or notification instead
+      // toast.error(message)
+
+      return { success: false, message }
     } finally {
-      setLoading(false)
+      setShareLoading(false)
     }
   }
 
-  const unShareTicket = async (
-    ticketId,
-    email,
-    setLocalError,
-    setLocalLoading
-  ) => {
+  const unShareTicket = async (ticketId, email, setLocalLoading) => {
     setLocalLoading(true)
-    setLocalError(null)
 
+    // Backup previous state for rollback
     const previousTickets = tickets
+
+    // Optimistically update UI
     setTickets((prevTickets) =>
       prevTickets.map((ticket) =>
         ticket.id === ticketId
@@ -199,25 +203,26 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const response = await del(
-        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket`,
-        { email } // DELETE requests can have a body, though it's not common; alternatively, pass email in query params
+        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket/${email}`
       )
 
-      const updatedEmails = response.data
+      const updatedTicket = response.data.ticket
+
+      // Sync UI with backend's latest state
       setTickets((prevTickets) =>
         prevTickets.map((ticket) =>
-          ticket.id === ticketId
-            ? { ...ticket, sharedWith: updatedEmails }
-            : ticket
+          ticket.id === ticketId ? updatedTicket : ticket
         )
       )
+
       toast.success('Ticket unshared successfully!')
-      return updatedEmails
+      return updatedTicket.sharedWith
     } catch (error) {
       const errorMessage =
         error.response?.data?.message ||
         'Failed to unshare ticket. Please try again.'
-      setLocalError(errorMessage)
+
+      // Rollback on failure
       setTickets(previousTickets)
       toast.error(errorMessage)
       throw new Error(errorMessage)

@@ -1,3 +1,5 @@
+const http = require('http')
+const socketIo = require('socket.io')
 const express = require('express')
 const cors = require('cors')
 const multer = require('multer')
@@ -11,8 +13,6 @@ const { verifyAuthToken } = require('./middleware/verifyAuthToken.js')
 
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
-console.log('Firebase Credentials:', credentials)
-
 const app = express()
 const PORT = process.env.PORT || 8080
 
@@ -22,6 +22,14 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true })) // ✅ Supports form-data requests
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+
+const server = http.createServer(app)
+
+const io = socketIo(server)
+
+io.on('connection', (socket) => {
+  console.log('New client has connected')
+})
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
