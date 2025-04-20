@@ -104,7 +104,10 @@ const Dashboard = () => {
           ) : (
             <div className="bg-white border border-gray-200 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
               <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
-              <SharedTicketList sharedTickets={sharedTickets} />
+              <SharedTicketList
+                sharedTickets={sharedTickets}
+                onClickItem={(id) => navigate(`/shared/${id}`)}
+              />
               {sharedTickets.length === 0 && (
                 <p className="text-gray-500 text-sm mt-4">
                   No tickets shared with you yet.

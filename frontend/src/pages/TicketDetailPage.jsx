@@ -13,7 +13,7 @@ import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
 
-const TicketDetailPage = () => {
+const TicketDetailPage = ({ isOwner, isAdmin }) => {
   const { tickets, sharedTickets, updateTicket, isLoading } =
     useContext(TicketContext)
   const { ticketId } = useParams()
@@ -127,20 +127,22 @@ const TicketDetailPage = () => {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-4 justify-end pt-4">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
-              >
-                <FontAwesomeIcon icon={faPen} /> Edit
-              </button>
-              <button
-                onClick={() => navigate(`/sharing/${ticketId}`)}
-                className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition"
-              >
-                <FontAwesomeIcon icon={faShare} /> Share
-              </button>
-            </div>
+            {isOwner && (
+              <div className="flex flex-wrap gap-4 justify-end pt-4">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
+                >
+                  <FontAwesomeIcon icon={faPen} /> Edit
+                </button>
+                <button
+                  onClick={() => navigate(`/sharing/${ticketId}`)}
+                  className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition"
+                >
+                  <FontAwesomeIcon icon={faShare} /> Share
+                </button>
+              </div>
+            )}
           </>
         )}
 

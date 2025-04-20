@@ -73,6 +73,10 @@ const MyRoutes = () => {
                   element={<TicketDetailPage />}
                 />
                 <Route
+                  path="/shared/:ticketId"
+                  element={<TicketDetailPage isOwner={false} />}
+                />
+                <Route
                   path="/sharing/:ticketId"
                   element={<TicketSharingPage />}
                 />
