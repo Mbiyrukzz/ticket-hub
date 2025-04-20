@@ -14,10 +14,11 @@ import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
 
 const TicketDetailPage = () => {
-  const { tickets, updateTicket, isLoading } = useContext(TicketContext)
+  const { tickets, sharedTickets, updateTicket, isLoading } =
+    useContext(TicketContext)
   const { ticketId } = useParams()
   const navigate = useNavigate()
-  const ticket = tickets.find((t) => t.id === ticketId)
+  const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')

@@ -19,7 +19,6 @@ const ticketslistRoutes = {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
-      // ✅ Ensure database collections are initialized
       const users = usersCollection()
       const tickets = ticketsCollection()
       const comments = commentsCollection()
@@ -28,38 +27,40 @@ const ticketslistRoutes = {
         return res.status(500).json({ error: 'Database not initialized' })
       }
 
-      // ✅ Fetch the user
+      // 🔍 Fetch owned ticket IDs from user
       const user = await users.findOne({ id: userId })
-      if (!user || !user.tickets || user.tickets.length === 0) {
-        console.log('⚠️ No tickets found for userId:', userId)
-        return res.status(200).json([]) // Return empty array instead of 404
-      }
+      const ownedTicketIds = user?.tickets || []
 
-      // ✅ Fetch tickets and comments in parallel
-      const ticketPromises = user.tickets.map(async (ticketId) => {
-        console.log(`🔍 Checking ticket ID: ${ticketId}`)
+      // 🧾 Fetch owned tickets with comments
+      const ownedPromises = ownedTicketIds.map(async (ticketId) => {
         const ticket = await tickets.findOne({ id: ticketId })
-        if (!ticket) {
-          console.log(`⚠️ Ticket not found for ID: ${ticketId}`)
-          return null
-        }
-
-        const ticketComments = await comments
-          .find({ ticketId: ticketId })
-          .toArray()
-
+        if (!ticket) return null
+        const ticketComments = await comments.find({ ticketId }).toArray()
         return { ...ticket, comments: ticketComments }
       })
 
-      const ticketsWithComments = await Promise.all(ticketPromises)
+      const ownedTicketsWithComments = (
+        await Promise.all(ownedPromises)
+      ).filter((t) => t !== null)
 
-      // ✅ Filter out any null values
-      const filteredTickets = ticketsWithComments.filter(
-        (ticket) => ticket !== null
+      // 🤝 Fetch shared tickets with comments
+      const sharedTicketsRaw = await tickets
+        .find({ 'sharedWith.email': authUser.email })
+        .toArray()
+
+      const sharedWithUsersTickets = await Promise.all(
+        sharedTicketsRaw.map(async (ticket) => {
+          const ticketComments = await comments
+            .find({ ticketId: ticket.id })
+            .toArray()
+          return { ...ticket, comments: ticketComments }
+        })
       )
 
-      console.log('✅ Fetched tickets:', filteredTickets)
-      res.status(200).json(filteredTickets)
+      res.status(200).json({
+        ownedTicketsWithComments,
+        sharedWithUsersTickets,
+      })
     } catch (error) {
       console.error('❌ Error fetching tickets:', error)
       res.status(500).json({ error: 'Failed to fetch tickets' })

@@ -10,6 +10,7 @@ const TicketsProvider = ({ children }) => {
 
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
+  const [sharedTickets, setSharedTickets] = useState([])
 
   useEffect(() => {
     const loadTickets = async () => {
@@ -18,20 +19,32 @@ const TicketsProvider = ({ children }) => {
       setIsLoading(true)
 
       try {
-        const fetchedTickets = await get(
+        const { ownedTicketsWithComments, sharedWithUsersTickets } = await get(
           `http://localhost:8080/users/${user.uid}/tickets`
         )
-        console.log('📥 Fetched tickets:', fetchedTickets)
 
-        if (Array.isArray(fetchedTickets)) {
-          setTickets(fetchedTickets)
+        console.log('📥 Fetched tickets:', {
+          ownedTicketsWithComments,
+          sharedWithUsersTickets,
+        })
+
+        if (Array.isArray(ownedTicketsWithComments)) {
+          setTickets(ownedTicketsWithComments)
         } else {
-          console.error('❌ Unexpected API response:', fetchedTickets)
-          setTickets([]) // Fallback to empty array
+          console.error('❌ Unexpected ownedTickets structure')
+          setTickets([])
+        }
+
+        if (Array.isArray(sharedWithUsersTickets)) {
+          setSharedTickets(sharedWithUsersTickets)
+        } else {
+          console.error('❌ Unexpected sharedTickets structure')
+          setSharedTickets([])
         }
       } catch (error) {
         console.error('❌ Error fetching tickets:', error)
-        setTickets([]) // Fallback to empty array
+        setTickets([])
+        setSharedTickets([])
       } finally {
         setIsLoading(false)
       }
@@ -41,6 +54,7 @@ const TicketsProvider = ({ children }) => {
       loadTickets()
     }
   }, [user, isReady, get])
+
   const createTicket = async (ticketData) => {
     if (!user) {
       console.error('⚠️ User not authenticated!')
@@ -236,6 +250,7 @@ const TicketsProvider = ({ children }) => {
       value={{
         tickets,
         isLoading,
+        sharedTickets,
         createTicket,
         deleteTicket,
         updateTicket,

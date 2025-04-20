@@ -37,7 +37,7 @@ const unShareTicketRoute = {
         timestamp: new Date(),
       })
 
-      return res.status(200).json({ ticket: updatedTicket })
+      return res.status(200).json({ ticket: updatedTicket.sharedWith })
     } catch (error) {
       console.error('Error unsharing ticket:', error)
       return res.status(500).json({
