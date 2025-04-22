@@ -19,13 +19,12 @@ const TicketsProvider = ({ children }) => {
       setIsLoading(true)
 
       try {
-        const { ownedTicketsWithComments, sharedWithUsersTickets } = await get(
-          `http://localhost:8080/users/${user.uid}/tickets`
-        )
+        const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
+          await get(`http://localhost:8080/users/${user.uid}/tickets`)
 
         console.log('📥 Fetched tickets:', {
           ownedTicketsWithComments,
-          sharedWithUsersTickets,
+          sharedWithUsersTicketsFormatted,
         })
 
         if (Array.isArray(ownedTicketsWithComments)) {
@@ -35,8 +34,8 @@ const TicketsProvider = ({ children }) => {
           setTickets([])
         }
 
-        if (Array.isArray(sharedWithUsersTickets)) {
-          setSharedTickets(sharedWithUsersTickets)
+        if (Array.isArray(sharedWithUsersTicketsFormatted)) {
+          setSharedTickets(sharedWithUsersTicketsFormatted)
         } else {
           console.error('❌ Unexpected sharedTickets structure')
           setSharedTickets([])

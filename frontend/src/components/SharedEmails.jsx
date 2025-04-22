@@ -4,12 +4,17 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const SharedEmails = ({ emails, onAdd, onDelete }) => {
+const SharedEmails = ({
+  emails,
+  onAdd,
+  onDelete,
+  shareLoading,
+  unshareLoading,
+  disabled,
+}) => {
   const [newEmail, setNewEmail] = useState('')
   const [optionalMessage, setOptionalMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [deleteLoading, setDeleteLoading] = useState({})
 
   const handleEmailChange = (e) => {
     const email = e.target.value
@@ -23,6 +28,7 @@ const SharedEmails = ({ emails, onAdd, onDelete }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (disabled) return
 
     if (!newEmail || !emailRegex.test(newEmail)) {
       setErrorMessage('Please enter a valid email address.')
@@ -34,7 +40,6 @@ const SharedEmails = ({ emails, onAdd, onDelete }) => {
       return
     }
 
-    setLoading(true)
     try {
       await onAdd(newEmail, optionalMessage)
       setNewEmail('')
@@ -42,51 +47,51 @@ const SharedEmails = ({ emails, onAdd, onDelete }) => {
       setErrorMessage('')
     } catch (error) {
       setErrorMessage(error.message || 'Failed to share the ticket.')
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleDelete = async (email) => {
+    if (disabled) return
     if (!window.confirm(`Unshare this ticket with ${email}?`)) return
 
-    setDeleteLoading((prev) => ({ ...prev, [email]: true }))
     try {
       await onDelete(email)
     } catch (error) {
       setErrorMessage(error.message || 'Failed to unshare the ticket.')
-    } finally {
-      setDeleteLoading((prev) => ({ ...prev, [email]: false }))
     }
   }
 
   return (
     <div className="space-y-6">
       {emails.length > 0 ? (
-        emails.map(({ email, optionalMessage }) => (
+        emails.map((setting, index) => (
           <div
-            key={email}
+            key={`${setting.email}-${index}`}
             className="flex justify-between items-center p-4 bg-white shadow rounded-xl border border-gray-200"
           >
             <div>
-              <h5 className="text-gray-800 font-medium">{email}</h5>
-              {optionalMessage && (
-                <p className="text-sm text-gray-500">{optionalMessage}</p>
+              <h5 className="text-gray-800 font-medium">{setting.email}</h5>
+              {setting.optionalMessage && (
+                <p className="text-sm text-gray-500">
+                  {setting.optionalMessage}
+                </p>
               )}
             </div>
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleDelete(email)
+                handleDelete(setting.email)
               }}
-              aria-label={`Unshare ticket with ${email}`}
-              disabled={deleteLoading[email]}
+              aria-label={`Unshare ticket with ${setting.email}`}
+              disabled={unshareLoading || disabled}
               className={`px-3 py-1.5 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-medium ${
-                deleteLoading[email] ? 'opacity-50 cursor-not-allowed' : ''
+                unshareLoading || disabled
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
               }`}
             >
               <FontAwesomeIcon icon={faTrash} />
-              {deleteLoading[email] ? 'Unsharing...' : 'Unshare'}
+              {unshareLoading ? 'Unsharing...' : 'Unshare'}
             </button>
           </div>
         ))
@@ -113,7 +118,10 @@ const SharedEmails = ({ emails, onAdd, onDelete }) => {
               type="email"
               placeholder="recipient@example.com"
               required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={disabled}
+              className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
             />
           </div>
           <div>
@@ -126,17 +134,20 @@ const SharedEmails = ({ emails, onAdd, onDelete }) => {
               onChange={(e) => setOptionalMessage(e.target.value)}
               placeholder="Add a note..."
               rows="4"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={disabled}
+              className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                disabled ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
             ></textarea>
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={shareLoading || disabled}
             className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
+              shareLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {loading ? 'Sharing...' : 'Share Ticket'}
+            {shareLoading ? 'Sharing...' : 'Share Ticket'}
           </button>
         </form>
       </div>

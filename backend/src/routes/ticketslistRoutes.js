@@ -14,56 +14,84 @@ const ticketslistRoutes = {
     const authUser = req.user
 
     try {
+      // Validate user ID match
       if (authUser.uid !== userId) {
-        console.error('❌ Forbidden - User ID mismatch')
-        return res.status(403).json({ error: 'Forbidden' })
+        return res.status(403).json({ error: 'Forbidden: Unauthorized access' })
       }
 
-      const users = usersCollection()
-      const tickets = ticketsCollection()
-      const comments = commentsCollection()
-      if (!users || !tickets || !comments) {
-        console.error('❌ Database not initialized')
-        return res.status(500).json({ error: 'Database not initialized' })
+      // Check database collections
+      const collections = {
+        users: usersCollection(),
+        tickets: ticketsCollection(),
+        comments: commentsCollection(),
       }
 
-      // 🔍 Fetch owned ticket IDs from user
-      const user = await users.findOne({ id: userId })
-      const ownedTicketIds = user?.tickets || []
+      if (!collections.users || !collections.tickets || !collections.comments) {
+        return res
+          .status(500)
+          .json({ error: 'Internal Server Error: Database unavailable' })
+      }
 
-      // 🧾 Fetch owned tickets with comments
-      const ownedPromises = ownedTicketIds.map(async (ticketId) => {
-        const ticket = await tickets.findOne({ id: ticketId })
-        if (!ticket) return null
-        const ticketComments = await comments.find({ ticketId }).toArray()
-        return { ...ticket, comments: ticketComments }
-      })
+      // Fetch user data
+      const user = await collections.users.findOne({ id: userId })
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+      }
 
-      const ownedTicketsWithComments = (
-        await Promise.all(ownedPromises)
-      ).filter((t) => t !== null)
-
-      // 🤝 Fetch shared tickets with comments
-      const sharedTicketsRaw = await tickets
-        .find({ 'sharedWith.email': authUser.email })
+      // Fetch owned tickets with comments
+      const ownedTicketsWithComments = await collections.tickets
+        .aggregate([
+          { $match: { id: { $in: user.tickets || [] } } },
+          {
+            $lookup: {
+              from: 'comments',
+              localField: 'id',
+              foreignField: 'ticketId',
+              as: 'comments',
+            },
+          },
+        ])
         .toArray()
 
-      const sharedWithUsersTickets = await Promise.all(
-        sharedTicketsRaw.map(async (ticket) => {
-          const ticketComments = await comments
-            .find({ ticketId: ticket.id })
-            .toArray()
-          return { ...ticket, comments: ticketComments }
+      // Fetch shared tickets with case-insensitive email match
+      const sharedWithUsersTickets = await collections.tickets
+        .find(
+          {
+            'sharedWith.email': { $regex: `^${user.email}$`, $options: 'i' }, // Case-insensitive match
+          },
+          {
+            projection: {
+              _id: 0,
+              id: 1,
+              sharedWith: 1,
+              title: 1, // Include additional fields needed by frontend
+              description: 1,
+              status: 1,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          }
+        )
+        .toArray()
+
+      const sharedWithUsersTicketsFormatted = sharedWithUsersTickets.map(
+        (ticket) => ({
+          ...ticket,
+          permissionLevel:
+            ticket.sharedWith.find(
+              (setting) =>
+                setting.email.toLowerCase() === user.email.toLowerCase()
+            )?.role || 'viewer', // Default role if not found
         })
       )
 
-      res.status(200).json({
+      return res.status(200).json({
         ownedTicketsWithComments,
-        sharedWithUsersTickets,
+        sharedWithUsersTicketsFormatted,
       })
     } catch (error) {
-      console.error('❌ Error fetching tickets:', error)
-      res.status(500).json({ error: 'Failed to fetch tickets' })
+      console.error('Error fetching tickets:', error)
+      return res.status(500).json({ error: 'Internal Server Error' })
     }
   },
 }

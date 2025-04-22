@@ -106,7 +106,7 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
               <SharedTicketList
                 sharedTickets={sharedTickets}
-                onClickItem={(id) => navigate(`/shared/${id}`)}
+                onClickItem={(id) => navigate(`/tickets/${id}`)}
               />
               {sharedTickets.length === 0 && (
                 <p className="text-gray-500 text-sm mt-4">

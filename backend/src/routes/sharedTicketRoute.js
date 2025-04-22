@@ -59,8 +59,14 @@ const sharedTicketRoute = {
       const result = await ticketsCollection().findOneAndUpdate(
         { id: ticketId },
         {
-          $addToSet: {
-            sharedWith: { email, optionalMessage: sanitizedMessage, name },
+          $push: {
+            sharedWith: {
+              id: userWithEmail.id,
+              email,
+              optionalMessage: sanitizedMessage,
+              name,
+              role: 'view',
+            },
           },
         },
         { returnDocument: 'after' }

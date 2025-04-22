@@ -25,6 +25,11 @@ const TicketSharingPage = () => {
 
   const ticket = tickets.find((t) => t.id === ticketId)
 
+  // Determine permissions
+  const isOwner = ticket?.createdBy === user?.uid
+  const permissionLevel = ticket?.permissionLevel || 'view'
+  const canShare = isOwner || permissionLevel === 'edit'
+
   useEffect(() => {
     let isMounted = true
 
@@ -37,8 +42,8 @@ const TicketSharingPage = () => {
             setTickets((prev) => prev.filter((t) => t.id !== ticketId))
           }
         } catch (error) {
+          console.error('Fetch ticket error:', error)
           if (isMounted) {
-            console.error('Fetch ticket error:', error)
             setTickets((prev) => prev.filter((t) => t.id !== ticketId))
           }
         } finally {
@@ -73,13 +78,15 @@ const TicketSharingPage = () => {
   }
 
   console.log('TicketSharingPage user:', { userId: user?.uid, ticketId })
+  console.log('Ticket:', ticket)
+  console.log('Permissions:', { isOwner, permissionLevel, canShare })
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         <button
           className="mb-6 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition"
-          onClick={() => navigate(`/users/${user.uid}/tickets/${ticketId}`)}
+          onClick={() => navigate(`/tickets/${ticketId}`)}
         >
           Back
         </button>
@@ -93,28 +100,40 @@ const TicketSharingPage = () => {
           </div>
         )}
 
+        {!canShare && (
+          <p className="text-gray-500 mb-4">
+            You have {permissionLevel} access to this ticket. Only owners or
+            editors can modify sharing settings.
+          </p>
+        )}
+
         {ticket.sharedWith?.length === 0 && (
           <p className="text-gray-500 mb-4">
-            Ticket not shared with anyone. Only you and admins can view.
+            Ticket not shared with anyone. Only the owner and admins can view.
           </p>
         )}
 
         <SharedEmails
           onAdd={(email, optionalMessage) =>
-            shareTicket(
-              ticketId,
-              email,
-              optionalMessage,
-              setTickets,
-              setShareLoading
-            )
+            canShare
+              ? shareTicket(
+                  ticketId,
+                  email,
+                  optionalMessage,
+                  setTickets,
+                  setShareLoading
+                )
+              : alert('You do not have permission to share this ticket.')
           }
           onDelete={(email) =>
-            unShareTicket(ticketId, email, setUnshareLoading)
+            canShare
+              ? unShareTicket(ticketId, email, setUnshareLoading)
+              : alert('You do not have permission to unshare this ticket.')
           }
-          emails={ticket.sharedWith || []}
+          emails={ticket.sharedWith || [].map((setting) => setting.email)}
           shareLoading={shareLoading}
           unshareLoading={unshareLoading}
+          disabled={!canShare}
         />
       </div>
     </div>

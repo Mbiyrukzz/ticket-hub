@@ -13,9 +13,10 @@ import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
 
-const TicketDetailPage = ({ isOwner, isAdmin }) => {
+const TicketDetailPage = ({ isOwner = true }) => {
   const { tickets, sharedTickets, updateTicket, isLoading } =
     useContext(TicketContext)
+
   const { ticketId } = useParams()
   const navigate = useNavigate()
   const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)

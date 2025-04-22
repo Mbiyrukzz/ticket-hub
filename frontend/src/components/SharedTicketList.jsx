@@ -17,7 +17,7 @@ const SharedTicketList = ({ sharedTickets = [] }) => {
       ) : (
         sharedTickets.map((ticket) => (
           <Link
-            to={`/tickets/${ticket.id}`}
+            to={`/shared/${ticket.id}`}
             key={ticket.id}
             className="block bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 hover:bg-gray-50"
           >
