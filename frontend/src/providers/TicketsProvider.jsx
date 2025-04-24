@@ -149,6 +149,7 @@ const TicketsProvider = ({ children }) => {
   const shareTicket = async (
     ticketId,
     email,
+    role,
     optionalMessage,
     setTickets,
     setShareLoading
@@ -163,7 +164,7 @@ const TicketsProvider = ({ children }) => {
 
       const response = await post(
         `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/share-ticket`,
-        { email, optionalMessage }
+        { email, optionalMessage, role }
       )
 
       const updatedEmails = response.data

@@ -16,7 +16,6 @@ import Loading from '../components/Loading'
 const TicketDetailPage = ({ isOwner = true }) => {
   const { tickets, sharedTickets, updateTicket, isLoading } =
     useContext(TicketContext)
-
   const { ticketId } = useParams()
   const navigate = useNavigate()
   const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)
@@ -32,6 +31,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
+      console.log('Ticket:', ticket) // Debug ticket data
     }
   }, [ticket])
 
@@ -61,6 +61,9 @@ const TicketDetailPage = ({ isOwner = true }) => {
 
   if (isLoading) return <Loading />
   if (!ticket) return <TicketNotFoundPage />
+
+  const { role } = ticket || {}
+  const canEdit = role
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-10">
@@ -128,26 +131,27 @@ const TicketDetailPage = ({ isOwner = true }) => {
               )}
             </div>
 
-            {isOwner && (
-              <div className="flex flex-wrap gap-4 justify-end pt-4">
+            <div className="flex flex-wrap gap-4 justify-end pt-4">
+              {(isOwner || canEdit) && (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
                 >
                   <FontAwesomeIcon icon={faPen} /> Edit
                 </button>
+              )}
+              {isOwner && (
                 <button
                   onClick={() => navigate(`/sharing/${ticketId}`)}
                   className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition"
                 >
                   <FontAwesomeIcon icon={faShare} /> Share
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
 
-        {/* Comment Section */}
         <div className="pt-8 border-t border-gray-200">
           <h3 className="text-2xl font-bold text-yellow-600 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faCommentDots} /> Responses

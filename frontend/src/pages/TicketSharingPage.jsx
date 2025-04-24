@@ -27,8 +27,8 @@ const TicketSharingPage = () => {
 
   // Determine permissions
   const isOwner = ticket?.createdBy === user?.uid
-  const permissionLevel = ticket?.permissionLevel || 'view'
-  const canShare = isOwner || permissionLevel === 'edit'
+  const role = ticket?.role || 'view'
+  const canShare = isOwner || role === 'edit'
 
   useEffect(() => {
     let isMounted = true
@@ -79,7 +79,7 @@ const TicketSharingPage = () => {
 
   console.log('TicketSharingPage user:', { userId: user?.uid, ticketId })
   console.log('Ticket:', ticket)
-  console.log('Permissions:', { isOwner, permissionLevel, canShare })
+  console.log('Permissions:', { isOwner, role, canShare })
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 md:p-10">
@@ -102,26 +102,28 @@ const TicketSharingPage = () => {
 
         {!canShare && (
           <p className="text-gray-500 mb-4">
-            You have {permissionLevel} access to this ticket. Only owners or
-            editors can modify sharing settings.
+            You have {role} access to this ticket. Only owners or editors can
+            modify sharing settings.
           </p>
         )}
 
-        {ticket.sharedWith?.length === 0 && (
+        {(!ticket.sharedWith || ticket.sharedWith.length === 0) && (
           <p className="text-gray-500 mb-4">
             Ticket not shared with anyone. Only the owner and admins can view.
           </p>
         )}
 
         <SharedEmails
-          onAdd={(email, optionalMessage) =>
+          onAdd={({ email, optionalMessage, role }) =>
             canShare
               ? shareTicket(
                   ticketId,
                   email,
                   optionalMessage,
+                  role,
                   setTickets,
-                  setShareLoading
+                  setShareLoading,
+                  user
                 )
               : alert('You do not have permission to share this ticket.')
           }
@@ -130,7 +132,7 @@ const TicketSharingPage = () => {
               ? unShareTicket(ticketId, email, setUnshareLoading)
               : alert('You do not have permission to unshare this ticket.')
           }
-          emails={ticket.sharedWith || [].map((setting) => setting.email)}
+          emails={ticket.sharedWith || []}
           shareLoading={shareLoading}
           unshareLoading={unshareLoading}
           disabled={!canShare}

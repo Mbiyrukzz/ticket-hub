@@ -4,7 +4,8 @@ const multer = require('multer')
 
 const { ticketsCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
+
+const { userCanEditTicket } = require('../middleware/userCanEditTicket.js')
 
 // Multer Storage Configuration (same as create)
 const storage = multer.diskStorage({
@@ -26,7 +27,7 @@ const upload = multer({ storage })
 const updateTicketRoute = {
   path: '/users/:userId/tickets/:ticketId',
   method: 'put',
-  middleware: [upload.single('image'), verifyAuthToken, userOwnsTicket],
+  middleware: [upload.single('image'), verifyAuthToken, userCanEditTicket],
   handler: async (req, res) => {
     try {
       const tickets = ticketsCollection()

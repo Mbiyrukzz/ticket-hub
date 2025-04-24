@@ -4,6 +4,9 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const VIEW = 'view'
+const EDIT = 'edit'
+
 const SharedEmails = ({
   emails,
   onAdd,
@@ -15,6 +18,7 @@ const SharedEmails = ({
   const [newEmail, setNewEmail] = useState('')
   const [optionalMessage, setOptionalMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [selectPermission, setSelectPermission] = useState(VIEW)
 
   const handleEmailChange = (e) => {
     const email = e.target.value
@@ -40,8 +44,14 @@ const SharedEmails = ({
       return
     }
 
+    console.log('Sharing ticket with:', {
+      email: newEmail,
+      role: selectPermission,
+      optionalMessage,
+    })
+
     try {
-      await onAdd(newEmail, optionalMessage)
+      await onAdd({ email: newEmail, optionalMessage, role: selectPermission })
       setNewEmail('')
       setOptionalMessage('')
       setErrorMessage('')
@@ -49,6 +59,12 @@ const SharedEmails = ({
       setErrorMessage(error.message || 'Failed to share the ticket.')
     }
   }
+
+  console.log('Sharing ticket with:', {
+    email: newEmail,
+    role: selectPermission,
+    optionalMessage,
+  })
 
   const handleDelete = async (email) => {
     if (disabled) return
@@ -76,6 +92,7 @@ const SharedEmails = ({
                   {setting.optionalMessage}
                 </p>
               )}
+              <p> {setting.role}</p>
             </div>
             <button
               onClick={(e) => {
@@ -139,6 +156,32 @@ const SharedEmails = ({
                 disabled ? 'bg-gray-100 cursor-not-allowed' : ''
               }`}
             ></textarea>
+          </div>
+          <div>
+            Permission Level:{' '}
+            <div>
+              {' '}
+              <label htmlFor="">
+                <input
+                  type="radio"
+                  value={VIEW}
+                  checked={selectPermission === VIEW}
+                  onChange={() => setSelectPermission(VIEW)}
+                />{' '}
+                Can View
+              </label>
+            </div>
+            <div>
+              <label htmlFor="">
+                <input
+                  type="radio"
+                  value={EDIT}
+                  checked={selectPermission === EDIT}
+                  onChange={() => setSelectPermission(EDIT)}
+                />{' '}
+                Can Edit
+              </label>
+            </div>
           </div>
           <button
             type="submit"
