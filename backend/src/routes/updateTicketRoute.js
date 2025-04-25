@@ -39,7 +39,7 @@ const updateTicketRoute = {
       const { title, content } = req.body
 
       // ✅ Fetch the ticket first
-      const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
+      const ticket = await tickets.findOne({ id: ticketId })
       if (!ticket) {
         return res.status(404).json({ error: 'Ticket not found' })
       }
