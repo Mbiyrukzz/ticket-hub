@@ -4,7 +4,9 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs').promises
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-const logActivity = require('../middleware/logActivity.js') // Import logActivity
+const { userCanEditTicket } = require('../middleware/userCanEditTicket.js')
+
+const logActivity = require('../middleware/logActivity.js')
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -48,7 +50,7 @@ const validateComment = (req, res, next) => {
 const createCommentRoute = {
   path: '/users/:userId/tickets/:ticketId/comments',
   method: 'post',
-  middleware: [upload.single('image'), verifyAuthToken, validateComment],
+  middleware: [upload.single('image'), verifyAuthToken, userCanEditTicket],
   handler: async (req, res) => {
     let tempFile
     try {

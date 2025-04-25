@@ -1,198 +1,105 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faTrashAlt, faShareSquare } from '@fortawesome/free-solid-svg-icons'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const VIEW = 'view'
 const EDIT = 'edit'
+const VIEW = 'view'
 
-const SharedEmails = ({
-  emails,
-  onAdd,
-  onDelete,
-  shareLoading,
-  unshareLoading,
-  disabled,
-}) => {
+const SharedEmails = ({ sharingSettings, onAdd, onDelete }) => {
   const [newEmail, setNewEmail] = useState('')
-  const [optionalMessage, setOptionalMessage] = useState('')
+  const [selectedPermission, setSelectedPermission] = useState(VIEW)
+
   const [errorMessage, setErrorMessage] = useState('')
-  const [selectPermission, setSelectPermission] = useState(VIEW)
 
-  const handleEmailChange = (e) => {
-    const email = e.target.value
-    setNewEmail(email)
-    if (email && !emailRegex.test(email)) {
-      setErrorMessage('Please enter a valid email address.')
-    } else {
-      setErrorMessage('')
-    }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (disabled) return
-
-    if (!newEmail || !emailRegex.test(newEmail)) {
-      setErrorMessage('Please enter a valid email address.')
-      return
+  const onClickAdd = () => {
+    if (!newEmail) {
+      return setErrorMessage('Please enter a value')
     }
 
-    if (emails.some((item) => item.email === newEmail)) {
-      setErrorMessage('This email has already been shared with.')
-      return
+    if (!emailRegex.test(newEmail)) {
+      return setErrorMessage('Enter a valid email')
     }
-
-    console.log('Sharing ticket with:', {
-      email: newEmail,
-      role: selectPermission,
-      optionalMessage,
-    })
-
-    try {
-      await onAdd({ email: newEmail, optionalMessage, role: selectPermission })
-      setNewEmail('')
-      setOptionalMessage('')
-      setErrorMessage('')
-    } catch (error) {
-      setErrorMessage(error.message || 'Failed to share the ticket.')
-    }
-  }
-
-  console.log('Sharing ticket with:', {
-    email: newEmail,
-    role: selectPermission,
-    optionalMessage,
-  })
-
-  const handleDelete = async (email) => {
-    if (disabled) return
-    if (!window.confirm(`Unshare this ticket with ${email}?`)) return
-
-    try {
-      await onDelete(email)
-    } catch (error) {
-      setErrorMessage(error.message || 'Failed to unshare the ticket.')
-    }
+    onAdd({ email: newEmail, role: selectedPermission })
+    setNewEmail('')
+    setErrorMessage('')
   }
 
   return (
-    <div className="space-y-6">
-      {emails.length > 0 ? (
-        emails.map((setting, index) => (
+    <div className="w-full max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-lg space-y-5">
+      <h3 className="text-lg font-semibold text-gray-800">Shared With</h3>
+
+      <div className="space-y-2">
+        {sharingSettings.map(({ email, role }) => (
           <div
-            key={`${setting.email}-${index}`}
-            className="flex justify-between items-center p-4 bg-white shadow rounded-xl border border-gray-200"
+            key={email}
+            className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-lg hover:shadow-sm transition-shadow"
           >
-            <div>
-              <h5 className="text-gray-800 font-medium">{setting.email}</h5>
-              {setting.optionalMessage && (
-                <p className="text-sm text-gray-500">
-                  {setting.optionalMessage}
-                </p>
-              )}
-              <p> {setting.role}</p>
-            </div>
+            <p className="text-sm text-gray-700">{email}</p>
+            <p className="text-sm text-gray-500">
+              {role || 'No role assigned'}
+            </p>
+
             <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDelete(setting.email)
-              }}
-              aria-label={`Unshare ticket with ${setting.email}`}
-              disabled={unshareLoading || disabled}
-              className={`px-3 py-1.5 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-medium ${
-                unshareLoading || disabled
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
-              }`}
+              onClick={() => onDelete(email)}
+              className="text-red-500 hover:text-red-700 transition-colors"
+              title="Remove"
             >
-              <FontAwesomeIcon icon={faTrash} />
-              {unshareLoading ? 'Unsharing...' : 'Unshare'}
+              <FontAwesomeIcon icon={faTrashAlt} />
             </button>
           </div>
-        ))
-      ) : (
-        <p className="text-gray-500">No one has been shared this ticket yet.</p>
-      )}
+        ))}
+      </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">
-          Share Ticket
-        </h2>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className="block text-gray-600 mb-1">
-              Email Address
+      <div className="flex flex-col gap-2 mt-4">
+        {errorMessage && (
+          <p className="text-sm text-red-500 bg-red-100 border border-red-200 px-4 py-2 rounded-lg">
+            {errorMessage}
+          </p>
+        )}
+
+        <input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="Enter an email to share with..."
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+        />
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-700">Permissions</p>
+          <div className="flex gap-4">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+              <input
+                type="radio"
+                value={VIEW}
+                checked={selectedPermission === VIEW}
+                onChange={() => setSelectedPermission(VIEW)}
+                className="accent-yellow-500"
+              />
+              <span>Can view</span>
             </label>
-            {errorMessage && (
-              <p className="text-red-500 text-sm mb-2">{errorMessage}</p>
-            )}
-            <input
-              id="email"
-              value={newEmail}
-              onChange={handleEmailChange}
-              type="email"
-              placeholder="recipient@example.com"
-              required
-              disabled={disabled}
-              className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-              }`}
-            />
-          </div>
-          <div>
-            <label htmlFor="message" className="block text-gray-600 mb-1">
-              Message (optional)
+            <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+              <input
+                type="radio"
+                value={EDIT}
+                checked={selectedPermission === EDIT}
+                onChange={() => setSelectedPermission(EDIT)}
+                className="accent-yellow-500"
+              />
+              <span>Can edit</span>
             </label>
-            <textarea
-              id="message"
-              value={optionalMessage}
-              onChange={(e) => setOptionalMessage(e.target.value)}
-              placeholder="Add a note..."
-              rows="4"
-              disabled={disabled}
-              className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-              }`}
-            ></textarea>
           </div>
-          <div>
-            Permission Level:{' '}
-            <div>
-              {' '}
-              <label htmlFor="">
-                <input
-                  type="radio"
-                  value={VIEW}
-                  checked={selectPermission === VIEW}
-                  onChange={() => setSelectPermission(VIEW)}
-                />{' '}
-                Can View
-              </label>
-            </div>
-            <div>
-              <label htmlFor="">
-                <input
-                  type="radio"
-                  value={EDIT}
-                  checked={selectPermission === EDIT}
-                  onChange={() => setSelectPermission(EDIT)}
-                />{' '}
-                Can Edit
-              </label>
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={shareLoading || disabled}
-            className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold ${
-              shareLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {shareLoading ? 'Sharing...' : 'Share Ticket'}
-          </button>
-        </form>
+        </div>
+
+        <button
+          onClick={onClickAdd}
+          className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors px-4 py-2 rounded-lg"
+        >
+          <FontAwesomeIcon icon={faShareSquare} />
+          <span className="text-sm font-medium">Share</span>
+        </button>
       </div>
     </div>
   )

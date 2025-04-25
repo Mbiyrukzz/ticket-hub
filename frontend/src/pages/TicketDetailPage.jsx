@@ -63,7 +63,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
   if (!ticket) return <TicketNotFoundPage />
 
   const { role } = ticket || {}
-  const canEdit = role
+  const canEdit = role === 'edit'
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-10">

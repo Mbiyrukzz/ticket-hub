@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
+
 import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
@@ -146,104 +146,93 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
-  const shareTicket = async (
-    ticketId,
-    email,
-    role,
-    optionalMessage,
-    setTickets,
-    setShareLoading
-  ) => {
+  const shareTicket = async (ticketId, email, role) => {
     try {
-      setShareLoading(true)
-      console.log('Sending share request:', {
-        ticketId,
-        email,
-        optionalMessage,
-      })
-
-      const response = await post(
-        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/share-ticket`,
-        { email, optionalMessage, role }
+      const updatedEmails = await post(
+        `http://localhost:8080/tickets/${ticketId}/share-ticket`,
+        { email, role }
       )
+      setTickets(
+        tickets.map((ticket) =>
+          ticket.id === ticketId
+            ? { ...ticket, sharedWith: updatedEmails }
+            : ticket
+        )
+      )
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
-      const updatedEmails = response.data
-
-      setTickets((prevTickets) =>
-        prevTickets.map((ticket) =>
+  const unshareTicket = async (ticketId, email) => {
+    try {
+      const updatedTicket = await del(
+        `http://localhost:8080/tickets/${ticketId}/unshare-ticket/${email}`
+      )
+      setTickets(
+        tickets.map((ticket) =>
           ticket.id === ticketId
             ? {
                 ...ticket,
-                sharedWith: updatedEmails,
+                sharedWith: updatedTicket,
               }
             : ticket
         )
       )
-
-      return { success: true }
     } catch (error) {
-      console.error('Error sharing ticket:', error)
-
-      const message = error?.response?.data?.message || 'Failed to share ticket'
-
-      // Optional: show toast or notification instead
-      // toast.error(message)
-
-      return { success: false, message }
-    } finally {
-      setShareLoading(false)
+      console.log(error)
     }
   }
 
-  const unShareTicket = async (ticketId, email, setLocalLoading) => {
-    setLocalLoading(true)
+  // const unShareTicket = async (ticketId, email, setLocalLoading) => {
+  //   setLocalLoading(true)
 
-    // Backup previous state for rollback
-    const previousTickets = tickets
+  //   // Backup previous state for rollback
+  //   const previousTickets = tickets
 
-    // Optimistically update UI
-    setTickets((prevTickets) =>
-      prevTickets.map((ticket) =>
-        ticket.id === ticketId
-          ? {
-              ...ticket,
-              sharedWith: (ticket.sharedWith || []).filter(
-                (shared) => shared.email !== email
-              ),
-            }
-          : ticket
-      )
-    )
+  //   // Optimistically update UI
+  //   setTickets((prevTickets) =>
+  //     prevTickets.map((ticket) =>
+  //       ticket.id === ticketId
+  //         ? {
+  //             ...ticket,
+  //             sharedWith: (ticket.sharedWith || []).filter(
+  //               (shared) => shared.email !== email
+  //             ),
+  //           }
+  //         : ticket
+  //     )
+  //   )
 
-    try {
-      const response = await del(
-        `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket/${email}`
-      )
+  //   try {
+  //     const response = await del(
+  //       `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket/${email}`
+  //     )
 
-      const updatedTicket = response.data.ticket
+  //     const updatedTicket = response.data.ticket
 
-      // Sync UI with backend's latest state
-      setTickets((prevTickets) =>
-        prevTickets.map((ticket) =>
-          ticket.id === ticketId ? updatedTicket : ticket
-        )
-      )
+  //     // Sync UI with backend's latest state
+  //     setTickets((prevTickets) =>
+  //       prevTickets.map((ticket) =>
+  //         ticket.id === ticketId ? updatedTicket : ticket
+  //       )
+  //     )
 
-      toast.success('Ticket unshared successfully!')
-      return updatedTicket.sharedWith
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        'Failed to unshare ticket. Please try again.'
+  //     toast.success('Ticket unshared successfully!')
+  //     return updatedTicket.sharedWith
+  //   } catch (error) {
+  //     const errorMessage =
+  //       error.response?.data?.message ||
+  //       'Failed to unshare ticket. Please try again.'
 
-      // Rollback on failure
-      setTickets(previousTickets)
-      toast.error(errorMessage)
-      throw new Error(errorMessage)
-    } finally {
-      setLocalLoading(false)
-    }
-  }
+  //     // Rollback on failure
+  //     setTickets(previousTickets)
+  //     toast.error(errorMessage)
+  //     throw new Error(errorMessage)
+  //   } finally {
+  //     setLocalLoading(false)
+  //   }
+  // }
 
   return (
     <TicketContext.Provider
@@ -255,7 +244,7 @@ const TicketsProvider = ({ children }) => {
         deleteTicket,
         updateTicket,
         shareTicket,
-        unShareTicket,
+        unshareTicket,
       }}
     >
       {children}

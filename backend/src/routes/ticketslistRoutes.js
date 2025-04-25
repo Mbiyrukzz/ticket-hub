@@ -77,11 +77,10 @@ const ticketslistRoutes = {
       const sharedWithUsersTicketsFormatted = sharedWithUsersTickets.map(
         (ticket) => ({
           ...ticket,
-          role:
-            ticket.sharedWith.find(
-              (setting) =>
-                setting.email.toLowerCase() === user.email.toLowerCase()
-            )?.role || 'edit', // Default role if not found
+          role: ticket.sharedWith.find(
+            (setting) =>
+              setting.email.toLowerCase() === user.email.toLowerCase()
+          ).role,
         })
       )
 

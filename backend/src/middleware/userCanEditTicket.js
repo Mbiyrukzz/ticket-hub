@@ -19,8 +19,11 @@ const userCanEditTicket = async (req, res, next) => {
     const isOwner = ticket.createdBy === authUser.uid
     const userPermission =
       ticket.sharedWith &&
-      ticket.sharedWith.find((setting) => setting.id === authUser.uid)
-    const hasEditAccess = userPermission && userPermission.role
+      ticket.sharedWith.find(
+        (setting) =>
+          setting.email.toLowerCase() === authUser.email.toLowerCase()
+      )
+    const hasEditAccess = userPermission && userPermission.role === 'edit'
 
     if (!isOwner && !hasEditAccess) {
       return res.status(403).json({ error: 'Forbidden' })
