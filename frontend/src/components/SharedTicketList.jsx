@@ -58,7 +58,7 @@ const SharedTicketList = ({ sharedTickets = [] }) => {
                   </span>
                   <span className="text-indigo-600 flex items-center gap-1 font-medium">
                     <FontAwesomeIcon icon={faUser} />
-                    Shared by {user.email || 'Unknown'}
+                    Shared by {user.sharedWith || 'Unknown'}
                   </span>
                 </div>
               </div>

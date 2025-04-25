@@ -65,7 +65,9 @@ const ticketslistRoutes = {
               id: 1,
               sharedWith: 1,
               title: 1, // Include additional fields needed by frontend
-              description: 1,
+              content: 1,
+              image: 1,
+              comments: 1,
               status: 1,
               createdAt: 1,
               updatedAt: 1,

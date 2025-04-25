@@ -55,7 +55,6 @@ const sharedTicketRoute = {
           .json({ message: `Ticket with ID ${ticketId} not found` })
       }
 
-      console.log('Updated ticket:', result.value) // Debug
       res.status(200).json(result.value.sharedWith || [])
     } catch (error) {
       console.error('Error sharing ticket:', error)
