@@ -12,15 +12,14 @@ const CreateAccountPage = () => {
   const [error, setError] = useState(null)
   const [bubbles, setBubbles] = useState([])
 
-  // Generate bubbles on mount
   useEffect(() => {
     const generateBubbles = () => {
       const newBubbles = Array.from({ length: 10 }).map(() => ({
         id: Math.random(),
-        size: Math.random() * 60 + 20, // Sizes between 20px and 80px
-        left: Math.random() * 90, // Random horizontal position
-        duration: Math.random() * 6 + 4, // Duration between 4s and 10s
-        delay: Math.random() * 3, // Delay up to 3s
+        size: Math.random() * 60 + 20,
+        left: Math.random() * 90,
+        duration: Math.random() * 6 + 4,
+        delay: Math.random() * 3,
       }))
       setBubbles(newBubbles)
     }
@@ -53,19 +52,19 @@ const CreateAccountPage = () => {
       navigate('/tickets')
     } catch (err) {
       console.error('Error creating account:', err)
-      setError(err.code) // Using err.code for consistency with Firebase error handling
+      setError(err.code)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-12 overflow-hidden relative">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center px-4 py-12 overflow-hidden relative">
       {/* Animated Bubbles */}
       {bubbles.map((bubble) => (
         <div
           key={bubble.id}
-          className="bubble absolute rounded-full bg-blue-200 opacity-30"
+          className="bubble absolute rounded-full bg-blue-200 dark:bg-blue-400 opacity-30 dark:opacity-20"
           style={{
             width: `${bubble.size}px`,
             height: `${bubble.size}px`,
@@ -79,7 +78,7 @@ const CreateAccountPage = () => {
 
       {/* Animated Cubes */}
       <div
-        className="cube absolute bg-blue-300 opacity-20"
+        className="cube absolute bg-blue-300 dark:bg-blue-500 opacity-20"
         style={{
           width: '60px',
           height: '60px',
@@ -89,7 +88,7 @@ const CreateAccountPage = () => {
         }}
       />
       <div
-        className="cube absolute bg-purple-300 opacity-20"
+        className="cube absolute bg-purple-300 dark:bg-purple-500 opacity-20"
         style={{
           width: '45px',
           height: '45px',
@@ -101,15 +100,17 @@ const CreateAccountPage = () => {
       />
 
       {/* Main Content */}
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-200 animate-fadeIn relative z-10">
-        <h4 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 animate-fadeIn relative z-10">
+        <h4 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">
           Create An Account
         </h4>
 
         {loading ? (
           <div className="flex flex-col items-center space-y-4 animate-pulse">
             <Loading />
-            <p className="text-lg text-gray-600">Creating your account...</p>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Creating your account...
+            </p>
           </div>
         ) : (
           <CreateAccountForm

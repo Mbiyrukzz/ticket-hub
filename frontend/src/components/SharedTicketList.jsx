@@ -28,7 +28,7 @@ const SharedTicketList = ({ sharedTickets = [] }) => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-5">
       {sharedTickets.length === 0 ? (
-        <p className="text-gray-400 text-center text-lg font-medium">
+        <p className="text-gray-400 dark:text-gray-500 text-center text-lg font-medium">
           No shared tickets found.
         </p>
       ) : (
@@ -36,27 +36,27 @@ const SharedTicketList = ({ sharedTickets = [] }) => {
           <Link
             to={`/shared/${ticket.id}`}
             key={ticket.id}
-            className="block bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 hover:bg-gray-50"
+            className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md transition-all p-6 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                   {ticket.title}
                 </h3>
-                <p className="text-gray-600 text-sm leading-snug">
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-snug">
                   {ticket.content?.slice(0, 100)}
                   {ticket.content?.length > 100 && '...'}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 text-sm pt-1">
-                  <span className="text-gray-500 flex items-center gap-1">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <FontAwesomeIcon icon={faHashtag} />
                     {ticket.id}
                   </span>
-                  <span className="text-gray-500 flex items-center gap-1">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <FontAwesomeIcon icon={faCommentDots} />
                     {ticket.comments?.length || 0}
                   </span>
-                  <span className="text-indigo-600 flex items-center gap-1 font-medium">
+                  <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-medium">
                     <FontAwesomeIcon icon={faUser} />
                     Shared by {user.sharedWith || 'Unknown'}
                   </span>

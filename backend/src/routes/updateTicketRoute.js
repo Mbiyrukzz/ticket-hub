@@ -38,18 +38,15 @@ const updateTicketRoute = {
       const { userId, ticketId } = req.params
       const { title, content } = req.body
 
-      // ✅ Fetch the ticket first
       const ticket = await tickets.findOne({ id: ticketId })
       if (!ticket) {
         return res.status(404).json({ error: 'Ticket not found' })
       }
 
-      // ✅ Build updateFields object dynamically
       const updateFields = {}
       if (title && title !== ticket.title) updateFields.title = title
       if (content && content !== ticket.content) updateFields.content = content
 
-      // ✅ Handle image update
       if (req.file) {
         if (ticket.image) {
           const oldImagePath = path.join(
@@ -71,10 +68,9 @@ const updateTicketRoute = {
       }
 
       if (Object.keys(updateFields).length === 0) {
-        return res.status(200).json(ticket) // ✅ No updates needed
+        return res.status(200).json(ticket)
       }
 
-      // ✅ Perform update
       const result = await tickets.updateOne(
         { id: ticketId },
         { $set: updateFields }
@@ -84,7 +80,6 @@ const updateTicketRoute = {
         return res.status(404).json({ error: 'Ticket not found during update' })
       }
 
-      // ✅ Fetch and return the updated ticket
       const updatedTicket = await tickets.findOne({ id: ticketId })
       res.status(200).json(updatedTicket)
     } catch (error) {

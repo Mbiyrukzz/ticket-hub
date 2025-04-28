@@ -111,20 +111,6 @@ const LoginForm = ({ error, onSubmit }) => {
         >
           Sign in
         </button>
-
-        {/* Sign in with Google */}
-        {/* <button
-          type="button"
-          className="w-full py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-2
-                  hover:bg-gray-100 transition-all duration-300"
-        >
-          <img
-            src="https://www.svgrepo.com/show/303108/google-icon-logo.svg"
-            alt="Google"
-            className="w-5 h-5"
-          />
-          Sign in with Google
-        </button> */}
       </form>
     </>
   )

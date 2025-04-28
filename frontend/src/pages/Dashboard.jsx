@@ -18,7 +18,7 @@ const Dashboard = () => {
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false)
   const [ticketIdToDelete, setTicketIdToDelete] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
-  const [activeTab, setActiveTab] = useState('my-tickets') // State for active tab
+  const [activeTab, setActiveTab] = useState('my-tickets')
 
   if (isLoading) return <Loading />
 
@@ -45,12 +45,12 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-100 text-gray-900">
+    <div className="relative min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Add Ticket Button */}
       <div className="absolute top-6 right-6 z-10">
         <button
           onClick={() => setNewTicketModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-medium"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition font-medium"
         >
           + Add New Issue
         </button>
@@ -60,23 +60,23 @@ const Dashboard = () => {
       <div className="p-6">
         {/* Tabs Navigation */}
         <div className="mb-6">
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab('my-tickets')}
-              className={`px-4 py-2 font-medium text-sm ${
+              className={`px-4 py-2 font-medium text-sm transition ${
                 activeTab === 'my-tickets'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               My Tickets
             </button>
             <button
               onClick={() => setActiveTab('shared-tickets')}
-              className={`px-4 py-2 font-medium text-sm ${
+              className={`px-4 py-2 font-medium text-sm transition ${
                 activeTab === 'shared-tickets'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Shared With You
@@ -87,13 +87,13 @@ const Dashboard = () => {
         {/* Tab Content */}
         <div className="grid grid-cols-1 gap-6">
           {errorMessage && (
-            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg border border-red-300">
+            <div className="mb-4 p-4 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600 rounded-lg">
               {errorMessage}
             </div>
           )}
 
           {activeTab === 'my-tickets' ? (
-            <div className="bg-white border border-gray-200 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
               <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
               <TicketList
                 tickets={tickets}
@@ -102,14 +102,14 @@ const Dashboard = () => {
               />
             </div>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
               <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
               <SharedTicketList
                 sharedTickets={sharedTickets}
                 onClickItem={(id) => navigate(`/shared/${id}`)}
               />
               {sharedTickets.length === 0 && (
-                <p className="text-gray-500 text-sm mt-4">
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
                   No tickets shared with you yet.
                 </p>
               )}

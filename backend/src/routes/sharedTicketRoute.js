@@ -13,7 +13,6 @@ const sharedTicketRoute = {
     const { ticketId } = req.params
     const { email, role } = req.body
 
-    // Validate request body
     if (!email) {
       return res.status(400).json({ message: 'Email is required' })
     }

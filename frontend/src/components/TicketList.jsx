@@ -10,13 +10,13 @@ import {
 const getPriorityBadge = (priority) => {
   switch (priority) {
     case 'Urgent':
-      return 'bg-red-100 text-red-700'
+      return 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
     case 'Medium':
-      return 'bg-blue-100 text-blue-700'
+      return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
     case 'Low':
-      return 'bg-green-100 text-green-700'
+      return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
     default:
-      return 'bg-gray-200 text-gray-600'
+      return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
   }
 }
 
@@ -30,7 +30,7 @@ const TicketList = ({ tickets, onRequestDelete }) => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {tickets.length === 0 ? (
-        <p className="text-gray-500 text-center text-lg">
+        <p className="text-gray-500 dark:text-gray-400 text-center text-lg">
           No tickets available.
         </p>
       ) : (
@@ -38,14 +38,14 @@ const TicketList = ({ tickets, onRequestDelete }) => {
           <Link
             to={`/tickets/${ticket.id}`}
             key={ticket.id}
-            className="block bg-white border border-gray-200 rounded-xl shadow hover:shadow-md transition-all p-5 hover:bg-gray-50"
+            className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow hover:shadow-md transition-all p-5 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
                   {ticket.title}
                 </h3>
-                <p className="text-gray-600 text-sm mb-2">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
                   {truncateText(ticket.content, 18)}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
@@ -56,18 +56,18 @@ const TicketList = ({ tickets, onRequestDelete }) => {
                   >
                     {ticket.priority}
                   </span>
-                  <span className="text-gray-500 flex items-center gap-1">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <FontAwesomeIcon icon={faHashtag} />
                     {ticket.id}
                   </span>
-                  <span className="text-gray-500 flex items-center gap-1">
+                  <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <FontAwesomeIcon icon={faCommentDots} />
                     {ticket.comments?.length || 0}
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-col items-end justify-between h-full text-sm text-gray-500">
+              <div className="flex flex-col items-end justify-between h-full text-sm text-gray-500 dark:text-gray-400">
                 <span>{ticket.timestamp || 'Just now'}</span>
                 <button
                   onClick={(e) => {
@@ -75,7 +75,7 @@ const TicketList = ({ tickets, onRequestDelete }) => {
                     e.stopPropagation()
                     onRequestDelete(ticket.id)
                   }}
-                  className="mt-2 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition text-xs"
+                  className="mt-2 px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-800 transition text-xs"
                 >
                   <FontAwesomeIcon icon={faTrash} /> Delete
                 </button>

@@ -103,7 +103,6 @@ const CommentProvider = ({ children }) => {
       setError(null)
 
       try {
-        // Log the request details
         console.log('🔍 Edit Comment Request Details:', {
           userId,
           ticketId,
@@ -111,7 +110,6 @@ const CommentProvider = ({ children }) => {
           timestamp: new Date().toISOString(),
         })
 
-        // Make the PUT request to the updated endpoint
         const response = await put(
           `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`,
           updatedData
@@ -120,25 +118,19 @@ const CommentProvider = ({ children }) => {
         // Log success
         console.log('✅ Comment updated successfully:', { commentId })
 
-        // Update the comments state
         setComments((prev) =>
           prev.map((comment) =>
             comment.id === commentId ? response.updatedComment : comment
           )
         )
 
-        // Optionally set a success message (if your app supports it)
-        // setSuccess('Comment updated successfully');
-
         return response.updatedComment
       } catch (error) {
-        // Log the error with details
         console.error('❌ Error updating comment:', {
           message: error.message,
-          response: error.response?.data, // Capture backend error details if available
+          response: error.response?.data,
         })
 
-        // Set a user-friendly error message
         const errorMessage =
           error.response?.data?.error || 'Failed to update comment'
         setError(`${errorMessage}: ${error.message}`)
