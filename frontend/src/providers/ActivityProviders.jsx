@@ -4,15 +4,14 @@ import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
 const ActivityProviders = ({ children }) => {
-  const { get, del } = useAuthedRequest() // Call the hook as a function
+  const { get, del } = useAuthedRequest()
   const { user } = useUser()
   const [activities, setActivities] = useState([])
 
-  // Fetch activities from the backend
   const fetchActivities = async () => {
     if (!user) {
       console.log('⚠️ User not authenticated, skipping fetchActivities')
-      setActivities([]) // Clear activities if user is not authenticated
+      setActivities([])
       return
     }
 
@@ -26,28 +25,26 @@ const ActivityProviders = ({ children }) => {
         message: error.message,
         response: error.response?.data,
       })
-      setActivities([]) // Clear activities on error
+      setActivities([])
     }
   }
 
-  // Fetch activities on mount and when user changes
   useEffect(() => {
     fetchActivities()
-  }, [get, user]) // Add user as a dependency
+  }, [get, user])
 
   const clearActivities = async () => {
     try {
       console.log('🔍 Clearing activities for user:', user.uid)
       await del('/activities')
-      setActivities([]) // Clear the local state
+      setActivities([])
       console.log('✅ Activities cleared successfully')
     } catch (error) {
       console.error('❌ Error clearing activities:', error)
-      throw error // Let the component handle the error
+      throw error
     }
   }
 
-  // Format the time for display (e.g., "5 mins ago")
   const formatTime = (timestamp) => {
     const now = new Date()
     const activityTime = new Date(timestamp)
@@ -61,7 +58,6 @@ const ActivityProviders = ({ children }) => {
     return 'Yesterday'
   }
 
-  // Provide a refresh function to allow components to trigger a fetch
   const refreshActivities = async () => {
     await fetchActivities()
   }

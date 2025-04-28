@@ -7,6 +7,7 @@ import {
   faReply,
   faEllipsisH,
 } from '@fortawesome/free-solid-svg-icons'
+
 import { useUser } from '../hooks/useUser'
 import ActivityContext from '../contexts/ActivityContext'
 
