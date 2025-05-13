@@ -4,8 +4,7 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-const logActivity = require('../middleware/logActivity.js') // Import logActivity
-
+const logActivity = require('../middleware/logActivity.js')
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

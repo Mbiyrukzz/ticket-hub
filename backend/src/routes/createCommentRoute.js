@@ -4,16 +4,38 @@ const {
   ticketsCollection,
 } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
+
 const { v4: uuidv4 } = require('uuid')
+
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '..', 'uploads')
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true })
+    }
+    cb(null, uploadPath)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    cb(null, `${uniqueSuffix}-${file.originalname}`)
+  },
+})
+
+const upload = multer({ storage })
 
 const createCommentRoute = {
   path: '/tickets/:ticketId/comments',
   method: 'post',
-  middleware: [verifyAuthToken],
+  middleware: [verifyAuthToken, upload.single('image')], // 👈 Add multer middleware
   handler: async (req, res) => {
     const { ticketId } = req.params
     const authUser = req.user
     const { content, parentId } = req.body
+    const imageFile = req.file
 
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'Content is required' })
@@ -29,7 +51,6 @@ const createCommentRoute = {
         return res.status(404).json({ error: 'Ticket not found' })
       }
 
-      // Check ownership or shared access
       const isOwner = ticket.createdBy === authUser.uid
       const isShared = ticket.sharedWith?.some(
         (user) => user.email.toLowerCase() === authUser.email.toLowerCase()
@@ -53,6 +74,11 @@ const createCommentRoute = {
         content,
         parentId: parentId || null,
         createdAt: new Date().toISOString(),
+      }
+
+      // Add image URL if uploaded
+      if (imageFile) {
+        newComment.imageUrl = `/uploads/${imageFile.filename}`
       }
 
       await comments.insertOne(newComment)

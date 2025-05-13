@@ -77,10 +77,7 @@ const CommentProvider = ({ children }) => {
         )
         const response = await post(
           `http://localhost:8080/tickets/${ticketId}/comments`,
-          {
-            content: text,
-            parentId: null,
-          }
+          formData
         )
         console.log('Add comment response:', response)
         await fetchComments(userId, ticketId)

@@ -133,48 +133,48 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
   const nestedComments = buildCommentTree(comments)
 
   return (
-    <div className="mt-8 max-w-3xl mx-auto rounded-2xl bg-white shadow-xl p-6 space-y-6">
-      <h4 className="text-xl font-semibold text-gray-900">
-        Comments ({comments.length})
-      </h4>
+    <div className="mt-8 max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">
+          Comments{' '}
+          <span className="ml-2 text-sm text-gray-500">
+            ({comments.length})
+          </span>
+        </h2>
+      </div>
 
-      {error && (
-        <p className="text-red-500 bg-red-50 p-2 rounded-md">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
       <form
         onSubmit={(e) => handleAddComment(e)}
-        className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3"
+        className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50"
       >
-        <input
-          type="text"
-          placeholder="Share your mind..."
+        <textarea
+          rows={3}
+          placeholder="Add comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          className="w-full p-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
         />
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <input
             type="file"
             accept="image/*"
             onChange={handleImageChange}
-            className="text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            className="text-sm text-gray-500"
           />
           <button
             type="submit"
-            className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition"
+            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2 px-4 rounded-md"
           >
-            Post
+            Submit
           </button>
         </div>
       </form>
 
-      {/* Render comments recursively */}
-      <div className="space-y-6">
+      <div className="mt-6 space-y-6">
         {nestedComments.length === 0 ? (
-          <p className="text-gray-500 text-center py-6 bg-gray-50 rounded-lg">
-            No comments yet. Be the first to comment!
-          </p>
+          <p className="text-gray-500 text-center">No comments yet.</p>
         ) : (
           nestedComments.map((comment) => (
             <CommentItem
@@ -221,18 +221,15 @@ const CommentItem = ({
   setEditedText,
 }) => {
   return (
-    <div className="ml-0 md:ml-6 border-l-2 border-gray-200 pl-4">
-      <div className="flex items-start space-x-4 p-4 bg-white border border-gray-200 rounded-xl shadow-sm mt-4">
-        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-semibold">
+    <div className="pl-4 border-l border-gray-200">
+      <div className="flex items-start space-x-4">
+        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold">
           {comment.author?.[0]?.toUpperCase() || '?'}
         </div>
-        <div className="flex-1 space-y-1">
+        <div className="flex-1">
           <div className="flex justify-between items-center">
-            <p className="font-semibold text-gray-900">{comment.author}</p>
-            <FontAwesomeIcon
-              icon={faEllipsisH}
-              className="text-gray-400 hover:text-gray-600 cursor-pointer"
-            />
+            <p className="font-medium text-gray-900">{comment.author}</p>
+            <FontAwesomeIcon icon={faEllipsisH} className="text-gray-400" />
           </div>
 
           {editingId === comment.id ? (
@@ -240,18 +237,18 @@ const CommentItem = ({
               <textarea
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
+                className="w-full p-2 mt-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => onSaveEdit(comment.id)}
-                  className="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setEditedText('')}
-                  className="px-4 py-1 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                  className="bg-gray-200 text-gray-700 px-3 py-1 rounded-md"
                 >
                   Cancel
                 </button>
@@ -259,16 +256,16 @@ const CommentItem = ({
             </>
           ) : (
             <>
-              <p className="text-gray-700">{comment.content}</p>
+              <p className="text-gray-700 mt-1">{comment.content}</p>
               {comment.imageUrl && (
                 <img
                   src={comment.imageUrl}
-                  alt="Comment"
-                  className="mt-2 max-w-xs rounded-md border border-gray-200"
+                  alt="Comment Attachment"
+                  className="mt-2 max-w-xs rounded-md border"
                 />
               )}
-              <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
-                <button className="flex items-center gap-1 hover:text-indigo-600 transition">
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <button className="flex items-center gap-1 hover:text-indigo-600">
                   <FontAwesomeIcon icon={faThumbsUp} /> Like
                 </button>
                 <button
@@ -278,7 +275,7 @@ const CommentItem = ({
                       [comment.id]: !prev[comment.id],
                     }))
                   }
-                  className="flex items-center gap-1 hover:text-indigo-600 transition"
+                  className="flex items-center gap-1 hover:text-indigo-600"
                 >
                   <FontAwesomeIcon icon={faReply} /> Reply
                 </button>
@@ -316,36 +313,36 @@ const CommentItem = ({
               />
               <button
                 type="submit"
-                className="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md"
               >
                 Post Reply
               </button>
             </form>
           )}
+
+          {comment.children?.length > 0 && (
+            <div className="mt-4 space-y-4">
+              {comment.children.map((child) => (
+                <CommentItem
+                  key={child.id}
+                  comment={child}
+                  replying={replying}
+                  setReplying={setReplying}
+                  replyText={replyText}
+                  setReplyText={setReplyText}
+                  onReply={onReply}
+                  onDelete={() => onDelete(child.id)}
+                  onEdit={onEdit}
+                  onSaveEdit={onSaveEdit}
+                  editingId={editingId}
+                  editedText={editedText}
+                  setEditedText={setEditedText}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {comment.children?.length > 0 && (
-        <div className="space-y-4 mt-2">
-          {comment.children.map((child) => (
-            <CommentItem
-              key={child.id}
-              comment={child}
-              replying={replying}
-              setReplying={setReplying}
-              replyText={replyText}
-              setReplyText={setReplyText}
-              onReply={onReply}
-              onDelete={() => onDelete(child.id)}
-              onEdit={onEdit}
-              onSaveEdit={onSaveEdit}
-              editingId={editingId}
-              editedText={editedText}
-              setEditedText={setEditedText}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
