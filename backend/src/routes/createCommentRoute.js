@@ -30,7 +30,7 @@ const upload = multer({ storage })
 const createCommentRoute = {
   path: '/tickets/:ticketId/comments',
   method: 'post',
-  middleware: [verifyAuthToken, upload.single('image')], // 👈 Add multer middleware
+  middleware: [verifyAuthToken, upload.single('image')],
   handler: async (req, res) => {
     const { ticketId } = req.params
     const authUser = req.user
@@ -71,6 +71,7 @@ const createCommentRoute = {
         id: uuidv4(),
         ticketId,
         userId: authUser.uid,
+        userName: user.name || user.userName || 'Unknown User', // 👈 Add userName
         content,
         parentId: parentId || null,
         createdAt: new Date().toISOString(),

@@ -1,4 +1,8 @@
-const { commentsCollection, ticketsCollection } = require('../db.js')
+const {
+  commentsCollection,
+  ticketsCollection,
+  usersCollection,
+} = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const listCommentsRoute = {
@@ -17,6 +21,7 @@ const listCommentsRoute = {
     try {
       const tickets = ticketsCollection()
       const comments = commentsCollection()
+      const users = usersCollection() // 👈 Add users collection
 
       const ticket = await tickets.findOne({ id: ticketId })
       if (!ticket) {
@@ -61,8 +66,24 @@ const listCommentsRoute = {
         .sort({ createdAt: 1 })
         .toArray()
 
-      console.log(`✅ Returning ${ticketComments.length} comments`)
-      return res.status(200).json({ comments: ticketComments })
+      // Fetch user info for all unique userIds in the comments
+      const userIds = [
+        ...new Set(ticketComments.map((comment) => comment.userId)),
+      ]
+      const usersList = await users.find({ id: { $in: userIds } }).toArray()
+
+      const userMap = usersList.reduce((acc, user) => {
+        acc[user.id] = user.name || user.userName || 'Unknown User'
+        return acc
+      }, {})
+
+      const commentsWithUserNames = ticketComments.map((comment) => ({
+        ...comment,
+        userName: userMap[comment.userId] || 'Unknown User',
+      }))
+
+      console.log(`✅ Returning ${commentsWithUserNames.length} comments`)
+      return res.status(200).json({ comments: commentsWithUserNames })
     } catch (error) {
       console.error('Error fetching comments:', error)
       return res.status(500).json({ error: 'Internal Server Error' })

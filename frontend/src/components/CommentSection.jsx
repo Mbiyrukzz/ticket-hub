@@ -224,11 +224,11 @@ const CommentItem = ({
     <div className="pl-4 border-l border-gray-200">
       <div className="flex items-start space-x-4">
         <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold">
-          {comment.author?.[0]?.toUpperCase() || '?'}
+          {comment.userName?.[0]?.toUpperCase() || '?'}
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
-            <p className="font-medium text-gray-900">{comment.author}</p>
+            <p className="font-medium text-gray-900">{comment.userName}</p>
             <FontAwesomeIcon icon={faEllipsisH} className="text-gray-400" />
           </div>
 
