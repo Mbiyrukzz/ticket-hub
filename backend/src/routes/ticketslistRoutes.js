@@ -50,6 +50,24 @@ const ticketslistRoutes = {
               as: 'comments',
             },
           },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'createdBy',
+              foreignField: 'id',
+              as: 'creatorInfo',
+            },
+          },
+          {
+            $addFields: {
+              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
+            },
+          },
+          {
+            $project: {
+              creatorInfo: 0,
+            },
+          },
         ])
         .toArray()
 
@@ -70,6 +88,19 @@ const ticketslistRoutes = {
             },
           },
           {
+            $lookup: {
+              from: 'users',
+              localField: 'createdBy',
+              foreignField: 'id',
+              as: 'creatorInfo',
+            },
+          },
+          {
+            $addFields: {
+              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
+            },
+          },
+          {
             $project: {
               _id: 0,
               id: 1,
@@ -81,6 +112,7 @@ const ticketslistRoutes = {
               status: 1,
               createdAt: 1,
               updatedAt: 1,
+              userName: 1,
             },
           },
         ])

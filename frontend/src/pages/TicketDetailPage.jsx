@@ -99,13 +99,13 @@ const TicketDetailPage = ({ isOwner = true }) => {
             <div className="flex justify-end gap-4 pt-4">
               <button
                 onClick={() => setIsEditing(false)}
-                className="px-5 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition"
+                className="px-5 py-2 bg-gray-50 text-red-400 font-semibold border-2 border-red-400 rounded-lg hover:bg-gray-400 transition"
               >
                 <FontAwesomeIcon icon={faTimes} /> Cancel
               </button>
               <button
                 onClick={saveChanges}
-                className="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
+                className="px-5 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
               >
                 <FontAwesomeIcon icon={faCheck} /> Save
               </button>
@@ -114,13 +114,13 @@ const TicketDetailPage = ({ isOwner = true }) => {
         ) : (
           <>
             <div className="space-y-4">
-              <h2 className="text-3xl font-bold text-yellow-600">
+              <h2 className="text-3xl font-bold text-gray-600">
                 {ticket.title}
               </h2>
               <p className="text-lg text-gray-700">{ticket.content}</p>
               <p className="text-sm text-gray-500">
-                <span className="font-medium text-yellow-600">Posted by:</span>{' '}
-                {ticket.postedBy}
+                <span className="font-medium text-gray-400">Created by:</span>{' '}
+                {ticket.userName}
               </p>
               {ticket.image && (
                 <img
@@ -135,7 +135,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
               {(isOwner || canEdit) && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-400 transition"
+                  className="px-5 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-400 transition"
                 >
                   <FontAwesomeIcon icon={faPen} /> Edit
                 </button>
@@ -143,7 +143,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
               {isOwner && (
                 <button
                   onClick={() => navigate(`/sharing/${ticketId}`)}
-                  className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 transition"
+                  className="px-5 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:border-indigo-500 transition"
                 >
                   <FontAwesomeIcon icon={faShare} /> Share
                 </button>
@@ -153,7 +153,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
         )}
 
         <div className="pt-8 border-t border-gray-200">
-          <h3 className="text-2xl font-bold text-yellow-600 mb-4 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-blue-500 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faCommentDots} /> Responses
           </h3>
           <CommentSection

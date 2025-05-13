@@ -5,6 +5,7 @@ const path = require('path')
 const fs = require('fs')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const logActivity = require('../middleware/logActivity.js')
+
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -55,10 +56,23 @@ const createTicketRoute = {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
+      // Get the user's name
+      const userDoc = await users.findOne({ id: userId })
+      if (!userDoc) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
+      const userName =
+        userDoc.name ||
+        userDoc.displayName ||
+        userDoc.email?.split('@')[0] ||
+        'Unknown'
+
       console.log('🔍 Create Ticket Request Details:', {
         userId,
         title,
         content,
+        userName,
         timestamp: new Date().toISOString(),
       })
       console.log('📸 Uploaded File:', req.file)
@@ -76,7 +90,8 @@ const createTicketRoute = {
         content: content.trim(),
         image,
         createdBy: userId,
-        createdAt: new Date(), // Added createdAt for consistency
+        userName, // 👈 Include userName here
+        createdAt: new Date(),
         comments: [],
       }
 
@@ -84,11 +99,9 @@ const createTicketRoute = {
       let response
       try {
         await session.withTransaction(async () => {
-          // Insert the new ticket
           const result = await tickets.insertOne(newTicket)
           const mongoId = result.insertedId
 
-          // Update user with the new ticket
           const userUpdateResult = await users.updateOne(
             { id: userId },
             { $push: { tickets: newTicketId } }
@@ -101,7 +114,6 @@ const createTicketRoute = {
             throw new Error('Failed to update user with new ticket')
           }
 
-          // Log the activity after the ticket is created
           await logActivity(
             'created-ticket',
             `Created a new ticket #${newTicketId}`,
@@ -111,7 +123,7 @@ const createTicketRoute = {
 
           response = {
             ...newTicket,
-            _id: mongoId.toString(), // Convert ObjectId to string
+            _id: mongoId.toString(),
             createdAt: newTicket.createdAt.toISOString(),
           }
 

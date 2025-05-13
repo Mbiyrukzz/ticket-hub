@@ -165,7 +165,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
           />
           <button
             type="submit"
-            className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2 px-4 rounded-md"
+            className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md"
           >
             Submit
           </button>
@@ -287,7 +287,7 @@ const CommentItem = ({
                 </button>
                 <button
                   onClick={onDelete}
-                  className="text-red-600 hover:text-red-700 font-medium"
+                  className="text-red-400 hover:text-red-500 font-medium"
                 >
                   Delete
                 </button>
@@ -313,7 +313,7 @@ const CommentItem = ({
               />
               <button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md"
+                className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md"
               >
                 Post Reply
               </button>
