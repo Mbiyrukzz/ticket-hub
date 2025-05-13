@@ -184,56 +184,6 @@ const TicketsProvider = ({ children }) => {
     }
   }
 
-  // const unShareTicket = async (ticketId, email, setLocalLoading) => {
-  //   setLocalLoading(true)
-
-  //   // Backup previous state for rollback
-  //   const previousTickets = tickets
-
-  //   // Optimistically update UI
-  //   setTickets((prevTickets) =>
-  //     prevTickets.map((ticket) =>
-  //       ticket.id === ticketId
-  //         ? {
-  //             ...ticket,
-  //             sharedWith: (ticket.sharedWith || []).filter(
-  //               (shared) => shared.email !== email
-  //             ),
-  //           }
-  //         : ticket
-  //     )
-  //   )
-
-  //   try {
-  //     const response = await del(
-  //       `http://localhost:8080/users/${user.uid}/tickets/${ticketId}/unshare-ticket/${email}`
-  //     )
-
-  //     const updatedTicket = response.data.ticket
-
-  //     // Sync UI with backend's latest state
-  //     setTickets((prevTickets) =>
-  //       prevTickets.map((ticket) =>
-  //         ticket.id === ticketId ? updatedTicket : ticket
-  //       )
-  //     )
-
-  //     toast.success('Ticket unshared successfully!')
-  //     return updatedTicket.sharedWith
-  //   } catch (error) {
-  //     const errorMessage =
-  //       error.response?.data?.message ||
-  //       'Failed to unshare ticket. Please try again.'
-
-  //     // Rollback on failure
-  //     setTickets(previousTickets)
-  //     toast.error(errorMessage)
-  //     throw new Error(errorMessage)
-  //   } finally {
-  //     setLocalLoading(false)
-  //   }
-  // }
-
   return (
     <TicketContext.Provider
       value={{

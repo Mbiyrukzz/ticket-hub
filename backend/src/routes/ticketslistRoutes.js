@@ -53,18 +53,28 @@ const ticketslistRoutes = {
         ])
         .toArray()
 
-      // Fetch shared tickets with case-insensitive email match
+      // Fetch shared tickets with comments
       const sharedWithUsersTickets = await collections.tickets
-        .find(
+        .aggregate([
           {
-            'sharedWith.email': { $regex: `^${user.email}$`, $options: 'i' }, // Case-insensitive match
+            $match: {
+              'sharedWith.email': { $regex: `^${user.email}$`, $options: 'i' },
+            },
           },
           {
-            projection: {
+            $lookup: {
+              from: 'comments',
+              localField: 'id',
+              foreignField: 'ticketId',
+              as: 'comments',
+            },
+          },
+          {
+            $project: {
               _id: 0,
               id: 1,
               sharedWith: 1,
-              title: 1, // Include additional fields needed by frontend
+              title: 1,
               content: 1,
               image: 1,
               comments: 1,
@@ -72,17 +82,18 @@ const ticketslistRoutes = {
               createdAt: 1,
               updatedAt: 1,
             },
-          }
-        )
+          },
+        ])
         .toArray()
 
       const sharedWithUsersTicketsFormatted = sharedWithUsersTickets.map(
         (ticket) => ({
           ...ticket,
-          role: ticket.sharedWith.find(
-            (setting) =>
-              setting.email.toLowerCase() === user.email.toLowerCase()
-          ).role,
+          role:
+            ticket.sharedWith.find(
+              (setting) =>
+                setting.email.toLowerCase() === user.email.toLowerCase()
+            )?.role || 'view',
         })
       )
 
@@ -96,5 +107,4 @@ const ticketslistRoutes = {
     }
   },
 }
-
 module.exports = { ticketslistRoutes }

@@ -13,21 +13,39 @@ const CommentProvider = ({ children }) => {
 
   const fetchComments = useCallback(
     async (userId, ticketId) => {
-      if (!userId || !ticketId || !isReady) return
+      if (!userId || !ticketId || !isReady) {
+        console.warn('Skipping fetch: userId, ticketId, or isReady missing', {
+          userId,
+          ticketId,
+          isReady,
+        })
+        return
+      }
       setLoading(true)
       setError(null)
       try {
         const response = await get(
-          `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`
+          `http://localhost:8080/tickets/${ticketId}/comments`
         )
-        const newComments = Array.isArray(response.data) ? response.data : []
+        console.log('Fetched comments:', response.comments)
+        const newComments = Array.isArray(response.comments)
+          ? response.comments
+          : []
         setComments((prev) => [
           ...prev.filter((c) => c.ticketId !== ticketId),
           ...newComments,
         ])
       } catch (error) {
-        console.error('❌ Error fetching comments:', error)
-        setError('Failed to fetch comments: ' + error.message)
+        console.error('❌ Error fetching comments:', error, {
+          userId,
+          ticketId,
+          response: error.response,
+        })
+        setError(
+          error.response?.status === 403
+            ? 'You do not have permission to view comments for this ticket.'
+            : `Error fetching comments: ${error.message}`
+        )
       } finally {
         setLoading(false)
       }
@@ -43,7 +61,7 @@ const CommentProvider = ({ children }) => {
       try {
         const formData = new FormData()
         formData.append('content', text)
-        formData.append('author', user?.displayName || 'Anonymous')
+        formData.append('author', user?.userName || 'Anonymous')
         if (imageFile) {
           console.log(
             'Adding image:',
@@ -55,11 +73,14 @@ const CommentProvider = ({ children }) => {
         }
         console.log(
           'Sending comment to:',
-          `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`
+          `http://localhost:8080/tickets/${ticketId}/comments`
         )
         const response = await post(
-          `http://localhost:8080/users/${userId}/tickets/${ticketId}/comments`,
-          formData
+          `http://localhost:8080/tickets/${ticketId}/comments`,
+          {
+            content: text,
+            parentId: null,
+          }
         )
         console.log('Add comment response:', response)
         await fetchComments(userId, ticketId)

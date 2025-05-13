@@ -2,57 +2,70 @@ const { commentsCollection, ticketsCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const listCommentsRoute = {
-  path: '/users/:userId/tickets/:ticketId/comments',
+  path: '/tickets/:ticketId/comments',
   method: 'get',
-  middleware: [verifyAuthToken], // Add authentication
+  middleware: [verifyAuthToken],
   handler: async (req, res) => {
+    const { ticketId } = req.params
+    const authUser = req.user
+
+    if (!authUser?.uid || !authUser?.email) {
+      console.error('Invalid authUser:', authUser)
+      return res.status(401).json({ error: 'Invalid user authentication' })
+    }
+
     try {
-      const authUser = req.user
-      const { userId, ticketId } = req.params
-
-      // Validate authentication
-      if (!authUser || authUser.uid !== userId) {
-        return res.status(403).json({ error: 'Forbidden' })
-      }
-
-      // Database connections
-      const comments = commentsCollection()
       const tickets = ticketsCollection()
-      if (!comments || !tickets) {
-        throw new Error('Database connection not initialized')
+      const comments = commentsCollection()
+
+      const ticket = await tickets.findOne({ id: ticketId })
+      if (!ticket) {
+        console.error(`Ticket not found: ${ticketId}`)
+        return res.status(404).json({ error: 'Ticket not found' })
       }
 
-      // Verify ticket exists and belongs to user
-      const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
-      if (!ticket) {
-        return res.status(404).json({
-          error: "Ticket not found or you don't have permission",
+      const normalizedAuthEmail = authUser.email.trim().toLowerCase()
+      const isOwner = ticket.userId === authUser.uid
+
+      const isShared =
+        ticket.sharedWith && Array.isArray(ticket.sharedWith)
+          ? ticket.sharedWith.some((user) => {
+              if (!user || typeof user !== 'object' || !user.email) {
+                console.warn('Invalid sharedWith user:', user)
+                return false
+              }
+              const sharedEmail = user.email.trim().toLowerCase()
+              const matches = sharedEmail === normalizedAuthEmail
+              console.log(
+                `Comparing sharedEmail: '${sharedEmail}' with authEmail: '${normalizedAuthEmail}' -> matches: ${matches}`
+              )
+              return matches
+            })
+          : false
+
+      console.log('=== Access Debug ===')
+      console.log('Auth UID:', authUser.uid)
+      console.log('Auth Email:', normalizedAuthEmail)
+      console.log('Ticket Owner UID:', ticket.userId)
+      console.log('Shared With:', ticket.sharedWith)
+      console.log('isOwner:', isOwner, '| isShared:', isShared)
+
+      if (!isOwner && !isShared) {
+        return res.status(403).json({
+          error: 'Unauthorized to view comments for this ticket',
         })
       }
 
-      // Fetch comments for the given ticketId
-      const commentList = await comments.find({ ticketId }).toArray()
+      const ticketComments = await comments
+        .find({ ticketId })
+        .sort({ createdAt: 1 })
+        .toArray()
 
-      if (!commentList || commentList.length === 0) {
-        console.log('⚠️ No comments found for ticketId:', ticketId)
-        return res.status(200).json([]) // Return empty array instead of 404
-      }
-
-      // Convert createdAt to ISO string if needed (for consistency with create)
-      const formattedComments = commentList.map((comment) => ({
-        ...comment,
-        _id: comment._id.toString(), // Convert ObjectId to string
-        createdAt: new Date(comment.createdAt).toISOString(),
-      }))
-
-      console.log('✅ Sending comments:', formattedComments)
-      res.status(200).json(formattedComments)
+      console.log(`✅ Returning ${ticketComments.length} comments`)
+      return res.status(200).json({ comments: ticketComments })
     } catch (error) {
-      console.error('❌ Error fetching comments:', error.stack)
-      res.status(error.status || 500).json({
-        error: 'Failed to fetch comments',
-        details: error.message,
-      })
+      console.error('Error fetching comments:', error)
+      return res.status(500).json({ error: 'Internal Server Error' })
     }
   },
 }
