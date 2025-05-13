@@ -15,7 +15,7 @@ const userOwnsTicket = async (req, res, next) => {
       return res.status(404).json({ error: 'Ticket not found' })
     }
 
-    if (ticket.userId !== authUser.uid) {
+    if (ticket.createdBy !== authUser.uid) {
       return res.sendStatus(403) // Forbidden
     }
 
