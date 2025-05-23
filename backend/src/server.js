@@ -17,9 +17,25 @@ const app = express()
 const PORT = process.env.PORT || 8080
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(
+  cors({
+    origin: 'https://support.ashmif.com || http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+
+    credentials: true,
+  })
+)
 app.use(express.json())
-app.use(express.urlencoded({ extended: true })) // ✅ Supports form-data requests
+app.use(express.urlencoded({ extended: true }))
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'Hello from MERN backend' })
+})
+
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'))
+})
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 

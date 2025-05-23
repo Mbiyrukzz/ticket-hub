@@ -79,7 +79,7 @@ const createCommentRoute = {
 
       // Add image URL if uploaded
       if (imageFile) {
-        newComment.imageUrl = `/uploads/${imageFile.filename}`
+        newComment.imageUrl = `/uploads/${imageFile.filename} || 'http://localhost:8080'`
       }
 
       await comments.insertOne(newComment)
