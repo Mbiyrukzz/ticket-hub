@@ -4,6 +4,8 @@ import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const TicketsProvider = ({ children }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
   const { user } = useUser()
@@ -20,7 +22,7 @@ const TicketsProvider = ({ children }) => {
 
       try {
         const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
-          await get(`http://localhost:8080/users/${user.uid}/tickets`)
+          await get(`${API_URL}/users/${user.uid}/tickets`)
 
         console.log('📥 Fetched tickets:', {
           ownedTicketsWithComments,
@@ -77,7 +79,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const newTicket = await post(
-        `http://localhost:8080/users/${user.uid}/tickets`,
+        `${API_URL}/users/${user.uid}/tickets`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -104,7 +106,7 @@ const TicketsProvider = ({ children }) => {
       if (image instanceof File) formData.append('image', image)
 
       const updatedTicket = await put(
-        `http://localhost:8080/users/${userId}/tickets/${ticketId}`,
+        `${API_URL}/users/${userId}/tickets/${ticketId}`,
         formData
       )
 
@@ -136,7 +138,7 @@ const TicketsProvider = ({ children }) => {
     console.log('🚮 Attempting to delete ticket with ID:', ticketId)
 
     try {
-      await del(`http://localhost:8080/users/${user.uid}/tickets/${ticketId}`) // ✅ Ensuring correct API URL
+      await del(`${API_URL}/users/${user.uid}/tickets/${ticketId}`) // ✅ Ensuring correct API URL
 
       console.log('✅ Ticket deleted:', ticketId)
 
@@ -149,7 +151,7 @@ const TicketsProvider = ({ children }) => {
   const shareTicket = async (ticketId, email, role) => {
     try {
       const updatedEmails = await post(
-        `http://localhost:8080/tickets/${ticketId}/share-ticket`,
+        `${API_URL}/tickets/${ticketId}/share-ticket`,
         { email, role }
       )
       setTickets(
@@ -167,7 +169,7 @@ const TicketsProvider = ({ children }) => {
   const unshareTicket = async (ticketId, email) => {
     try {
       const updatedTicket = await del(
-        `http://localhost:8080/tickets/${ticketId}/unshare-ticket/${email}`
+        `${API_URL}/tickets/${ticketId}/unshare-ticket/${email}`
       )
       setTickets(
         tickets.map((ticket) =>

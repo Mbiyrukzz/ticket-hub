@@ -1,3 +1,5 @@
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 export const transformComment = (comment) => ({
   id: comment.id,
   text: comment.content,
@@ -6,9 +8,7 @@ export const transformComment = (comment) => ({
     name: comment.author,
   },
   parentId: comment.parentCommentId,
-  attachment: comment.attachment
-    ? `http://localhost:5000/Uploads/${comment.attachment}`
-    : null,
+  attachment: comment.attachment ? `${API_URL}/${comment.attachment}` : null,
   createdAt: comment.createdAt,
   replies: comment.replies || [],
 })

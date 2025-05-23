@@ -3,6 +3,8 @@ import CommentContext from '../contexts/CommentContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const CommentProvider = ({ children }) => {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(false)
@@ -24,9 +26,7 @@ const CommentProvider = ({ children }) => {
       setLoading(true)
       setError(null)
       try {
-        const response = await get(
-          `http://localhost:8080/tickets/${ticketId}/comments`
-        )
+        const response = await get(`${API_URL}/tickets/${ticketId}/comments`)
         console.log('Fetched comments:', response.comments)
         const newComments = Array.isArray(response.comments)
           ? response.comments
@@ -76,7 +76,7 @@ const CommentProvider = ({ children }) => {
           `http://localhost:8080/tickets/${ticketId}/comments`
         )
         const response = await post(
-          `http://localhost:8080/tickets/${ticketId}/comments`,
+          `${API_URL}/tickets/${ticketId}/comments`,
           formData
         )
         console.log('Add comment response:', response)
@@ -129,7 +129,7 @@ const CommentProvider = ({ children }) => {
         })
 
         const response = await put(
-          `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`,
+          `${API_URL}/tickets/${ticketId}/comments/${commentId}`,
           updatedData
         )
 
@@ -184,9 +184,7 @@ const CommentProvider = ({ children }) => {
         })
 
         // Make the DELETE request to the updated endpoint
-        await del(
-          `http://localhost:8080/tickets/${ticketId}/comments/${commentId}`
-        )
+        await del(`${API_URL}/tickets/${ticketId}/comments/${commentId}`)
 
         // Log success
         console.log('✅ Comment deleted successfully:', { commentId })

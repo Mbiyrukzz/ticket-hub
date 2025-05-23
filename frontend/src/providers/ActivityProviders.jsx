@@ -3,6 +3,8 @@ import ActivityContext from '../contexts/ActivityContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
 const ActivityProviders = ({ children }) => {
   const { get, del } = useAuthedRequest()
   const { user } = useUser()
@@ -17,7 +19,7 @@ const ActivityProviders = ({ children }) => {
 
     try {
       console.log('🔍 Fetching activities from backend')
-      const response = await get('http://localhost:8080/activities')
+      const response = await get(`${API_URL}/activities`)
       setActivities(response)
       console.log('✅ Activities fetched successfully:', response)
     } catch (error) {
