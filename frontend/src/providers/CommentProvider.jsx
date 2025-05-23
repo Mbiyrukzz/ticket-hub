@@ -3,7 +3,8 @@ import CommentContext from '../contexts/CommentContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://support.ashmif.com/api'
 
 const CommentProvider = ({ children }) => {
   const [comments, setComments] = useState([])

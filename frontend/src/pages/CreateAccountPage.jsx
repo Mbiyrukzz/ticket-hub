@@ -6,6 +6,9 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
 import Loading from '../components/Loading'
 import './CreateAccountPage.css'
 
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://support.ashmif.com/api'
+
 const CreateAccountPage = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
@@ -44,7 +47,7 @@ const CreateAccountPage = () => {
       const token = await result.user.getIdToken()
 
       await axios.post(
-        'http://localhost:8080/users',
+        `${API_URL}/users`,
         { name },
         { headers: { authtoken: token } }
       )
