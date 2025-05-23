@@ -19,7 +19,8 @@ const PORT = process.env.PORT || 8080
 // Middleware
 app.use(
   cors({
-    origin: 'https://support.ashmif.com || http://localhost:5173',
+    origin: ['https://support.ashmif.com', 'http://localhost:5173'],
+
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
 
     credentials: true,
@@ -27,10 +28,6 @@ app.use(
 )
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-app.get('/api', (req, res) => {
-  res.json({ message: 'Hello from MERN backend' })
-})
 
 // Serve React app for all other routes
 app.get('*', (req, res) => {
@@ -88,7 +85,7 @@ const start = async () => {
     })
 
     // Start server
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
+    server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
   } catch (error) {
     console.error('❌ Error connecting to the database:', error)
     process.exit(1)
