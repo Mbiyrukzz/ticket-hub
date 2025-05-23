@@ -44,7 +44,7 @@ const CreateAccountPage = () => {
       const token = await result.user.getIdToken()
 
       await axios.post(
-        'http://localhost:5000/users',
+        'http://localhost:8080/users',
         { name },
         { headers: { authtoken: token } }
       )

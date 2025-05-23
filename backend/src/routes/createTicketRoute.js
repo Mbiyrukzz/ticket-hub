@@ -79,7 +79,7 @@ const createTicketRoute = {
 
       const newTicketId = uuidv4()
       const image = req.file
-        ? `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/${
+        ? `${process.env.BASE_URL || 'http://localhost:8080'}/uploads/${
             req.file.filename
           }`
         : null

@@ -3,7 +3,7 @@ import CommentContext from '../contexts/CommentContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const CommentProvider = ({ children }) => {
   const [comments, setComments] = useState([])
@@ -73,7 +73,7 @@ const CommentProvider = ({ children }) => {
         }
         console.log(
           'Sending comment to:',
-          `http://localhost:5000/tickets/${ticketId}/comments`
+          `http://localhost:8080/tickets/${ticketId}/comments`
         )
         const response = await post(
           `${API_URL}/tickets/${ticketId}/comments`,

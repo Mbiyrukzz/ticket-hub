@@ -4,7 +4,7 @@ import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const TicketsProvider = ({ children }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()

@@ -54,7 +54,7 @@ const updateTicketRoute = {
             '..',
             'uploads',
             path.basename(
-              ticket.image.replace('http://localhost:5000/uploads/', '')
+              ticket.image.replace('http://localhost:8080/uploads/', '')
             )
           )
           if (fs.existsSync(oldImagePath)) {
@@ -64,7 +64,7 @@ const updateTicketRoute = {
             console.warn('⚠️ Old image not found at:', oldImagePath)
           }
         }
-        updateFields.image = `http://localhost:5000/uploads/${req.file.filename}`
+        updateFields.image = `http://localhost:8080/uploads/${req.file.filename}`
       }
 
       if (Object.keys(updateFields).length === 0) {
