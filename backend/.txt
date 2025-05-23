@@ -23,7 +23,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const response = await axios.get(
-        `http://localhost:8080/users/${user.uid}/tickets`
+        `http://localhost:5000/users/${user.uid}/tickets`
       )
       console.log('📥 Fetched tickets:', response.data)
 
@@ -73,7 +73,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const response = await axios.post(
-        `http://localhost:8080/users/${user.uid}/tickets`,
+        `http://localhost:5000/users/${user.uid}/tickets`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

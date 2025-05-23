@@ -14,7 +14,7 @@ const { verifyAuthToken } = require('./middleware/verifyAuthToken.js')
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
 const app = express()
-const PORT = process.env.PORT || 8080
+const PORT = process.env.PORT || 5000
 
 // Middleware
 app.use(
