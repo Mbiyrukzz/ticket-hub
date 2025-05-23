@@ -71,13 +71,12 @@ const createCommentRoute = {
         id: uuidv4(),
         ticketId,
         userId: authUser.uid,
-        userName: user.name || user.userName || 'Unknown User', // 👈 Add userName
+        userName: user.name || user.userName || 'Unknown User',
         content,
         parentId: parentId || null,
         createdAt: new Date().toISOString(),
       }
 
-      // Add image URL if uploaded
       if (imageFile) {
         newComment.imageUrl = `/uploads/${imageFile.filename} || 'http://localhost:8080'`
       }

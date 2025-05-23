@@ -1,5 +1,5 @@
 const http = require('http')
-const socketIo = require('socket.io')
+
 const express = require('express')
 const cors = require('cors')
 const multer = require('multer')
@@ -9,7 +9,6 @@ const admin = require('firebase-admin')
 const { initializeDbConnection } = require('./db.js')
 const { routes } = require('./routes/index.js')
 const credentials = require('../credentials.json')
-const { verifyAuthToken } = require('./middleware/verifyAuthToken.js')
 
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
@@ -35,14 +34,6 @@ app.get('*', (req, res) => {
 })
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
-
-const server = http.createServer(app)
-
-const io = socketIo(server)
-
-io.on('connection', (socket) => {
-  console.log('New client has connected')
-})
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -85,7 +76,9 @@ const start = async () => {
     })
 
     // Start server
-    server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT || 8080}`)
+    )
   } catch (error) {
     console.error('❌ Error connecting to the database:', error)
     process.exit(1)
