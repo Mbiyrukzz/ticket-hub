@@ -28,11 +28,6 @@ app.use(
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Serve React app for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'))
-})
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 const storage = multer.diskStorage({
