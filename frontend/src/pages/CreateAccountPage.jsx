@@ -6,7 +6,7 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
 import Loading from '../components/Loading'
 import './CreateAccountPage.css'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:8080'
 
 const CreateAccountPage = () => {
   const navigate = useNavigate()
