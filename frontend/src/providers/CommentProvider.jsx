@@ -3,7 +3,7 @@ import CommentContext from '../contexts/CommentContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:8090'
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:8090'
 
 const CommentProvider = ({ children }) => {
   const [comments, setComments] = useState([])
