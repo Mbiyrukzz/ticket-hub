@@ -65,7 +65,11 @@ const start = async () => {
         `✅ Registering route: ${route.method.toUpperCase()} ${route.path}`
       )
       if (route.middleware) {
-        app[route.method](route.path, ...route.middleware, route.handler)
+        app[route.method](
+          `/api${route.path}`,
+          ...route.middleware,
+          route.handler
+        )
       } else {
         app[route.method](route.path, route.handler)
       }
