@@ -78,7 +78,9 @@ const createCommentRoute = {
       }
 
       if (imageFile) {
-        newComment.imageUrl = `/uploads/${imageFile.filename} || 'http://localhost:8090'`
+        const image = req.file
+          ? `${process.env.IMAGE_UPLOAD}/${req.file.filename}`
+          : null
       }
 
       await comments.insertOne(newComment)
