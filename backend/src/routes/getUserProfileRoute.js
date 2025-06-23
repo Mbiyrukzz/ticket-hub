@@ -2,7 +2,7 @@ const { verifyAuthToken } = require('../middleware/verifyAuthToken.js');
 const { usersCollection } = require('../db.js');
 
 const getUserProfileRoute = {
-  path: '/users/:userId/profile',
+  path: '/admins/:userId/profile',
   method: 'get',
   middleware: [verifyAuthToken],
   handler: async (req, res) => {

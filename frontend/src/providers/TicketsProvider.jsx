@@ -22,7 +22,7 @@ const TicketsProvider = ({ children }) => {
 
       try {
         const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
-          await get(`${API_URL}/users/${user.uid}/tickets`)
+          await get(`${API_URL}/api/users/${user.uid}/tickets`)
 
         console.log('📥 Fetched tickets:', {
           ownedTicketsWithComments,
@@ -79,7 +79,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const newTicket = await post(
-        `${API_URL}/users/${user.uid}/tickets`,
+        `${API_URL}/api/users/${user.uid}/tickets`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

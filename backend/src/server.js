@@ -17,7 +17,7 @@ const app = express()
 const PORT = process.env.PORT || 8090
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({ origin: '*' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true })) // ✅ Supports form-data requests
 
