@@ -22,6 +22,7 @@ const routes = [
   createUserRoute,
   makeAdminRoute,
   adminCreateTicketRoute,
+
   getUserProfileRoute,
   ticketslistRoutes,
   createTicketRoute,
