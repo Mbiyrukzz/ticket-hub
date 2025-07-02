@@ -31,7 +31,7 @@ const TicketDetailPage = ({ isOwner = true }) => {
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
-      console.log('Ticket:', ticket) // Debug ticket data
+      console.log('Ticket:', ticket)
     }
   }, [ticket])
 
@@ -118,10 +118,34 @@ const TicketDetailPage = ({ isOwner = true }) => {
                 {ticket.title}
               </h2>
               <p className="text-lg text-gray-700">{ticket.content}</p>
-              <p className="text-sm text-gray-500">
-                <span className="font-medium text-gray-400">Created by:</span>{' '}
-                {ticket.userName}
-              </p>
+
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>
+                  <span className="font-medium text-gray-400">Created by:</span>{' '}
+                  {ticket.userName}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-400">
+                    Assigned to:
+                  </span>{' '}
+                  {ticket.assignedToName || ticket.assignedTo || '—'}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-400">Priority:</span>{' '}
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-white text-xs ${
+                      ticket.priority === 'High'
+                        ? 'bg-red-500'
+                        : ticket.priority === 'Medium'
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                    }`}
+                  >
+                    {ticket.priority}
+                  </span>
+                </p>
+              </div>
+
               {ticket.image && (
                 <img
                   src={ticket.image}

@@ -6,12 +6,12 @@ const fs = require('fs')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const logActivity = require('../middleware/logActivity.js')
-const { verifyAdmin } = require('../middleware/verifyAdmin.js')
+const { isAdmin } = require('../middleware/isAdmin.js')
 
 // Multer Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'Uploads')
+    const uploadPath = path.join(__dirname, '.', 'uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
@@ -27,16 +27,17 @@ const upload = multer({ storage })
 const adminCreateTicketRoute = {
   path: '/admins/:userId/tickets',
   method: 'post',
-  middleware: [upload.single('image'), verifyAuthToken, verifyAdmin],
+  middleware: [upload.single('image'), verifyAuthToken, isAdmin],
   handler: async (req, res) => {
     try {
       const authUser = req.user
+      const userDoc = req.userDoc
       const { userId } = req.params
       const users = usersCollection()
       const tickets = ticketsCollection()
 
       // Ensure the authenticated user is creating a ticket for themselves
-      if (!authUser.isAdmin) {
+      if (!userDoc.isAdmin) {
         return res
           .status(403)
           .json({ error: 'Only admins can create tickets for others' })
@@ -48,9 +49,9 @@ const adminCreateTicketRoute = {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
-      const userDoc = await users.findOne({ id: userId })
+      const isAdminUser = await users.findOne({ id: userId })
 
-      if (!userDoc) {
+      if (!isAdminUser) {
         return res.status(404).json({ error: 'User not found' })
       }
 
@@ -62,7 +63,9 @@ const adminCreateTicketRoute = {
 
       const ticketId = uuidv4()
       const image = req.file
-        ? `${process.env.IMAGE_UPLOAD}/${req.file.filename}`
+        ? `${process.env.API_URL || 'http://localhost:8090'}/uploads/${
+            req.file.filename
+          }`
         : null
 
       const newTicket = {

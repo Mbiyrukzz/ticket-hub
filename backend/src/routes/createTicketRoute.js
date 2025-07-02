@@ -9,7 +9,7 @@ const logActivity = require('../middleware/logActivity.js')
 // Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads')
+    const uploadPath = path.join(__dirname, '..', 'Uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
@@ -79,7 +79,9 @@ const createTicketRoute = {
 
       const newTicketId = uuidv4()
       const image = req.file
-        ? `${process.env.IMAGE_UPLOAD}/${req.file.filename}`
+        ? `${process.env.API_URL || 'http://localhost:8090'}/uploads/${
+            req.file.filename
+          }`
         : null
 
       const newTicket = {

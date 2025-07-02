@@ -21,7 +21,7 @@ app.use(cors({ origin: '*' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true })) // ✅ Supports form-data requests
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use('/uploads', express.static(path.join(__dirname, 'Uploads')))
 
 const server = http.createServer(app)
 
