@@ -11,7 +11,7 @@ const { isAdmin } = require('../middleware/isAdmin.js')
 // Multer Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '.', 'uploads')
+    const uploadPath = path.join(__dirname, '..', 'Uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
