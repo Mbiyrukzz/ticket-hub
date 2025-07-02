@@ -69,10 +69,11 @@ const adminCreateTicketRoute = {
         id: ticketId,
         title: title.trim(),
         content: content.trim(),
-        priority: priority || 'Medium', // Default to Medium if not provided
+        priority: priority || 'Medium',
         image,
         createdBy: authUser.uid,
-        assignedTo: authUser.uid,
+        createdFor: userId, // shows it's for this user
+        assignedTo: userId, // task assigned to the user
         assignedToName: userName,
         createdAt: new Date(),
         comments: [],

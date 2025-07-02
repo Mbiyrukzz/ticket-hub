@@ -9,6 +9,7 @@ const { deleteActivitiesRoute } = require('./deleteActivitiesRoute.js')
 const { deleteCommentRoute } = require('./deleteCommentRoute.js')
 const { deleteTicketRoute } = require('./deleteTicketRoute.js')
 const { getUserProfileRoute } = require('./getUserProfileRoute.js')
+const { listAllUsersRoute } = require('./listAllUsersRoute.js')
 const { listAllUsersTickets } = require('./listAllUsersTickets.js')
 const { listCommentsRoute } = require('./listCommentsRoute.js')
 
@@ -26,6 +27,8 @@ const routes = [
 
   getUserProfileRoute,
   listAllUsersTickets,
+  listAllUsersRoute,
+
   ticketslistRoutes,
   createTicketRoute,
   updateTicketRoute,

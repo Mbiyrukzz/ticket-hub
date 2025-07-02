@@ -6,10 +6,10 @@ const { isAdmin } = require('../middleware/isAdmin')
 const listAllUsersTickets = {
   path: '/admins/tickets',
   method: 'get',
-  middleware: [verifyAuthToken, isAdmin], // Remove verifyAdmin
+  middleware: [verifyAuthToken, isAdmin],
   handler: async (req, res) => {
     const authUser = req.user
-    const userDoc = req.userDoc // Set by isAdmin middleware
+    const userDoc = req.userDoc
 
     if (!userDoc?.isAdmin) {
       console.log('⚠️ Admin access denied:', {
