@@ -1,6 +1,7 @@
 const { getActivitiesRoute } = require('./activitiesRoutes.js')
 const { makeAdminRoute } = require('./admin.js')
 const { adminCreateTicketRoute } = require('./adminCreateTicketRoute.js')
+const { adminViewTicketsRoute } = require('./adminViewTicketRoute.js')
 
 const { createCommentRoute } = require('./createCommentRoute.js')
 const { createTicketRoute } = require('./createTicketRoute.js')
@@ -24,6 +25,7 @@ const routes = [
   createUserRoute,
   makeAdminRoute,
   adminCreateTicketRoute,
+  adminViewTicketsRoute,
 
   getUserProfileRoute,
   listAllUsersTickets,
