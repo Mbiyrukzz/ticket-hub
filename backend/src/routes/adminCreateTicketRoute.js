@@ -8,7 +8,6 @@ const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const logActivity = require('../middleware/logActivity.js')
 const { isAdmin } = require('../middleware/isAdmin.js')
 
-// Multer Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '..', 'Uploads')
@@ -36,14 +35,13 @@ const adminCreateTicketRoute = {
       const users = usersCollection()
       const tickets = ticketsCollection()
 
-      // Ensure the authenticated user is creating a ticket for themselves
       if (!userDoc.isAdmin) {
         return res
           .status(403)
           .json({ error: 'Only admins can create tickets for others' })
       }
 
-      const { title, content, priority } = req.body
+      const { title, content, priority, status } = req.body
 
       if (!title?.trim() || !content?.trim()) {
         return res.status(400).json({ error: 'Title and content are required' })
@@ -74,9 +72,10 @@ const adminCreateTicketRoute = {
         content: content.trim(),
         priority: priority || 'Medium',
         image,
+        status: status || 'Open',
         createdBy: authUser.uid,
-        createdFor: userId, // shows it's for this user
-        assignedTo: userId, // task assigned to the user
+        createdFor: userId,
+        assignedTo: userId,
         assignedToName: userName,
         createdAt: new Date(),
         comments: [],

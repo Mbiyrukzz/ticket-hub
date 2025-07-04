@@ -90,7 +90,8 @@ const createTicketRoute = {
         content: content.trim(),
         image,
         createdBy: userId,
-        userName, // 👈 Include userName here
+        userName,
+        status: 'Open',
         createdAt: new Date(),
         comments: [],
       }
