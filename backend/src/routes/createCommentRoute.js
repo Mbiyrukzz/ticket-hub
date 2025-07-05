@@ -12,7 +12,7 @@ const fs = require('fs')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '..', 'uploads')
+    const uploadPath = path.join(__dirname, '..', 'Uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
@@ -78,8 +78,10 @@ const createCommentRoute = {
         content,
         parentId: parentId || null,
         createdAt: new Date().toISOString(),
-        imageUrl: imageFile
-          ? `${process.env.IMAGE_UPLOAD}/${imageFile.filename}`
+        imageUrl: req.file
+          ? `${process.env.API_URL || 'http://localhost:8090'}/uploads/${
+              req.file.filename
+            }`
           : null,
       }
 
