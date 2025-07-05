@@ -4,7 +4,7 @@ const { isAdmin } = require('../middleware/isAdmin.js')
 const logActivity = require('../middleware/logActivity.js')
 
 const adminViewTicketsRoute = {
-  path: '/admins/:userId/tickets', // Optional userId parameter
+  path: '/admins/:userId/tickets',
   method: 'get',
   middleware: [verifyAuthToken, isAdmin],
   handler: async (req, res) => {
@@ -15,7 +15,6 @@ const adminViewTicketsRoute = {
       const tickets = ticketsCollection()
       const users = usersCollection()
 
-      // Ensure the authenticated user is an admin
       if (!userDoc.isAdmin) {
         return res.status(403).json({ error: 'Only admins can view tickets' })
       }
@@ -23,7 +22,6 @@ const adminViewTicketsRoute = {
       let ticketQuery = {}
       let queryDescription = 'Viewed all tickets'
 
-      // If userId is provided, filter tickets by createdFor or assignedTo
       if (userId) {
         const targetUser = await users.findOne({ id: userId })
         if (!targetUser) {
@@ -41,7 +39,6 @@ const adminViewTicketsRoute = {
         queryDescription = `Viewed tickets for user ${userId}`
       }
 
-      // Fetch and format tickets with comments and creator info
       const formattedTickets = await tickets
         .aggregate([
           { $match: ticketQuery },
@@ -74,7 +71,6 @@ const adminViewTicketsRoute = {
         ])
         .toArray()
 
-      // Optional: Fetch tickets shared with this admin (if needed)
       const sharedWithUsersTickets = await tickets
         .aggregate([
           {
@@ -124,7 +120,6 @@ const adminViewTicketsRoute = {
         ])
         .toArray()
 
-      // Log the admin's viewing activity
       await logActivity(
         'admin-viewed-tickets',
         queryDescription,
