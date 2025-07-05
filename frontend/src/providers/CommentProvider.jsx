@@ -3,7 +3,7 @@ import CommentContext from '../contexts/CommentContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:8090'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
 
 const CommentProvider = ({ children }) => {
   const [comments, setComments] = useState([])
@@ -26,7 +26,9 @@ const CommentProvider = ({ children }) => {
       setLoading(true)
       setError(null)
       try {
-        const response = await get(`${API_URL}/tickets/${ticketId}/comments`)
+        const response = await get(
+          `${API_URL}/api/tickets/${ticketId}/comments`
+        )
         console.log('Fetched comments:', response.comments)
         const newComments = Array.isArray(response.comments)
           ? response.comments
@@ -73,10 +75,10 @@ const CommentProvider = ({ children }) => {
         }
         console.log(
           'Sending comment to:',
-          `http://localhost:8090/tickets/${ticketId}/comments`
+          `http://localhost:8090/api/tickets/${ticketId}/comments`
         )
         const response = await post(
-          `${API_URL}/tickets/${ticketId}/comments`,
+          `${API_URL}/api/tickets/${ticketId}/comments`,
           formData
         )
         console.log('Add comment response:', response)

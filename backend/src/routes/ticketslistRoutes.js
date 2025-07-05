@@ -12,14 +12,10 @@ const ticketslistRoutes = {
   handler: async (req, res) => {
     const { userId } = req.params
     const authUser = req.user
+    const isAdmin = authUser.isAdmin === true || authUser.admin === true
 
     try {
-      // Validate user ID match
-      if (authUser.uid !== userId) {
-        return res.status(403).json({ error: 'Forbidden: Unauthorized access' })
-      }
-
-      // Check database collections
+      // Check DB access
       const collections = {
         users: usersCollection(),
         tickets: ticketsCollection(),
@@ -27,51 +23,83 @@ const ticketslistRoutes = {
       }
 
       if (!collections.users || !collections.tickets || !collections.comments) {
-        return res
-          .status(500)
-          .json({ error: 'Internal Server Error: Database unavailable' })
+        return res.status(500).json({ error: 'Database unavailable' })
       }
 
-      // Fetch user data
+      // Fetch requested user
       const user = await collections.users.findOne({ id: userId })
       if (!user) {
         return res.status(404).json({ error: 'User not found' })
       }
 
-      // Fetch owned tickets with comments
+      // Non-admins can only access their own tickets
+      if (!isAdmin && authUser.uid !== userId) {
+        return res.status(403).json({ error: 'Unauthorized access' })
+      }
+
+      // Common comment lookup with isAdmin field
+      const commentLookup = {
+        $lookup: {
+          from: 'comments',
+          let: { ticket_id: '$id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$ticketId', '$$ticket_id'] } } },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: 'id',
+                as: 'authorInfo',
+              },
+            },
+            {
+              $addFields: {
+                isAdmin: { $arrayElemAt: ['$authorInfo.isAdmin', 0] },
+              },
+            },
+            {
+              $project: {
+                authorInfo: 0,
+              },
+            },
+          ],
+          as: 'comments',
+        },
+      }
+
+      const creatorLookup = {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: 'id',
+          as: 'creatorInfo',
+        },
+      }
+
+      const addUserName = {
+        $addFields: {
+          userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
+        },
+      }
+
+      const hideCreatorInfo = {
+        $project: {
+          creatorInfo: 0,
+        },
+      }
+
+      // Fetch owned tickets
       const ownedTicketsWithComments = await collections.tickets
         .aggregate([
-          { $match: { id: { $in: user.tickets || [] } } },
-          {
-            $lookup: {
-              from: 'comments',
-              localField: 'id',
-              foreignField: 'ticketId',
-              as: 'comments',
-            },
-          },
-          {
-            $lookup: {
-              from: 'users',
-              localField: 'createdBy',
-              foreignField: 'id',
-              as: 'creatorInfo',
-            },
-          },
-          {
-            $addFields: {
-              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
-            },
-          },
-          {
-            $project: {
-              creatorInfo: 0,
-            },
-          },
+          { $match: isAdmin ? {} : { id: { $in: user.tickets || [] } } },
+          commentLookup,
+          creatorLookup,
+          addUserName,
+          hideCreatorInfo,
         ])
         .toArray()
 
-      // Fetch shared tickets with comments
+      // Fetch shared-with tickets
       const sharedWithUsersTickets = await collections.tickets
         .aggregate([
           {
@@ -79,27 +107,9 @@ const ticketslistRoutes = {
               'sharedWith.email': { $regex: `^${user.email}$`, $options: 'i' },
             },
           },
-          {
-            $lookup: {
-              from: 'comments',
-              localField: 'id',
-              foreignField: 'ticketId',
-              as: 'comments',
-            },
-          },
-          {
-            $lookup: {
-              from: 'users',
-              localField: 'createdBy',
-              foreignField: 'id',
-              as: 'creatorInfo',
-            },
-          },
-          {
-            $addFields: {
-              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
-            },
-          },
+          commentLookup,
+          creatorLookup,
+          addUserName,
           {
             $project: {
               _id: 0,
@@ -132,11 +142,13 @@ const ticketslistRoutes = {
       return res.status(200).json({
         ownedTicketsWithComments,
         sharedWithUsersTicketsFormatted,
+        isAdmin,
       })
     } catch (error) {
-      console.error('Error fetching tickets:', error)
+      console.error('❌ Error fetching tickets:', error)
       return res.status(500).json({ error: 'Internal Server Error' })
     }
   },
 }
+
 module.exports = { ticketslistRoutes }

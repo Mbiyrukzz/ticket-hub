@@ -14,48 +14,30 @@ const listCommentsRoute = {
     const authUser = req.user
 
     if (!authUser?.uid || !authUser?.email) {
-      console.error('Invalid authUser:', authUser)
       return res.status(401).json({ error: 'Invalid user authentication' })
     }
 
     try {
       const tickets = ticketsCollection()
       const comments = commentsCollection()
-      const users = usersCollection() // 👈 Add users collection
+      const users = usersCollection()
 
       const ticket = await tickets.findOne({ id: ticketId })
       if (!ticket) {
-        console.error(`Ticket not found: ${ticketId}`)
         return res.status(404).json({ error: 'Ticket not found' })
       }
 
-      const normalizedAuthEmail = authUser.email.trim().toLowerCase()
+      const currentUser = await users.findOne({ id: authUser.uid })
+      const isAdmin = currentUser?.isAdmin === true
+      const normalizedEmail = authUser.email.trim().toLowerCase()
+
       const isOwner = ticket.userId === authUser.uid
+      const isShared = (ticket.sharedWith || []).some(
+        (u) => u.email?.trim().toLowerCase() === normalizedEmail
+      )
 
-      const isShared =
-        ticket.sharedWith && Array.isArray(ticket.sharedWith)
-          ? ticket.sharedWith.some((user) => {
-              if (!user || typeof user !== 'object' || !user.email) {
-                console.warn('Invalid sharedWith user:', user)
-                return false
-              }
-              const sharedEmail = user.email.trim().toLowerCase()
-              const matches = sharedEmail === normalizedAuthEmail
-              console.log(
-                `Comparing sharedEmail: '${sharedEmail}' with authEmail: '${normalizedAuthEmail}' -> matches: ${matches}`
-              )
-              return matches
-            })
-          : false
-
-      console.log('=== Access Debug ===')
-      console.log('Auth UID:', authUser.uid)
-      console.log('Auth Email:', normalizedAuthEmail)
-      console.log('Ticket Owner UID:', ticket.userId)
-      console.log('Shared With:', ticket.sharedWith)
-      console.log('isOwner:', isOwner, '| isShared:', isShared)
-
-      if (!isOwner && !isShared) {
+      // Only allow access if user is owner, shared, or admin
+      if (!isOwner && !isShared && !isAdmin) {
         return res.status(403).json({
           error: 'Unauthorized to view comments for this ticket',
         })
@@ -66,24 +48,27 @@ const listCommentsRoute = {
         .sort({ createdAt: 1 })
         .toArray()
 
-      // Fetch user info for all unique userIds in the comments
-      const userIds = [
-        ...new Set(ticketComments.map((comment) => comment.userId)),
-      ]
+      const userIds = [...new Set(ticketComments.map((c) => c.userId))]
       const usersList = await users.find({ id: { $in: userIds } }).toArray()
 
       const userMap = usersList.reduce((acc, user) => {
-        acc[user.id] = user.name || user.userName || 'Unknown User'
+        acc[user.id] = {
+          name: user.name || user.userName || 'Unknown User',
+          isAdmin: user.isAdmin === true,
+        }
         return acc
       }, {})
+      console.log('Fetched Comments:', ticketComments.length)
+      console.log('Fetched Users:', usersList.length)
+      console.log('userIds:', userIds)
 
-      const commentsWithUserNames = ticketComments.map((comment) => ({
+      const commentsWithUserMeta = ticketComments.map((comment) => ({
         ...comment,
-        userName: userMap[comment.userId] || 'Unknown User',
+        userName: userMap[comment.userId]?.name || 'Unknown User',
+        isAdmin: userMap[comment.userId]?.isAdmin || false,
       }))
 
-      console.log(`✅ Returning ${commentsWithUserNames.length} comments`)
-      return res.status(200).json({ comments: commentsWithUserNames })
+      return res.status(200).json({ comments: commentsWithUserMeta })
     } catch (error) {
       console.error('Error fetching comments:', error)
       return res.status(500).json({ error: 'Internal Server Error' })

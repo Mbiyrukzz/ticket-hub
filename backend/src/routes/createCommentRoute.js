@@ -6,7 +6,6 @@ const {
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
 const { v4: uuidv4 } = require('uuid')
-
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
@@ -46,25 +45,29 @@ const createCommentRoute = {
       const comments = commentsCollection()
       const users = usersCollection()
 
-      const ticket = await tickets.findOne({ id: ticketId })
+      const [ticket, user] = await Promise.all([
+        tickets.findOne({ id: ticketId }),
+        users.findOne({ id: authUser.uid }),
+      ])
+
       if (!ticket) {
         return res.status(404).json({ error: 'Ticket not found' })
       }
 
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
       const isOwner = ticket.createdBy === authUser.uid
       const isShared = ticket.sharedWith?.some(
-        (user) => user.email.toLowerCase() === authUser.email.toLowerCase()
+        (u) => u.email.toLowerCase() === authUser.email.toLowerCase()
       )
+      const isAdmin = user.isAdmin
 
-      if (!isOwner && !isShared) {
+      if (!isOwner && !isShared && !isAdmin) {
         return res
           .status(403)
           .json({ error: 'Unauthorized to comment on this ticket' })
-      }
-
-      const user = await users.findOne({ id: authUser.uid })
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' })
       }
 
       const newComment = {
@@ -75,12 +78,9 @@ const createCommentRoute = {
         content,
         parentId: parentId || null,
         createdAt: new Date().toISOString(),
-      }
-
-      if (imageFile) {
-        const image = req.file
-          ? `${process.env.IMAGE_UPLOAD}/${req.file.filename}`
-          : null
+        imageUrl: imageFile
+          ? `${process.env.IMAGE_UPLOAD}/${imageFile.filename}`
+          : null,
       }
 
       await comments.insertOne(newComment)
