@@ -49,14 +49,6 @@ const adminViewTicketsRoute = {
           { $limit: Math.min(parseInt(limit), 50) }, // cap limit for safety
           {
             $lookup: {
-              from: 'comments',
-              localField: 'id',
-              foreignField: 'ticketId',
-              as: 'comments',
-            },
-          },
-          {
-            $lookup: {
               from: 'users',
               localField: 'createdBy',
               foreignField: 'id',
@@ -64,11 +56,25 @@ const adminViewTicketsRoute = {
             },
           },
           {
-            $addFields: {
-              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
+            $lookup: {
+              from: 'users',
+              localField: 'assignedTo',
+              foreignField: 'id',
+              as: 'assigneeInfo',
             },
           },
-          { $project: { creatorInfo: 0 } },
+          {
+            $addFields: {
+              userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
+              assignedToName: { $arrayElemAt: ['$assigneeInfo.name', 0] },
+            },
+          },
+          {
+            $project: {
+              creatorInfo: 0,
+              assigneeInfo: 0,
+            },
+          },
         ])
         .toArray()
 
