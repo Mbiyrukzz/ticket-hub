@@ -19,11 +19,15 @@ const adminNotificationsRoute = {
       const tickets = ticketsCollection()
       const users = usersCollection()
 
+      // Pagination values
       const limit = Math.min(parseInt(req.query.limit) || 10, 20)
+      const page = Math.max(parseInt(req.query.page) || 1, 1)
+      const skip = (page - 1) * limit
 
       const recentTickets = await tickets
         .find({})
         .sort({ createdAt: -1 })
+        .skip(skip)
         .limit(limit)
         .toArray()
 
