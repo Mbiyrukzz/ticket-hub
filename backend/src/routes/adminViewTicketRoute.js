@@ -12,6 +12,8 @@ const adminViewTicketsRoute = {
       const authUser = req.user
       const userDoc = req.userDoc
       const { userId } = req.params
+      const { offset = 0, limit = 10 } = req.query
+
       const tickets = ticketsCollection()
       const users = usersCollection()
 
@@ -42,6 +44,9 @@ const adminViewTicketsRoute = {
       const formattedTickets = await tickets
         .aggregate([
           { $match: ticketQuery },
+          { $sort: { createdAt: -1 } },
+          { $skip: parseInt(offset) },
+          { $limit: Math.min(parseInt(limit), 50) }, // cap limit for safety
           {
             $lookup: {
               from: 'comments',
@@ -63,14 +68,11 @@ const adminViewTicketsRoute = {
               userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
             },
           },
-          {
-            $project: {
-              creatorInfo: 0,
-            },
-          },
+          { $project: { creatorInfo: 0 } },
         ])
         .toArray()
 
+      // Shared tickets remain unpaginated, or you can paginate separately if needed
       const sharedWithUsersTickets = await tickets
         .aggregate([
           {
