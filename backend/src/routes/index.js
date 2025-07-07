@@ -3,6 +3,7 @@ const { makeAdminRoute } = require('./admin.js')
 const { adminCreateTicketRoute } = require('./adminCreateTicketRoute.js')
 const { adminNotificationsRoute } = require('./adminNotificationsRoute.js')
 const { adminRecentTicketsRoute } = require('./adminRecentTicketsRoute.js')
+const { adminSearchRoute } = require('./adminSearchRoute.js')
 const {
   adminTicketPriorityChartRoute,
 } = require('./adminTicketPriorityChartRoute.js')
@@ -40,6 +41,7 @@ const routes = [
   adminTicketPriorityChartRoute,
   adminTicketStatusLineChartRoute,
   adminNotificationsRoute,
+  adminSearchRoute,
 
   getUserProfileRoute,
   listAllUsersTickets,

@@ -19,7 +19,6 @@ const adminTicketStatusLineChartRoute = {
       const tickets = ticketsCollection()
       const statusStats = await tickets
         .aggregate([
-          // Example aggregation: adjust based on your data
           {
             $group: {
               _id: {
@@ -38,13 +37,15 @@ const adminTicketStatusLineChartRoute = {
         labels: [],
         open: [],
         inProgress: [],
-        closed: [],
+        resolved: [],
       }
 
       const dates = [
         ...new Set(statusStats.map((stat) => stat._id.date)),
       ].sort()
+
       formatted.labels = dates
+
       dates.forEach((date) => {
         const openStat =
           statusStats.find(
@@ -54,13 +55,14 @@ const adminTicketStatusLineChartRoute = {
           statusStats.find(
             (stat) => stat._id.date === date && stat._id.status === 'InProgress'
           )?.count || 0
-        const closedStat =
+        const resolvedStat =
           statusStats.find(
-            (stat) => stat._id.date === date && stat._id.status === 'Closed'
+            (stat) => stat._id.date === date && stat._id.status === 'Resolved'
           )?.count || 0
+
         formatted.open.push(openStat)
         formatted.inProgress.push(inProgressStat)
-        formatted.closed.push(closedStat)
+        formatted.resolved.push(resolvedStat)
       })
 
       res.json(formatted)

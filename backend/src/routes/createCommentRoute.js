@@ -34,7 +34,6 @@ const createCommentRoute = {
     const { ticketId } = req.params
     const authUser = req.user
     const { content, parentId } = req.body
-    const imageFile = req.file
 
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'Content is required' })
@@ -59,12 +58,13 @@ const createCommentRoute = {
       }
 
       const isOwner = ticket.createdBy === authUser.uid
+      const isAssigned = ticket.createdFor === authUser.uid
       const isShared = ticket.sharedWith?.some(
         (u) => u.email.toLowerCase() === authUser.email.toLowerCase()
       )
       const isAdmin = user.isAdmin
 
-      if (!isOwner && !isShared && !isAdmin) {
+      if (!isOwner && !isAssigned && !isShared && !isAdmin) {
         return res
           .status(403)
           .json({ error: 'Unauthorized to comment on this ticket' })
@@ -75,7 +75,7 @@ const createCommentRoute = {
         ticketId,
         userId: authUser.uid,
         userName: user.name || user.userName || 'Unknown User',
-        content,
+        content: content.trim(),
         parentId: parentId || null,
         createdAt: new Date().toISOString(),
         imageUrl: req.file
