@@ -125,7 +125,7 @@ const TicketsProvider = ({ children }) => {
       if (fields.image instanceof File) formData.append('image', fields.image)
 
       const updatedTicket = await put(
-        `${API_URL}/users/${userId}/tickets/${ticketId}`,
+        `${API_URL}/api/users/${userId}/tickets/${ticketId}`,
         formData
       )
 
@@ -150,7 +150,7 @@ const TicketsProvider = ({ children }) => {
     if (!user) return
 
     try {
-      await del(`${API_URL}/users/${user.uid}/tickets/${ticketId}`)
+      await del(`${API_URL}/api/users/${user.uid}/tickets/${ticketId}`)
       setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
     } catch (error) {
       console.error('❌ Error deleting ticket:', error.response?.data || error)

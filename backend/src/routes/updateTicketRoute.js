@@ -4,10 +4,9 @@ const multer = require('multer')
 
 const { ticketsCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-
 const { userCanEditTicket } = require('../middleware/userCanEditTicket.js')
 
-// Multer Storage Configuration (same as create)
+// Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '..', 'uploads')
@@ -47,30 +46,34 @@ const updateTicketRoute = {
       if (title && title !== ticket.title) updateFields.title = title
       if (content && content !== ticket.content) updateFields.content = content
 
+      // 🔄 Replace old image if a new one is uploaded
       if (req.file) {
         if (ticket.image) {
           const oldImagePath = path.join(
             __dirname,
             '..',
             'uploads',
-            path.basename(
-              ticket.image.replace('http://localhost:8090/uploads/', '')
-            )
+            path.basename(ticket.image.replace(/.*\/uploads\//, ''))
           )
           if (fs.existsSync(oldImagePath)) {
             await fs.promises.unlink(oldImagePath)
             console.log('🗑️ Old image deleted')
           } else {
-            console.warn('⚠️ Old image not found at:', oldImagePath)
+            console.warn('⚠️ Old image not found:', oldImagePath)
           }
         }
-        updateFields.image = `http://localhost:8090/uploads/${req.file.filename}`
+
+        updateFields.image = `${
+          process.env.API_URL || 'http://localhost:8090'
+        }/uploads/${req.file.filename}`
       }
 
+      // ✅ If no changes, return current ticket
       if (Object.keys(updateFields).length === 0) {
         return res.status(200).json(ticket)
       }
 
+      // ⏫ Update ticket
       const result = await tickets.updateOne(
         { id: ticketId },
         { $set: updateFields }
@@ -81,6 +84,14 @@ const updateTicketRoute = {
       }
 
       const updatedTicket = await tickets.findOne({ id: ticketId })
+
+      // ✅ Emit real-time update via Socket.IO
+      const io = req.app.get('io') // Access io instance from Express
+      if (io) {
+        io.to(ticketId).emit('ticket-updated', updatedTicket)
+        console.log('📡 Emitted ticket-updated for:', ticketId)
+      }
+
       res.status(200).json(updatedTicket)
     } catch (error) {
       console.error('❌ Error updating ticket:', error)

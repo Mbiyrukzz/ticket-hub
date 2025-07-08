@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -8,17 +8,19 @@ import {
   faShare,
   faCommentDots,
 } from '@fortawesome/free-solid-svg-icons'
+import { io } from 'socket.io-client'
 import TicketNotFoundPage from './TicketNotFoundPage'
 import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8090'
 
 const TicketDetailPage = ({ isOwner = true }) => {
   const { tickets, sharedTickets, updateTicket, isLoading } =
     useContext(TicketContext)
   const { ticketId } = useParams()
   const navigate = useNavigate()
-  const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -26,14 +28,45 @@ const TicketDetailPage = ({ isOwner = true }) => {
   const [editedImage, setEditedImage] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
 
+  const socketRef = useRef(null)
+
+  const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)
+
+  // 🔄 Initialize edited fields when ticket is found
   useEffect(() => {
     if (ticket) {
       setEditedTitle(ticket.title)
       setEditedContent(ticket.content)
       setPreviewImage(ticket.image || null)
-      console.log('Ticket:', ticket)
     }
   }, [ticket])
+
+  // ✅ Socket join & real-time update
+  useEffect(() => {
+    if (!ticketId) return
+
+    const socket = io(SOCKET_URL)
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      socket.emit('join-ticket-room', ticketId)
+      console.log('📡 Joined ticket room:', ticketId)
+    })
+
+    socket.on('ticket-updated', (updatedTicket) => {
+      if (updatedTicket.id === ticketId) {
+        console.log('📨 Real-time ticket updated')
+        setEditedTitle(updatedTicket.title)
+        setEditedContent(updatedTicket.content)
+        setPreviewImage(updatedTicket.image || null)
+      }
+    })
+
+    return () => {
+      socket.emit('leave-ticket-room', ticketId)
+      socket.disconnect()
+    }
+  }, [ticketId])
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
@@ -44,25 +77,26 @@ const TicketDetailPage = ({ isOwner = true }) => {
   }
 
   const saveChanges = async () => {
-    try {
-      const updatedTicketData = {
-        title: editedTitle,
-        content: editedContent,
-        image: editedImage || undefined,
-      }
+    if (!ticket) return
+    const updatedTicketData = {
+      title: editedTitle,
+      content: editedContent,
+      image: editedImage || undefined,
+    }
 
+    try {
       await updateTicket(ticket.createdBy, ticket.id, updatedTicketData)
       setIsEditing(false)
       setEditedImage(null)
     } catch (error) {
-      console.error('Update failed:', error)
+      console.error('❌ Update failed:', error)
     }
   }
 
   if (isLoading) return <Loading />
   if (!ticket) return <TicketNotFoundPage />
 
-  const { role } = ticket || {}
+  const { role } = ticket
   const canEdit = role === 'edit'
 
   return (
@@ -118,7 +152,6 @@ const TicketDetailPage = ({ isOwner = true }) => {
                 {ticket.title}
               </h2>
               <p className="text-lg text-gray-700">{ticket.content}</p>
-
               <div className="text-sm text-gray-500 space-y-1">
                 <p>
                   <span className="font-medium text-gray-400">Created by:</span>{' '}
