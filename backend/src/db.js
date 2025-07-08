@@ -31,7 +31,8 @@ const initializeDbConnection = async () => {
   ticketsCollection = db.collection('tickets')
   commentsCollection = db.collection('comments')
   usersCollection = db.collection('users')
-  activitiesCollection = db.collection('activities') // Initialize activitiesCollection
+  activitiesCollection = db.collection('activities')
+  typingStatusCollection = db.collection('typingStatus')
 }
 
 // Function to get the activities collection
@@ -66,5 +67,12 @@ module.exports = {
     }
     return usersCollection
   },
-  activitiesCollection: getActivitiesCollection, // Export activitiesCollection
+
+  typingStatusCollection: () => {
+    if (!typingStatusCollection) {
+      console.error('❌ Typing status collection not initialized')
+      throw new Error('Typing status collection not initialized')
+    }
+  },
+  activitiesCollection: getActivitiesCollection,
 }

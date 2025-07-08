@@ -4,10 +4,10 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-
 const logActivity = require('../middleware/logActivity.js')
 const { isAdmin } = require('../middleware/isAdmin.js')
 
+// Setup Multer storage for ticket image
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '..', 'Uploads')
@@ -47,9 +47,8 @@ const adminCreateTicketRoute = {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
-      const isAdminUser = await users.findOne({ id: userId })
-
-      if (!isAdminUser) {
+      const assignedUser = await users.findOne({ id: userId })
+      if (!assignedUser) {
         return res.status(404).json({ error: 'User not found' })
       }
 
@@ -101,7 +100,7 @@ const adminCreateTicketRoute = {
 
           await logActivity(
             'user-created-ticket',
-            `User created ticket #${ticketId}`,
+            `Admin created ticket #${ticketId}`,
             authUser.uid,
             ticketId
           )
@@ -116,10 +115,16 @@ const adminCreateTicketRoute = {
         await session.endSession()
       }
 
-      res.status(201).json(response)
+      // ✅ Emit real-time event via Socket.IO
+      const io = req.app.get('io')
+      if (io) {
+        io.emit('ticket-created', response)
+      }
+
+      return res.status(201).json(response)
     } catch (error) {
-      console.error('❌ User ticket creation error:', error.message)
-      res.status(500).json({
+      console.error('❌ Admin ticket creation error:', error.message)
+      return res.status(500).json({
         error: 'Failed to create ticket',
         details: error.message,
       })

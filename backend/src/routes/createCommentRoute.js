@@ -4,12 +4,12 @@ const {
   ticketsCollection,
 } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
-
 const { v4: uuidv4 } = require('uuid')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 
+// ✅ Setup Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '..', 'Uploads')
@@ -49,13 +49,8 @@ const createCommentRoute = {
         users.findOne({ id: authUser.uid }),
       ])
 
-      if (!ticket) {
-        return res.status(404).json({ error: 'Ticket not found' })
-      }
-
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' })
-      }
+      if (!ticket) return res.status(404).json({ error: 'Ticket not found' })
+      if (!user) return res.status(404).json({ error: 'User not found' })
 
       const isOwner = ticket.createdBy === authUser.uid
       const isAssigned = ticket.createdFor === authUser.uid
@@ -86,6 +81,12 @@ const createCommentRoute = {
       }
 
       await comments.insertOne(newComment)
+
+      // ✅ Real-time update to all users in the same ticket room
+      const io = req.app.get('io')
+      if (io) {
+        io.to(ticketId).emit('comment-added', newComment)
+      }
 
       return res
         .status(201)

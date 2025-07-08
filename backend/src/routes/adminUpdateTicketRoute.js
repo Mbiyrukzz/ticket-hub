@@ -5,6 +5,7 @@ const logActivity = require('../middleware/logActivity')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const { io } = require('../server') // ✅ Socket.IO instance
 
 // Setup file upload (optional image support)
 const storage = multer.diskStorage({
@@ -82,6 +83,16 @@ const adminUpdateTicketRoute = {
         req.user.uid,
         ticketId
       )
+
+      // 🔥 Emit to socket room
+      const io = req.app.get('io')
+      if (io && ticketId) {
+        io.to(ticketId).emit('ticket-updated', {
+          ...ticket,
+          ...updates,
+          id: ticketId,
+        })
+      }
 
       res.status(200).json({ message: 'Ticket updated successfully', updates })
     } catch (error) {
