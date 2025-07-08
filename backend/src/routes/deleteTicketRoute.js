@@ -7,7 +7,7 @@ const {
 } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const { userOwnsTicket } = require('../middleware/userOwnsTicket.js')
-const logActivity = require('../middleware/logActivity.js') // Import logActivity
+const logActivity = require('../middleware/logActivity.js')
 
 const deleteTicketRoute = {
   path: '/users/:userId/tickets/:ticketId',
@@ -18,34 +18,24 @@ const deleteTicketRoute = {
       const tickets = ticketsCollection()
       const users = usersCollection()
       const comments = commentsCollection()
+      const io = req.app.get('io') // Access io like in update route
 
       if (!tickets || !users || !comments) {
-        console.log('⚠️ Database connection not initialized')
         return res
           .status(500)
           .json({ error: 'Database connection not initialized' })
       }
 
       const { ticketId, userId } = req.params
-      console.log('🔍 Delete Ticket Request Details:', {
-        userId,
-        ticketId,
-        timestamp: new Date().toISOString(),
-      })
 
-      // Fetch the ticket first (already done by userOwnsTicket middleware, but we’ll fetch again for clarity)
       const ticket = await tickets.findOne({ id: ticketId, createdBy: userId })
       if (!ticket) {
-        console.log('⚠️ Ticket not found or unauthorized:', {
-          ticketId,
-          userId,
-        })
         return res
           .status(404)
-          .json({ error: 'Ticket not found or you don’t have permission' })
+          .json({ error: 'Ticket not found or not authorized' })
       }
 
-      // Delete image if exists
+      // 🧹 Delete associated image if present
       if (ticket.image) {
         const imagePath = path.join(
           __dirname,
@@ -53,80 +43,74 @@ const deleteTicketRoute = {
           'uploads',
           path.basename(ticket.image)
         )
-        console.log('🛠️ Attempting image deletion:', imagePath)
         try {
           if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath)
-            console.log('🗑️ Image deleted successfully')
+            await fs.promises.unlink(imagePath)
+            console.log('🗑️ Image deleted:', imagePath)
           } else {
-            console.log('⚠️ Image file not found at:', imagePath)
+            console.log('⚠️ Image file not found:', imagePath)
           }
-        } catch (imageError) {
-          console.error('⚠️ Error deleting image:', imageError)
+        } catch (err) {
+          console.error('⚠️ Failed to delete image:', err)
         }
       }
 
+      // 🔄 MongoDB transaction
       const session = tickets.client.startSession()
       let userUpdateResult
+
       try {
         await session.withTransaction(async () => {
-          // Delete all comments associated with the ticket
-          const commentsDeleteResult = await comments.deleteMany({
-            ticketId: ticketId,
-          })
-          console.log('✅ Deleted comments:', {
-            ticketId,
-            deletedCount: commentsDeleteResult.deletedCount,
-          })
+          // ✅ Delete ticket comments
+          const deletedComments = await comments.deleteMany({ ticketId })
+          console.log(`🗑️ Deleted ${deletedComments.deletedCount} comments`)
 
-          // Delete the ticket from the collection
-          const ticketDeleteResult = await tickets.deleteOne({
+          // ✅ Delete ticket document
+          const deleteResult = await tickets.deleteOne({
             id: ticketId,
             createdBy: userId,
           })
-          if (ticketDeleteResult.deletedCount === 0) {
-            console.log('⚠️ No ticket was deleted:', { ticketId, userId })
-            throw new Error('Failed to delete ticket')
+          if (deleteResult.deletedCount === 0) {
+            throw new Error('Ticket deletion failed')
           }
-          console.log('✅ Ticket deleted from collection')
 
-          // Remove ticket reference from user
+          // ✅ Remove ticket ref from user
           userUpdateResult = await users.updateOne(
             { id: userId },
             { $pull: { tickets: ticketId } }
           )
           if (userUpdateResult.modifiedCount === 0) {
-            console.log(
-              '⚠️ Failed to update user by removing ticket reference:',
-              { userId, ticketId }
-            )
-            throw new Error(
-              'Failed to update user by removing ticket reference'
-            )
+            throw new Error('Failed to update user ticket reference')
           }
-          console.log('✅ User updated by removing ticket reference')
 
-          // Log the activity after the ticket and comments are deleted
+          // ✅ Log activity
           await logActivity(
             'deleted-ticket',
             `Deleted ticket #${ticketId}`,
             userId,
             ticketId
           )
-          console.log('✅ Activity logged for deleted ticket')
+
+          const io = req.app.get('io') // access io instance
+          if (io) {
+            io.to(ticketId).emit('ticket-deleted', {
+              ticketId,
+              title: ticket.title,
+              deletedBy: userId,
+            })
+          }
         })
       } finally {
         await session.endSession()
       }
 
-      console.log('✅ Ticket deleted successfully')
       res.status(200).json({
         message: '✅ Ticket deleted successfully',
         ticketId,
         userUpdated: userUpdateResult.modifiedCount > 0,
       })
     } catch (error) {
-      console.error('❌ Error in delete ticket route:', {
+      console.error('❌ Error deleting ticket:', {
         message: error.message,
         stack: error.stack,
       })

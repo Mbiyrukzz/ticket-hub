@@ -28,38 +28,42 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('my-tickets')
   const [highlightedTicketId, setHighlightedTicketId] = useState(null)
 
+  // ✅ Real-time updates via shared socket
   useEffect(() => {
     if (!socket) return
 
-    socket.on('ticket-created', (ticket) => {
+    const handleCreated = (ticket) => {
       toast.success(`New ticket created: ${ticket.title}`)
       setHighlightedTicketId(ticket.id)
-    })
+    }
 
-    socket.on('ticket-updated', (ticket) => {
+    const handleUpdated = (ticket) => {
       toast(`Ticket updated: ${ticket.title}`)
       setHighlightedTicketId(ticket.id)
-    })
+    }
 
-    socket.on('ticket-deleted', (ticketId) => {
-      toast.error(`Ticket deleted: ${ticketId}`)
-    })
+    const handleDeleted = ({ ticketId, title }) => {
+      toast.error(`Ticket deleted: ${title || ticketId}`)
+    }
+
+    socket.on('ticket-created', handleCreated)
+    socket.on('ticket-updated', handleUpdated)
+    socket.on('ticket-deleted', handleDeleted)
 
     return () => {
-      socket.off('ticket-created')
-      socket.off('ticket-updated')
-      socket.off('ticket-deleted')
+      socket.off('ticket-created', handleCreated)
+      socket.off('ticket-updated', handleUpdated)
+      socket.off('ticket-deleted', handleDeleted)
     }
   }, [socket])
 
+  // Clear highlight after timeout
   useEffect(() => {
     if (highlightedTicketId) {
       const timeout = setTimeout(() => setHighlightedTicketId(null), 3000)
       return () => clearTimeout(timeout)
     }
   }, [highlightedTicketId])
-
-  if (isLoading) return <Loading />
 
   const handleNewTicketSubmit = async ({ title, content, image }) => {
     try {
@@ -82,6 +86,8 @@ const Dashboard = () => {
       setErrorMessage('Failed to delete ticket. Please try again.')
     }
   }
+
+  if (isLoading) return <Loading />
 
   return (
     <div className="relative min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">

@@ -203,6 +203,7 @@ const TicketsProvider = ({ children }) => {
         updateTicket,
         shareTicket,
         unshareTicket,
+        socket: socket.current,
       }}
     >
       {children}
