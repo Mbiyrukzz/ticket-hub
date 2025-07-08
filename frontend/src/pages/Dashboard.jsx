@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TicketList from '../components/TicketList'
 import SharedTicketList from '../components/SharedTicketList'
@@ -8,17 +8,56 @@ import NewTicketForm from '../components/NewTicketForm'
 import ConfirmDeleteTicket from '../components/ConfirmDeleteTicket'
 import Loading from '../components/Loading'
 import ActivityContext from '../contexts/ActivityContext'
+import { toast } from 'react-hot-toast'
 
 const Dashboard = () => {
   const navigate = useNavigate()
   const { refreshActivities } = useContext(ActivityContext)
-  const { isLoading, tickets, sharedTickets, createTicket, deleteTicket } =
-    useContext(TicketContext)
+  const {
+    isLoading,
+    tickets,
+    sharedTickets,
+    createTicket,
+    deleteTicket,
+    socket,
+  } = useContext(TicketContext)
 
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false)
   const [ticketIdToDelete, setTicketIdToDelete] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const [activeTab, setActiveTab] = useState('my-tickets')
+  const [highlightedTicketId, setHighlightedTicketId] = useState(null)
+
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('ticket-created', (ticket) => {
+      toast.success(`New ticket created: ${ticket.title}`)
+      setHighlightedTicketId(ticket.id)
+    })
+
+    socket.on('ticket-updated', (ticket) => {
+      toast(`Ticket updated: ${ticket.title}`)
+      setHighlightedTicketId(ticket.id)
+    })
+
+    socket.on('ticket-deleted', (ticketId) => {
+      toast.error(`Ticket deleted: ${ticketId}`)
+    })
+
+    return () => {
+      socket.off('ticket-created')
+      socket.off('ticket-updated')
+      socket.off('ticket-deleted')
+    }
+  }, [socket])
+
+  useEffect(() => {
+    if (highlightedTicketId) {
+      const timeout = setTimeout(() => setHighlightedTicketId(null), 3000)
+      return () => clearTimeout(timeout)
+    }
+  }, [highlightedTicketId])
 
   if (isLoading) return <Loading />
 
@@ -58,64 +97,59 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="p-6">
-        {/* Tabs Navigation */}
-        <div className="mb-6">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setActiveTab('my-tickets')}
-              className={`px-4 py-2 font-medium text-sm transition ${
-                activeTab === 'my-tickets'
-                  ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              My Tickets
-            </button>
-            <button
-              onClick={() => setActiveTab('shared-tickets')}
-              className={`px-4 py-2 font-medium text-sm transition ${
-                activeTab === 'shared-tickets'
-                  ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              Shared With You
-            </button>
+        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+          <button
+            onClick={() => setActiveTab('my-tickets')}
+            className={`px-4 py-2 font-medium text-sm transition ${
+              activeTab === 'my-tickets'
+                ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            My Tickets
+          </button>
+          <button
+            onClick={() => setActiveTab('shared-tickets')}
+            className={`px-4 py-2 font-medium text-sm transition ${
+              activeTab === 'shared-tickets'
+                ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            Shared With You
+          </button>
+        </div>
+
+        {errorMessage && (
+          <div className="mb-4 p-4 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600 rounded-lg">
+            {errorMessage}
           </div>
-        </div>
+        )}
 
-        {/* Tab Content */}
-        <div className="grid grid-cols-1 gap-6">
-          {errorMessage && (
-            <div className="mb-4 p-4 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600 rounded-lg">
-              {errorMessage}
-            </div>
-          )}
-
-          {activeTab === 'my-tickets' ? (
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
-              <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
-              <TicketList
-                tickets={tickets}
-                onRequestDelete={setTicketIdToDelete}
-                onClickItem={(id) => navigate(`/tickets/${id}`)}
-              />
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
-              <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
-              <SharedTicketList
-                sharedTickets={sharedTickets}
-                onClickItem={(id) => navigate(`/shared/${id}`)}
-              />
-              {sharedTickets.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
-                  No tickets shared with you yet.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+        {activeTab === 'my-tickets' ? (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
+            <TicketList
+              tickets={tickets}
+              highlightedTicketId={highlightedTicketId}
+              onRequestDelete={setTicketIdToDelete}
+              onClickItem={(id) => navigate(`/tickets/${id}`)}
+            />
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
+            <SharedTicketList
+              sharedTickets={sharedTickets}
+              onClickItem={(id) => navigate(`/shared/${id}`)}
+            />
+            {sharedTickets.length === 0 && (
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
+                No tickets shared with you yet.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* New Ticket Modal */}

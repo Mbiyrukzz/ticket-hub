@@ -34,7 +34,6 @@ const createTicketRoute = {
       const users = usersCollection()
 
       if (!tickets || !users) {
-        console.log('⚠️ Database connection not initialized')
         return res
           .status(500)
           .json({ error: 'Database connection not initialized' })
@@ -43,20 +42,14 @@ const createTicketRoute = {
       const { userId } = req.params
 
       if (authUser.uid !== userId) {
-        console.log('⚠️ Unauthorized access attempt:', {
-          userId,
-          authUserId: authUser.uid,
-        })
         return res.status(403).json({ error: 'Forbidden' })
       }
 
       const { title, content } = req.body
       if (!title?.trim() || !content?.trim()) {
-        console.log('⚠️ Validation failed:', { title, content })
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
-      // Get the user's name
       const userDoc = await users.findOne({ id: userId })
       if (!userDoc) {
         return res.status(404).json({ error: 'User not found' })
@@ -67,15 +60,6 @@ const createTicketRoute = {
         userDoc.displayName ||
         userDoc.email?.split('@')[0] ||
         'Unknown'
-
-      console.log('🔍 Create Ticket Request Details:', {
-        userId,
-        title,
-        content,
-        userName,
-        timestamp: new Date().toISOString(),
-      })
-      console.log('📸 Uploaded File:', req.file)
 
       const newTicketId = uuidv4()
       const image = req.file
@@ -98,6 +82,7 @@ const createTicketRoute = {
 
       const session = tickets.client.startSession()
       let response
+
       try {
         await session.withTransaction(async () => {
           const result = await tickets.insertOne(newTicket)
@@ -108,10 +93,6 @@ const createTicketRoute = {
             { $push: { tickets: newTicketId } }
           )
           if (userUpdateResult.modifiedCount === 0) {
-            console.log('⚠️ Failed to update user with new ticket:', {
-              userId,
-              ticketId: newTicketId,
-            })
             throw new Error('Failed to update user with new ticket')
           }
 
@@ -128,7 +109,11 @@ const createTicketRoute = {
             createdAt: newTicket.createdAt.toISOString(),
           }
 
-          console.log('✅ Ticket created successfully:', response)
+          // ✅ Real-time broadcast via Socket.IO
+          const io = req.app.get('io')
+          if (io) {
+            io.emit('ticket-created', response)
+          }
         })
       } finally {
         await session.endSession()

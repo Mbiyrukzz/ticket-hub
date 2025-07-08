@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
-
+import React, { useEffect, useState, useRef } from 'react'
 import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
+import { io } from 'socket.io-client'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL
 
 const TicketsProvider = ({ children }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
@@ -14,6 +15,48 @@ const TicketsProvider = ({ children }) => {
   const [tickets, setTickets] = useState([])
   const [sharedTickets, setSharedTickets] = useState([])
 
+  const socket = useRef(null)
+
+  // ✅ Connect to socket
+  useEffect(() => {
+    if (!user?.uid) return
+
+    socket.current = io(SOCKET_URL)
+
+    socket.current.on('connect', () => {
+      console.log('✅ Connected to socket server:', socket.current.id)
+    })
+
+    // ✅ New ticket created
+    socket.current.on('ticket-created', (newTicket) => {
+      if (newTicket.createdBy === user.uid) return // avoid duplicate
+      console.log('📥 Real-time ticket created:', newTicket)
+      setTickets((prev) => [newTicket, ...prev])
+    })
+
+    // ✅ Ticket updated
+    socket.current.on('ticket-updated', (updatedTicket) => {
+      if (updatedTicket.createdBy !== user.uid) return
+      console.log('✏️ Real-time ticket updated:', updatedTicket)
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === updatedTicket.id ? updatedTicket : ticket
+        )
+      )
+    })
+
+    // ✅ Ticket deleted
+    socket.current.on('ticket-deleted', ({ ticketId }) => {
+      console.log('🗑️ Real-time ticket deleted:', ticketId)
+      setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
+    })
+
+    return () => {
+      socket.current?.disconnect()
+    }
+  }, [user?.uid])
+
+  // ✅ Load user tickets
   useEffect(() => {
     const loadTickets = async () => {
       if (!user || !isReady) return
@@ -24,24 +67,16 @@ const TicketsProvider = ({ children }) => {
         const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
           await get(`${API_URL}/api/users/${user.uid}/tickets`)
 
-        console.log('📥 Fetched tickets:', {
-          ownedTicketsWithComments,
-          sharedWithUsersTicketsFormatted,
-        })
-
-        if (Array.isArray(ownedTicketsWithComments)) {
-          setTickets(ownedTicketsWithComments)
-        } else {
-          console.error('❌ Unexpected ownedTickets structure')
-          setTickets([])
-        }
-
-        if (Array.isArray(sharedWithUsersTicketsFormatted)) {
-          setSharedTickets(sharedWithUsersTicketsFormatted)
-        } else {
-          console.error('❌ Unexpected sharedTickets structure')
-          setSharedTickets([])
-        }
+        setTickets(
+          Array.isArray(ownedTicketsWithComments)
+            ? ownedTicketsWithComments
+            : []
+        )
+        setSharedTickets(
+          Array.isArray(sharedWithUsersTicketsFormatted)
+            ? sharedWithUsersTicketsFormatted
+            : []
+        )
       } catch (error) {
         console.error('❌ Error fetching tickets:', error)
         setTickets([])
@@ -51,31 +86,20 @@ const TicketsProvider = ({ children }) => {
       }
     }
 
-    if (user && isReady) {
-      loadTickets()
-    }
+    loadTickets()
   }, [user, isReady, get])
 
+  // ✅ Create ticket
   const createTicket = async (ticketData) => {
-    if (!user) {
-      console.error('⚠️ User not authenticated!')
-      return
-    }
-
-    console.log('🚀 createTicket function triggered!', ticketData)
+    if (!user) return
 
     const { title, content, image } = ticketData
-    if (!title || !content) {
-      console.error('❌ Title and content are required')
-      return
-    }
+    if (!title || !content) return
 
     const formData = new FormData()
     formData.append('title', title)
     formData.append('content', content)
-    if (image instanceof File) {
-      formData.append('image', image)
-    }
+    if (image instanceof File) formData.append('image', image)
 
     try {
       const newTicket = await post(
@@ -86,62 +110,47 @@ const TicketsProvider = ({ children }) => {
         }
       )
 
-      console.log('✅ Ticket created:', newTicket)
-
-      setTickets((prevTickets) => [newTicket, ...prevTickets]) // ✅ Update state with new ticket
+      setTickets((prev) => [newTicket, ...prev])
     } catch (error) {
       console.error('❌ Error creating ticket:', error.response?.data || error)
     }
   }
 
-  const updateTicket = async (
-    userId,
-    ticketId,
-    { title, content, image } = {}
-  ) => {
+  // ✅ Update ticket
+  const updateTicket = async (userId, ticketId, fields = {}) => {
     try {
       const formData = new FormData()
-      if (title) formData.append('title', title)
-      if (content) formData.append('content', content)
-      if (image instanceof File) formData.append('image', image)
+      if (fields.title) formData.append('title', fields.title)
+      if (fields.content) formData.append('content', fields.content)
+      if (fields.image instanceof File) formData.append('image', fields.image)
 
       const updatedTicket = await put(
         `${API_URL}/users/${userId}/tickets/${ticketId}`,
         formData
       )
 
-      console.log('✅ Update response:')
-
-      setTickets((prevTickets) =>
-        prevTickets.map((ticket) =>
-          ticket.id === ticketId
-            ? { ...ticket, ...updatedTicket }
-            : { ...ticket }
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === ticketId ? { ...ticket, ...updatedTicket } : ticket
         )
       )
 
       return { success: true, data: updatedTicket }
     } catch (error) {
       console.error('❌ Error updating ticket:', error.response?.data || error)
-      const errorMessage =
-        error.response?.data?.error || 'Failed to update ticket'
-      return { success: false, error: errorMessage }
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to update ticket',
+      }
     }
   }
 
+  // ✅ Delete ticket
   const deleteTicket = async (ticketId) => {
-    if (!user) {
-      console.error('⚠️ User not authenticated!')
-      return
-    }
-
-    console.log('🚮 Attempting to delete ticket with ID:', ticketId)
+    if (!user) return
 
     try {
-      await del(`${API_URL}/users/${user.uid}/tickets/${ticketId}`) // ✅ Ensuring correct API URL
-
-      console.log('✅ Ticket deleted:', ticketId)
-
+      await del(`${API_URL}/users/${user.uid}/tickets/${ticketId}`)
       setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
     } catch (error) {
       console.error('❌ Error deleting ticket:', error.response?.data || error)
@@ -154,15 +163,15 @@ const TicketsProvider = ({ children }) => {
         `${API_URL}/tickets/${ticketId}/share-ticket`,
         { email, role }
       )
-      setTickets(
-        tickets.map((ticket) =>
+      setTickets((prev) =>
+        prev.map((ticket) =>
           ticket.id === ticketId
             ? { ...ticket, sharedWith: updatedEmails }
             : ticket
         )
       )
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 
@@ -171,18 +180,15 @@ const TicketsProvider = ({ children }) => {
       const updatedTicket = await del(
         `${API_URL}/tickets/${ticketId}/unshare-ticket/${email}`
       )
-      setTickets(
-        tickets.map((ticket) =>
+      setTickets((prev) =>
+        prev.map((ticket) =>
           ticket.id === ticketId
-            ? {
-                ...ticket,
-                sharedWith: updatedTicket,
-              }
+            ? { ...ticket, sharedWith: updatedTicket }
             : ticket
         )
       )
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   }
 
