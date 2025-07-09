@@ -46,6 +46,9 @@ io.on('connection', (socket) => {
   socket.on('user-typing', ({ ticketId, userName, userId }) => {
     socket.to(ticketId).emit('user-typing', { userName, userId })
   })
+  socket.on('new-comment', ({ ticketId, comment }) => {
+    io.to(ticketId).emit('comment-created', comment)
+  })
 
   socket.on('disconnect', () => {
     console.log('🔴 Client disconnected:', socket.id)

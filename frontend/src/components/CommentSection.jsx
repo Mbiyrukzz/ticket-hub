@@ -9,6 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { useUser } from '../hooks/useUser'
 import ActivityContext from '../contexts/ActivityContext'
+import clsx from 'clsx'
 
 const buildCommentTree = (comments) => {
   const map = {}
@@ -31,27 +32,35 @@ const buildCommentTree = (comments) => {
   return roots
 }
 
-const CommentSection = ({ ticketId, comments: propComments }) => {
+const CommentSection = ({ ticketId }) => {
   const {
     getCommentsByTicketId,
     addComment,
     editComment,
     deleteComment,
     fetchComments,
+    highlightedIds,
+    typingUsers,
+    emitTyping,
   } = useContext(CommentContext)
 
   const { refreshActivities } = useContext(ActivityContext)
   const { user } = useUser()
 
-  const comments = propComments || getCommentsByTicketId(ticketId) || []
+  const comments = getCommentsByTicketId(ticketId) || []
 
   const [newComment, setNewComment] = useState('')
   const [newImage, setNewImage] = useState(null)
   const [commentToDelete, setCommentToDelete] = useState(null)
   const [error, setError] = useState(null)
 
+  const [replying, setReplying] = useState({})
+  const [replyText, setReplyText] = useState({})
+  const [editingId, setEditingId] = useState(null)
+  const [editedText, setEditedText] = useState('')
+
   useEffect(() => {
-    if (!propComments && user?.uid && ticketId) {
+    if (user?.uid && ticketId) {
       fetchComments(user.uid, ticketId).catch((err) =>
         setError(
           err.message.includes('Unauthorized')
@@ -60,34 +69,30 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
         )
       )
     }
-  }, [user, ticketId, fetchComments, propComments])
+  }, [user, ticketId, fetchComments])
 
   const handleAddComment = async (e, parentId = null) => {
     e.preventDefault()
-    if (!user?.uid) {
-      setError('You must be logged in to comment.')
-      return
-    }
+    if (!user?.uid) return setError('You must be logged in to comment.')
 
     const content = parentId ? replyText[parentId] : newComment
+    if (!content.trim()) return
 
-    if (content.trim()) {
-      try {
-        await addComment(user.uid, ticketId, content, newImage, parentId)
-        await refreshActivities()
+    try {
+      await addComment(user.uid, ticketId, content, newImage, parentId)
+      await refreshActivities()
 
-        if (parentId) {
-          setReplyText((prev) => ({ ...prev, [parentId]: '' }))
-          setReplying((prev) => ({ ...prev, [parentId]: false }))
-        } else {
-          setNewComment('')
-          setNewImage(null)
-        }
-
-        setError(null)
-      } catch (error) {
-        setError('Failed to add comment.' + error)
+      if (parentId) {
+        setReplyText((prev) => ({ ...prev, [parentId]: '' }))
+        setReplying((prev) => ({ ...prev, [parentId]: false }))
+      } else {
+        setNewComment('')
+        setNewImage(null)
       }
+
+      setError(null)
+    } catch (error) {
+      setError('Failed to add comment.' + error.message)
     }
   }
 
@@ -96,24 +101,14 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
   }
 
   const handleConfirmDelete = async () => {
-    if (!user?.uid) {
-      setError('You must be logged in to delete a comment.')
-      return
-    }
     try {
       await deleteComment(user.uid, ticketId, commentToDelete)
       await refreshActivities()
       setCommentToDelete(null)
-      setError(null)
     } catch (error) {
-      setError('Failed to delete comment.' + error)
+      setError('Failed to delete comment: ' + error.message)
     }
   }
-
-  const [replying, setReplying] = useState({})
-  const [replyText, setReplyText] = useState({})
-  const [editingId, setEditingId] = useState(null)
-  const [editedText, setEditedText] = useState('')
 
   const handleEdit = (id, content) => {
     setEditingId(id)
@@ -141,6 +136,11 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
             ({comments.length})
           </span>
         </h2>
+        {typingUsers.length > 0 && (
+          <p className="text-sm text-indigo-500">
+            {typingUsers.join(', ')} typing...
+          </p>
+        )}
       </div>
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -153,16 +153,14 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
           rows={3}
           placeholder="Add comment..."
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={(e) => {
+            setNewComment(e.target.value)
+            emitTyping()
+          }}
           className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
         />
         <div className="flex justify-between items-center">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="text-sm text-gray-500"
-          />
+          <input type="file" accept="image/*" onChange={handleImageChange} />
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md"
@@ -180,6 +178,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
             <CommentItem
               key={comment.id}
               comment={comment}
+              user={user}
               replying={replying}
               setReplying={setReplying}
               replyText={replyText}
@@ -191,6 +190,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
               editingId={editingId}
               editedText={editedText}
               setEditedText={setEditedText}
+              highlighted={highlightedIds.includes(comment.id)}
             />
           ))
         )}
@@ -208,6 +208,7 @@ const CommentSection = ({ ticketId, comments: propComments }) => {
 
 const CommentItem = ({
   comment,
+  user,
   replying,
   setReplying,
   replyText,
@@ -219,10 +220,19 @@ const CommentItem = ({
   editingId,
   editedText,
   setEditedText,
+  highlighted,
 }) => {
+  const isAuthor = comment.userId === user?.uid
+
   return (
-    <div className="pl-4 border-l border-gray-200">
-      <div className="flex items-start space-x-4">
+    <div
+      className={clsx(
+        'pl-4 border-l border-gray-200 rounded-md transition-all duration-300',
+        highlighted && 'bg-yellow-100',
+        isAuthor && 'bg-blue-50'
+      )}
+    >
+      <div className="flex items-start space-x-4 py-3">
         <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold">
           {comment.userName?.[0]?.toUpperCase() || '?'}
         </div>
@@ -237,12 +247,12 @@ const CommentItem = ({
               <textarea
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="w-full p-2 mt-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 mt-2 border border-gray-300 rounded-md"
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => onSaveEdit(comment.id)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md"
+                  className="bg-indigo-600 text-white px-3 py-1 rounded-md"
                 >
                   Save
                 </button>
@@ -281,13 +291,13 @@ const CommentItem = ({
                 </button>
                 <button
                   onClick={() => onEdit(comment.id, comment.content)}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-indigo-600 hover:text-indigo-700"
                 >
                   Edit
                 </button>
                 <button
                   onClick={onDelete}
-                  className="text-red-400 hover:text-red-500 font-medium"
+                  className="text-red-400 hover:text-red-500"
                 >
                   Delete
                 </button>
@@ -313,7 +323,7 @@ const CommentItem = ({
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md"
+                className="bg-blue-500 text-white px-3 py-1 rounded-md"
               >
                 Post Reply
               </button>
@@ -326,6 +336,7 @@ const CommentItem = ({
                 <CommentItem
                   key={child.id}
                   comment={child}
+                  user={user}
                   replying={replying}
                   setReplying={setReplying}
                   replyText={replyText}
@@ -337,6 +348,7 @@ const CommentItem = ({
                   editingId={editingId}
                   editedText={editedText}
                   setEditedText={setEditedText}
+                  highlighted={highlighted}
                 />
               ))}
             </div>
