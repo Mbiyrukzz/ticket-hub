@@ -36,8 +36,11 @@ const TicketsProvider = ({ children }) => {
 
     // ✅ Ticket updated
     socket.current.on('ticket-updated', (updatedTicket) => {
-      if (updatedTicket.createdBy !== user.uid) return
-      console.log('✏️ Real-time ticket updated:', updatedTicket)
+      const isOwner = updatedTicket.createdBy === user.uid
+      const isShared = sharedTickets.some((t) => t.id === updatedTicket.id)
+
+      if (!isOwner && !isShared) return
+
       setTickets((prev) =>
         prev.map((ticket) =>
           ticket.id === updatedTicket.id ? updatedTicket : ticket
@@ -201,6 +204,7 @@ const TicketsProvider = ({ children }) => {
         createTicket,
         deleteTicket,
         updateTicket,
+        setTickets,
         shareTicket,
         unshareTicket,
         socket: socket.current,

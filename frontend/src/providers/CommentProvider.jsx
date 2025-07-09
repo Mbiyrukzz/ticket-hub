@@ -7,7 +7,7 @@ import { io } from 'socket.io-client'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL
 
-const CommentProvider = ({ children }) => {
+const CommentProvider = ({ children, ticketId }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
   const { user } = useUser()
 
@@ -21,12 +21,14 @@ const CommentProvider = ({ children }) => {
 
   // 🔌 Socket setup
   useEffect(() => {
-    if (!user?.uid) return
+    if (!user?.uid || !ticketId) return
 
     socketRef.current = io(SOCKET_URL)
 
     socketRef.current.on('connect', () => {
       console.log('✅ Socket connected:', socketRef.current.id)
+      socketRef.current.emit('join-ticket-room', ticketId)
+      console.log('🟢 Joined room:', ticketId)
     })
 
     socketRef.current.on('comment-created', (comment) => {
@@ -56,11 +58,14 @@ const CommentProvider = ({ children }) => {
     })
 
     return () => {
-      socketRef.current?.disconnect()
+      if (socketRef.current) {
+        socketRef.current.emit('leave-ticket-room', ticketId)
+        socketRef.current.disconnect()
+      }
     }
-  }, [user])
+  }, [user, ticketId])
 
-  // 📥 Load Comments for ticket
+  // 📥 Load Comments
   const fetchComments = useCallback(
     async (userId, ticketId) => {
       if (!userId || !ticketId || !isReady) return
@@ -87,7 +92,7 @@ const CommentProvider = ({ children }) => {
     [get, isReady]
   )
 
-  // ➕ Add
+  // ➕ Add Comment
   const addComment = useCallback(
     async (userId, ticketId, content, imageFile, parentId = null) => {
       if (!userId || !ticketId || !content?.trim() || !isReady) return
@@ -113,7 +118,7 @@ const CommentProvider = ({ children }) => {
     [post, isReady]
   )
 
-  // ✏️ Edit
+  // ✏️ Edit Comment
   const editComment = useCallback(
     async (userId, ticketId, commentId, updatedData) => {
       if (!updatedData?.content?.trim()) return
@@ -140,7 +145,7 @@ const CommentProvider = ({ children }) => {
     [put]
   )
 
-  // ❌ Delete
+  // ❌ Delete Comment
   const deleteComment = useCallback(
     async (userId, ticketId, commentId) => {
       try {
@@ -156,7 +161,7 @@ const CommentProvider = ({ children }) => {
     [del]
   )
 
-  // ✏️ Typing
+  // 💬 Typing
   const emitTyping = (ticketId) => {
     if (!user?.displayName || !ticketId) return
     socketRef.current?.emit('user-typing', {

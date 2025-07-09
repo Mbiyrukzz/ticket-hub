@@ -34,24 +34,42 @@ const io = socketIo(server, {
 // ✅ Make io available to routes via req.app.get('io')
 app.set('io', io)
 
-// ✅ Socket.IO Connection Handling
 io.on('connection', (socket) => {
   console.log('🟢 Client connected:', socket.id)
 
+  // 🔗 Join ticket room
   socket.on('join-ticket-room', (ticketId) => {
     socket.join(ticketId)
     console.log(`🔁 Socket ${socket.id} joined room: ${ticketId}`)
   })
 
-  socket.on('user-typing', ({ ticketId, userName, userId }) => {
-    socket.to(ticketId).emit('user-typing', { userName, userId })
-  })
-  socket.on('new-comment', ({ ticketId, comment }) => {
-    io.to(ticketId).emit('comment-created', comment)
+  // 👋 Leave room (optional if you implement it)
+  socket.on('leave-ticket-room', (ticketId) => {
+    socket.leave(ticketId)
+    console.log(`👋 Socket ${socket.id} left room: ${ticketId}`)
   })
 
-  socket.on('disconnect', () => {
-    console.log('🔴 Client disconnected:', socket.id)
+  // ✏️ Typing
+  socket.on('user-typing', ({ ticketId, userName, userId }) => {
+    socket.to(ticketId).emit('users-typing', [userName]) // ← match client side
+  })
+
+  // ➕ Comment created
+  socket.on('new-comment', ({ ticketId, comment }) => {
+    console.log(`📨 New comment on ${ticketId}`, comment)
+    socket.to(ticketId).emit('comment-created', comment)
+  })
+
+  // 📝 Comment updated
+  socket.on('update-comment', ({ ticketId, comment }) => {
+    console.log(`🛠️ Updated comment on ${ticketId}`)
+    socket.to(ticketId).emit('comment-updated', comment)
+  })
+
+  // ❌ Comment deleted
+  socket.on('delete-comment', ({ ticketId, commentId }) => {
+    console.log(`❌ Deleted comment ${commentId} on ${ticketId}`)
+    socket.to(ticketId).emit('comment-deleted', commentId)
   })
 })
 

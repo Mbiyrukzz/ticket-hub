@@ -13,12 +13,14 @@ import TicketNotFoundPage from './TicketNotFoundPage'
 import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
+import CommentProvider from '../providers/CommentProvider'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8090'
 
 const TicketDetailPage = ({ isOwner = true }) => {
-  const { tickets, sharedTickets, updateTicket, isLoading } =
+  const { tickets, sharedTickets, updateTicket, isLoading, setTickets } =
     useContext(TicketContext)
+
   const { ticketId } = useParams()
   const navigate = useNavigate()
 
@@ -56,10 +58,17 @@ const TicketDetailPage = ({ isOwner = true }) => {
     socket.on('ticket-updated', (updatedTicket) => {
       if (updatedTicket.id === ticketId) {
         console.log('📨 Real-time ticket updated')
+
+        // Update form state (editing mode)
         setEditedTitle(updatedTicket.title)
         setEditedContent(updatedTicket.content)
         setPreviewImage(updatedTicket.image || null)
       }
+
+      // ✅ Update global tickets context
+      setTickets((prev) =>
+        prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t))
+      )
     })
 
     return () => {
@@ -213,11 +222,13 @@ const TicketDetailPage = ({ isOwner = true }) => {
           <h3 className="text-2xl font-bold text-blue-500 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faCommentDots} /> Responses
           </h3>
-          <CommentSection
-            comments={ticket?.comments}
-            ticketId={ticket?.id}
-            userId={ticket?.createdBy}
-          />
+          <CommentProvider ticketId={ticketId}>
+            <CommentSection
+              comments={ticket?.comments}
+              ticketId={ticketId}
+              userId={ticket?.createdBy}
+            />
+          </CommentProvider>
         </div>
       </div>
     </div>
