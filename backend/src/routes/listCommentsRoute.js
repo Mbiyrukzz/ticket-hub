@@ -31,7 +31,8 @@ const listCommentsRoute = {
       const isAdmin = currentUser?.isAdmin === true
       const normalizedEmail = authUser.email.trim().toLowerCase()
 
-      const isOwner = ticket.createdBy === authUser.uid
+      const isOwner =
+        ticket.createdBy === authUser.uid || ticket.createdFor === authUser.uid
 
       const isShared = (ticket.sharedWith || []).some(
         (u) => u.email?.trim().toLowerCase() === normalizedEmail

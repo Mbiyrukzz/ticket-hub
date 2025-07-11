@@ -6,6 +6,7 @@ import {
   faThumbsUp,
   faReply,
   faEllipsisH,
+  faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
 import { useUser } from '../hooks/useUser'
 import ActivityContext from '../contexts/ActivityContext'
@@ -53,7 +54,6 @@ const CommentSection = ({ ticketId }) => {
   const [newImage, setNewImage] = useState(null)
   const [commentToDelete, setCommentToDelete] = useState(null)
   const [error, setError] = useState(null)
-
   const [replying, setReplying] = useState({})
   const [replyText, setReplyText] = useState({})
   const [editingId, setEditingId] = useState(null)
@@ -89,10 +89,9 @@ const CommentSection = ({ ticketId }) => {
         setNewComment('')
         setNewImage(null)
       }
-
       setError(null)
     } catch (error) {
-      setError('Failed to add comment.' + error.message)
+      setError('Failed to add comment: ' + error.message)
     }
   }
 
@@ -128,51 +127,80 @@ const CommentSection = ({ ticketId }) => {
   const nestedComments = buildCommentTree(comments)
 
   return (
-    <div className="mt-8 max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
+    <div className="mt-8 max-w-3xl mx-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl shadow-lg p-6 transition-all duration-300">
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400">
           Comments{' '}
-          <span className="ml-2 text-sm text-gray-500">
+          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
             ({comments.length})
           </span>
         </h2>
         {typingUsers.length > 0 && (
-          <p className="text-sm text-indigo-500">
+          <p className="text-sm text-teal-500 dark:text-teal-400 mt-2 animate-pulse">
             {typingUsers.join(', ')} typing...
           </p>
         )}
       </div>
 
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      {error && (
+        <p className="text-coral-500 dark:text-coral-400 text-sm mb-4 bg-coral-100 dark:bg-coral-900/20 p-3 rounded-lg">
+          {error}
+        </p>
+      )}
 
       <form
         onSubmit={(e) => handleAddComment(e)}
-        className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50"
+        className="space-y-4 border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800"
       >
         <textarea
-          rows={3}
-          placeholder="Add comment..."
+          rows={4}
+          placeholder="Add a comment..."
           value={newComment}
           onChange={(e) => {
             setNewComment(e.target.value)
             emitTyping()
           }}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none resize-none transition-all duration-200 hover:shadow-md"
         />
         <div className="flex justify-between items-center">
-          <input type="file" accept="image/*" onChange={handleImageChange} />
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-teal-500 dark:hover:text-teal-400 transition">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
+            </svg>
+            Attach Image
+          </label>
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md"
+            className="bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white text-sm font-medium py-2 px-5 rounded-full transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
           >
-            Submit
+            <FontAwesomeIcon icon={faPaperPlane} />
+            Post Comment
           </button>
         </div>
       </form>
 
       <div className="mt-6 space-y-6">
         {nestedComments.length === 0 ? (
-          <p className="text-gray-500 text-center">No comments yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center py-6">
+            No comments yet. Be the first to share your thoughts!
+          </p>
         ) : (
           nestedComments.map((comment) => (
             <CommentItem
@@ -190,6 +218,7 @@ const CommentSection = ({ ticketId }) => {
               editingId={editingId}
               editedText={editedText}
               setEditedText={setEditedText}
+              setEditingId={setEditingId} // Pass setEditingId as a prop
               highlighted={highlightedIds.includes(comment.id)}
             />
           ))
@@ -220,6 +249,7 @@ const CommentItem = ({
   editingId,
   editedText,
   setEditedText,
+  setEditingId, // Add setEditingId to props
   highlighted,
 }) => {
   const isAuthor = comment.userId === user?.uid
@@ -227,56 +257,75 @@ const CommentItem = ({
   return (
     <div
       className={clsx(
-        'pl-4 border-l border-gray-200 rounded-md transition-all duration-300',
-        highlighted && 'bg-yellow-100',
-        isAuthor && 'bg-blue-50'
+        'pl-5 border-l-4 rounded-lg transition-all duration-300 hover:shadow-md',
+        highlighted &&
+          'bg-amber-100 dark:bg-blue-500/20 border-amber-400 dark:border-amber-300',
+        isAuthor
+          ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-400 dark:border-blue-500'
+          : 'border-gray-300 dark:border-gray-600'
       )}
     >
-      <div className="flex items-start space-x-4 py-3">
-        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold">
+      <div className="flex items-start gap-4 py-4">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
           {comment.userName?.[0]?.toUpperCase() || '?'}
         </div>
         <div className="flex-1">
-          <div className="flex justify-between items-center">
-            <p className="font-medium text-gray-900">{comment.userName}</p>
-            <FontAwesomeIcon icon={faEllipsisH} className="text-gray-400" />
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                {comment.userName}
+              </p>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(comment.createdAt).toLocaleString()}
+              </span>
+            </div>
+            <FontAwesomeIcon
+              icon={faEllipsisH}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer transition"
+            />
           </div>
 
           {editingId === comment.id ? (
-            <>
+            <div className="space-y-3">
               <textarea
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="w-full p-2 mt-2 border border-gray-300 rounded-md"
+                className="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none resize-none transition-all duration-200"
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2">
                 <button
                   onClick={() => onSaveEdit(comment.id)}
-                  className="bg-indigo-600 text-white px-3 py-1 rounded-md"
+                  className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white px-4 py-2 rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   Save
                 </button>
                 <button
-                  onClick={() => setEditedText('')}
-                  className="bg-gray-200 text-gray-700 px-3 py-1 rounded-md"
+                  onClick={() => {
+                    setEditedText('')
+                    setEditingId(null)
+                  }}
+                  className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200"
                 >
                   Cancel
                 </button>
               </div>
-            </>
+            </div>
           ) : (
             <>
-              <p className="text-gray-700 mt-1">{comment.content}</p>
+              <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
+                {comment.content}
+              </p>
               {comment.imageUrl && (
                 <img
                   src={comment.imageUrl}
                   alt="Comment Attachment"
-                  className="mt-2 max-w-xs rounded-md border"
+                  className="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 max-w-sm shadow-sm hover:shadow-md transition-all duration-200"
                 />
               )}
-              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                <button className="flex items-center gap-1 hover:text-indigo-600">
-                  <FontAwesomeIcon icon={faThumbsUp} /> Like
+              <div className="flex items-center gap-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
+                <button className="flex items-center gap-1 hover:text-teal-500 dark:hover:text-teal-400 transition-all duration-200">
+                  <FontAwesomeIcon icon={faThumbsUp} />
+                  Like
                 </button>
                 <button
                   onClick={() =>
@@ -285,22 +334,27 @@ const CommentItem = ({
                       [comment.id]: !prev[comment.id],
                     }))
                   }
-                  className="flex items-center gap-1 hover:text-indigo-600"
+                  className="flex items-center gap-1 hover:text-teal-500 dark:hover:text-teal-400 transition-all duration-200"
                 >
-                  <FontAwesomeIcon icon={faReply} /> Reply
+                  <FontAwesomeIcon icon={faReply} />
+                  Reply
                 </button>
-                <button
-                  onClick={() => onEdit(comment.id, comment.content)}
-                  className="text-indigo-600 hover:text-indigo-700"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={onDelete}
-                  className="text-red-400 hover:text-red-500"
-                >
-                  Delete
-                </button>
+                {isAuthor && (
+                  <>
+                    <button
+                      onClick={() => onEdit(comment.id, comment.content)}
+                      className="hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={onDelete}
+                      className="text-coral-400 hover:text-coral-500 dark:hover:text-coral-400 transition-all duration-200"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -308,7 +362,7 @@ const CommentItem = ({
           {replying[comment.id] && (
             <form
               onSubmit={(e) => onReply(e, comment.id)}
-              className="mt-3 space-y-2"
+              className="mt-4 space-y-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
             >
               <textarea
                 value={replyText[comment.id] || ''}
@@ -319,19 +373,20 @@ const CommentItem = ({
                   }))
                 }
                 placeholder="Write a reply..."
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none resize-none transition-all duration-200"
               />
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-3 py-1 rounded-md"
+                className="bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
               >
+                <FontAwesomeIcon icon={faPaperPlane} />
                 Post Reply
               </button>
             </form>
           )}
 
           {comment.children?.length > 0 && (
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-6">
               {comment.children.map((child) => (
                 <CommentItem
                   key={child.id}
@@ -348,6 +403,7 @@ const CommentItem = ({
                   editingId={editingId}
                   editedText={editedText}
                   setEditedText={setEditedText}
+                  setEditingId={setEditingId}
                   highlighted={highlighted}
                 />
               ))}

@@ -16,7 +16,8 @@ const userCanEditTicket = async (req, res, next) => {
       return res.status(404).json({ error: 'Ticket not found' })
     }
 
-    const isOwner = ticket.createdBy === authUser.uid
+    const isOwner =
+      ticket.createdBy === authUser.uid || ticket.createdFor === authUser.uid
     const userPermission =
       ticket.sharedWith &&
       ticket.sharedWith.find(
