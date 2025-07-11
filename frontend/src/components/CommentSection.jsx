@@ -266,9 +266,20 @@ const CommentItem = ({
       )}
     >
       <div className="flex items-start gap-4 py-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-          {comment.userName?.[0]?.toUpperCase() || '?'}
+        <div className="w-12 h-12 rounded-full overflow-hidden shadow-md border border-gray-300 dark:border-gray-700">
+          {comment.avatar ? (
+            <img
+              src={comment.avatar}
+              alt={`${comment.userName}'s avatar`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-teal-500 dark:from-blue-400 dark:to-teal-400 text-white font-bold text-lg">
+              {comment.userName?.[0]?.toUpperCase() || '?'}
+            </div>
+          )}
         </div>
+
         <div className="flex-1">
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-2">

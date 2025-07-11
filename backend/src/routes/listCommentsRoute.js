@@ -65,6 +65,7 @@ const listCommentsRoute = {
                 ],
               },
               isAdmin: { $arrayElemAt: ['$author.isAdmin', 0] },
+              avatar: { $arrayElemAt: ['$author.avatar', 0] }, // ✅ Include avatar
             },
           },
           {
