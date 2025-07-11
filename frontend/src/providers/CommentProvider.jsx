@@ -128,7 +128,7 @@ const CommentProvider = ({ children, ticketId }) => {
       if (!updatedData?.content?.trim()) return
       try {
         const res = await put(
-          `${API_URL}/tickets/${ticketId}/comments/${commentId}`,
+          `${API_URL}/api/tickets/${ticketId}/comments/${commentId}`,
           updatedData
         )
         const updated = res?.updatedComment

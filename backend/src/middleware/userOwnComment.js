@@ -15,7 +15,7 @@ const userOwnComment = async (req, res, next) => {
       return res.status(404).json({ error: 'Ticket not found' })
     }
 
-    if (comment.createdBy !== authUser.uid) {
+    if (comment.userId !== authUser.uid) {
       return res.sendStatus(403) // Forbidden
     }
 
