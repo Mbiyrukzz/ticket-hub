@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -8,18 +8,18 @@ import {
   faShare,
   faCommentDots,
 } from '@fortawesome/free-solid-svg-icons'
-import { io } from 'socket.io-client'
 import TicketNotFoundPage from './TicketNotFoundPage'
 import TicketContext from '../contexts/TicketContext'
 import CommentSection from '../components/CommentSection'
 import Loading from '../components/Loading'
 import CommentProvider from '../providers/CommentProvider'
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8090'
+import SocketContext from '../contexts/SocketContext' // ✅ NEW
 
 const TicketDetailPage = ({ isOwner = true }) => {
   const { tickets, sharedTickets, updateTicket, isLoading, setTickets } =
     useContext(TicketContext)
+
+  const { socket, isConnected } = useContext(SocketContext) // ✅ NEW
 
   const { ticketId } = useParams()
   const navigate = useNavigate()
@@ -30,11 +30,8 @@ const TicketDetailPage = ({ isOwner = true }) => {
   const [editedImage, setEditedImage] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
 
-  const socketRef = useRef(null)
-
   const ticket = [...tickets, ...sharedTickets].find((t) => t.id === ticketId)
 
-  // 🔄 Initialize edited fields when ticket is found
   useEffect(() => {
     if (ticket) {
       setEditedTitle(ticket.title)
@@ -43,39 +40,34 @@ const TicketDetailPage = ({ isOwner = true }) => {
     }
   }, [ticket])
 
-  // ✅ Socket join & real-time update
+  // ✅ Join ticket room + listen for updates
   useEffect(() => {
-    if (!ticketId) return
+    if (!socket || !ticketId || !isConnected) return
 
-    const socket = io(SOCKET_URL)
-    socketRef.current = socket
+    socket.emit('join-ticket-room', ticketId)
+    console.log('📡 Joined ticket room:', ticketId)
 
-    socket.on('connect', () => {
-      socket.emit('join-ticket-room', ticketId)
-      console.log('📡 Joined ticket room:', ticketId)
-    })
-
-    socket.on('ticket-updated', (updatedTicket) => {
+    const handleUpdate = (updatedTicket) => {
       if (updatedTicket.id === ticketId) {
         console.log('📨 Real-time ticket updated')
-
-        // Update form state (editing mode)
         setEditedTitle(updatedTicket.title)
         setEditedContent(updatedTicket.content)
         setPreviewImage(updatedTicket.image || null)
       }
 
-      // ✅ Update global tickets context
       setTickets((prev) =>
         prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t))
       )
-    })
+    }
+
+    socket.on('ticket-updated', handleUpdate)
 
     return () => {
       socket.emit('leave-ticket-room', ticketId)
-      socket.disconnect()
+      socket.off('ticket-updated', handleUpdate)
+      console.log('👋 Left ticket room:', ticketId)
     }
-  }, [ticketId])
+  }, [socket, isConnected, ticketId, setTickets])
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]

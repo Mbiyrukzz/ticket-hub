@@ -1,65 +1,57 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
-import { io } from 'socket.io-client'
+import useSocket from '../hooks/useSocket'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL
 
 const TicketsProvider = ({ children }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
   const { user } = useUser()
+  const { socket, isConnected } = useSocket()
 
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
   const [sharedTickets, setSharedTickets] = useState([])
 
-  const socket = useRef(null)
-
-  // ✅ Connect to socket
+  // ✅ Real-time ticket events
   useEffect(() => {
-    if (!user?.uid) return
+    if (!user?.uid || !socket || !isConnected) return
 
-    socket.current = io(SOCKET_URL)
-
-    socket.current.on('connect', () => {
-      console.log('✅ Connected to socket server:', socket.current.id)
-    })
-
-    // ✅ New ticket created
-    socket.current.on('ticket-created', (newTicket) => {
-      if (newTicket.createdBy === user.uid) return // avoid duplicate
+    const handleCreated = (newTicket) => {
+      if (newTicket.createdBy === user.uid) return
       console.log('📥 Real-time ticket created:', newTicket)
       setTickets((prev) => [newTicket, ...prev])
-    })
+    }
 
-    // ✅ Ticket updated
-    socket.current.on('ticket-updated', (updatedTicket) => {
+    const handleUpdated = (updatedTicket) => {
       const isOwner = updatedTicket.createdBy === user.uid
       const isShared = sharedTickets.some((t) => t.id === updatedTicket.id)
-
       if (!isOwner && !isShared) return
 
       setTickets((prev) =>
-        prev.map((ticket) =>
-          ticket.id === updatedTicket.id ? updatedTicket : ticket
-        )
+        prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t))
       )
-    })
+    }
 
-    // ✅ Ticket deleted
-    socket.current.on('ticket-deleted', ({ ticketId }) => {
+    const handleDeleted = ({ ticketId }) => {
       console.log('🗑️ Real-time ticket deleted:', ticketId)
-      setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
-    })
+      setTickets((prev) => prev.filter((t) => t.id !== ticketId))
+    }
+
+    socket.on('ticket-created', handleCreated)
+    socket.on('ticket-updated', handleUpdated)
+    socket.on('ticket-deleted', handleDeleted)
 
     return () => {
-      socket.current?.disconnect()
+      socket.off('ticket-created', handleCreated)
+      socket.off('ticket-updated', handleUpdated)
+      socket.off('ticket-deleted', handleDeleted)
     }
-  }, [user?.uid])
+  }, [user?.uid, socket, isConnected, sharedTickets])
 
-  // ✅ Load user tickets
+  // ✅ Load user's tickets
   useEffect(() => {
     const loadTickets = async () => {
       if (!user || !isReady) return
@@ -70,16 +62,8 @@ const TicketsProvider = ({ children }) => {
         const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
           await get(`${API_URL}/api/users/${user.uid}/tickets`)
 
-        setTickets(
-          Array.isArray(ownedTicketsWithComments)
-            ? ownedTicketsWithComments
-            : []
-        )
-        setSharedTickets(
-          Array.isArray(sharedWithUsersTicketsFormatted)
-            ? sharedWithUsersTicketsFormatted
-            : []
-        )
+        setTickets(ownedTicketsWithComments || [])
+        setSharedTickets(sharedWithUsersTicketsFormatted || [])
       } catch (error) {
         console.error('❌ Error fetching tickets:', error)
         setTickets([])
@@ -93,11 +77,8 @@ const TicketsProvider = ({ children }) => {
   }, [user, isReady, get])
 
   // ✅ Create ticket
-  const createTicket = async (ticketData) => {
-    if (!user) return
-
-    const { title, content, image } = ticketData
-    if (!title || !content) return
+  const createTicket = async ({ title, content, image }) => {
+    if (!user || !title || !content) return
 
     const formData = new FormData()
     formData.append('title', title)
@@ -207,7 +188,7 @@ const TicketsProvider = ({ children }) => {
         setTickets,
         shareTicket,
         unshareTicket,
-        socket: socket.current,
+        socket, // now from global provider
       }}
     >
       {children}

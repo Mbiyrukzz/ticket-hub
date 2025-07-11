@@ -1,15 +1,22 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useContext,
+} from 'react'
 import CommentContext from '../contexts/CommentContext'
+import SocketContext from '../contexts/SocketContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
-import { io } from 'socket.io-client'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL
 
 const CommentProvider = ({ children, ticketId }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
   const { user } = useUser()
+  const { socket, isConnected } = useContext(SocketContext)
 
   const [comments, setComments] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -17,53 +24,50 @@ const CommentProvider = ({ children, ticketId }) => {
   const [highlightedIds, setHighlightedIds] = useState([])
   const [typingUsers, setTypingUsers] = useState([])
 
-  const socketRef = useRef(null)
+  const listenersSetRef = useRef(false)
 
-  // 🔌 Socket setup
+  // ✅ Socket Room Join + Listeners
   useEffect(() => {
-    if (!user?.uid || !ticketId) return
+    if (!socket || !ticketId || !user?.uid || !isConnected) return
 
-    socketRef.current = io(SOCKET_URL)
+    socket.emit('join-ticket-room', ticketId)
+    console.log(`🟢 Joined ticket room: ${ticketId}`)
 
-    socketRef.current.on('connect', () => {
-      console.log('✅ Socket connected:', socketRef.current.id)
-      socketRef.current.emit('join-ticket-room', ticketId)
-      console.log('🟢 Joined room:', ticketId)
-    })
+    if (!listenersSetRef.current) {
+      listenersSetRef.current = true
 
-    socketRef.current.on('comment-created', (comment) => {
-      setComments((prev) => {
-        const exists = prev.some((c) => c.id === comment.id)
-        return exists ? prev : [...prev, comment]
+      socket.on('comment-created', (comment) => {
+        setComments((prev) => {
+          const exists = prev.some((c) => c.id === comment.id)
+          return exists ? prev : [...prev, comment]
+        })
+        setHighlightedIds((prev) => [...prev, comment.id])
+        setTimeout(() => {
+          setHighlightedIds((prev) => prev.filter((id) => id !== comment.id))
+        }, 3000)
       })
-      setHighlightedIds((prev) => [...prev, comment.id])
-      setTimeout(() => {
-        setHighlightedIds((prev) => prev.filter((id) => id !== comment.id))
-      }, 3000)
-    })
 
-    socketRef.current.on('comment-updated', (updated) => {
-      setComments((prev) =>
-        prev.map((c) => (c.id === updated.id ? updated : c))
-      )
-    })
+      socket.on('comment-updated', (updated) => {
+        setComments((prev) =>
+          prev.map((c) => (c.id === updated.id ? updated : c))
+        )
+      })
 
-    socketRef.current.on('comment-deleted', (commentId) => {
-      setComments((prev) => prev.filter((c) => c.id !== commentId))
-    })
+      socket.on('comment-deleted', (commentId) => {
+        setComments((prev) => prev.filter((c) => c.id !== commentId))
+      })
 
-    socketRef.current.on('users-typing', (users) => {
-      const currentName = user?.displayName || user?.userName
-      setTypingUsers(users.filter((u) => u !== currentName))
-    })
+      socket.on('users-typing', (users) => {
+        const currentName = user?.displayName || user?.userName
+        setTypingUsers(users.filter((u) => u !== currentName))
+      })
+    }
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.emit('leave-ticket-room', ticketId)
-        socketRef.current.disconnect()
-      }
+      socket.emit('leave-ticket-room', ticketId)
+      console.log(`👋 Left ticket room: ${ticketId}`)
     }
-  }, [user, ticketId])
+  }, [socket, ticketId, user?.uid, isConnected])
 
   // 📥 Load Comments
   const fetchComments = useCallback(
@@ -107,7 +111,7 @@ const CommentProvider = ({ children, ticketId }) => {
           formData
         )
         setComments((prev) => [...prev, comment])
-        socketRef.current?.emit('new-comment', { ticketId, comment })
+        socket?.emit('new-comment', { ticketId, comment })
         return comment
       } catch (err) {
         console.error('❌ Failed to add comment:', err)
@@ -115,7 +119,7 @@ const CommentProvider = ({ children, ticketId }) => {
         throw err
       }
     },
-    [post, isReady]
+    [post, isReady, socket]
   )
 
   // ✏️ Edit Comment
@@ -131,10 +135,7 @@ const CommentProvider = ({ children, ticketId }) => {
         setComments((prev) =>
           prev.map((c) => (c.id === commentId ? updated : c))
         )
-        socketRef.current?.emit('update-comment', {
-          ticketId,
-          comment: updated,
-        })
+        socket?.emit('update-comment', { ticketId, comment: updated })
         return updated
       } catch (err) {
         console.error('❌ Failed to edit comment:', err)
@@ -142,7 +143,7 @@ const CommentProvider = ({ children, ticketId }) => {
         throw err
       }
     },
-    [put]
+    [put, socket]
   )
 
   // ❌ Delete Comment
@@ -151,24 +152,27 @@ const CommentProvider = ({ children, ticketId }) => {
       try {
         await del(`${API_URL}/tickets/${ticketId}/comments/${commentId}`)
         setComments((prev) => prev.filter((c) => c.id !== commentId))
-        socketRef.current?.emit('delete-comment', { ticketId, commentId })
+        socket?.emit('delete-comment', { ticketId, commentId })
       } catch (err) {
         console.error('❌ Failed to delete comment:', err)
         setError('Failed to delete comment.')
         throw err
       }
     },
-    [del]
+    [del, socket]
   )
 
   // 💬 Typing
-  const emitTyping = (ticketId) => {
-    if (!user?.displayName || !ticketId) return
-    socketRef.current?.emit('user-typing', {
-      ticketId,
-      userName: user.displayName || user.userName,
-    })
-  }
+  const emitTyping = useCallback(
+    (ticketId) => {
+      if (!user?.displayName || !ticketId) return
+      socket?.emit('user-typing', {
+        ticketId,
+        userName: user.displayName || user.userName,
+      })
+    },
+    [socket, user]
+  )
 
   const getCommentsByTicketId = useCallback(
     (ticketId) => comments.filter((c) => c.ticketId === ticketId),

@@ -9,6 +9,7 @@ const admin = require('firebase-admin')
 const { initializeDbConnection } = require('./db.js')
 const { routes } = require('./routes/index.js')
 const credentials = require('../credentials.json')
+const { socketAuth } = require('./sockets/socketAuth.js')
 
 // ✅ Firebase Admin Init
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
@@ -33,6 +34,8 @@ const io = socketIo(server, {
 
 // ✅ Make io available to routes via req.app.get('io')
 app.set('io', io)
+
+io.use(socketAuth)
 
 io.on('connection', (socket) => {
   console.log('🟢 Client connected:', socket.id)
