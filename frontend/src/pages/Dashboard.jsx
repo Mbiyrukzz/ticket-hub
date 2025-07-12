@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import TicketList from '../components/TicketList'
 import SharedTicketList from '../components/SharedTicketList'
 import TicketContext from '../contexts/TicketContext'
+import SocketContext from '../contexts/SocketContext'
 import Modal from '../components/Modal'
 import NewTicketForm from '../components/NewTicketForm'
 import ConfirmDeleteTicket from '../components/ConfirmDeleteTicket'
@@ -13,14 +14,10 @@ import { toast } from 'react-hot-toast'
 const Dashboard = () => {
   const navigate = useNavigate()
   const { refreshActivities } = useContext(ActivityContext)
-  const {
-    isLoading,
-    tickets,
-    sharedTickets,
-    createTicket,
-    deleteTicket,
-    socket,
-  } = useContext(TicketContext)
+  const { isLoading, tickets, sharedTickets, createTicket, deleteTicket } =
+    useContext(TicketContext)
+
+  const { socket } = useContext(SocketContext)
 
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false)
   const [ticketIdToDelete, setTicketIdToDelete] = useState(null)

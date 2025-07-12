@@ -7,7 +7,7 @@ const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 const logActivity = require('../middleware/logActivity.js')
 const { isAdmin } = require('../middleware/isAdmin.js')
 
-// Setup Multer storage for ticket image
+// Setup Multer for image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '..', 'uploads')
@@ -23,6 +23,7 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage })
 
+// Admin creates a ticket for a user and assigns it
 const adminCreateTicketRoute = {
   path: '/admins/:userId/tickets',
   method: 'post',
@@ -31,7 +32,6 @@ const adminCreateTicketRoute = {
     try {
       const authUser = req.user
       const userDoc = req.userDoc
-      const { userId } = req.params
       const users = usersCollection()
       const tickets = ticketsCollection()
 
@@ -41,21 +41,33 @@ const adminCreateTicketRoute = {
           .json({ error: 'Only admins can create tickets for others' })
       }
 
-      const { title, content, priority, status } = req.body
+      const { title, content, priority, status, assignedTo, createdFor } =
+        req.body
 
       if (!title?.trim() || !content?.trim()) {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
-      const assignedUser = await users.findOne({ id: userId })
+      const assignedUser = await users.findOne({ id: assignedTo })
       if (!assignedUser) {
-        return res.status(404).json({ error: 'User not found' })
+        return res.status(404).json({ error: 'Assigned user not found' })
       }
 
-      const userName =
-        userDoc.name ||
-        userDoc.displayName ||
-        userDoc.email?.split('@')[0] ||
+      const createdForUser = await users.findOne({ id: createdFor })
+      if (!createdForUser) {
+        return res.status(404).json({ error: 'Created-for user not found' })
+      }
+
+      const assignedToName =
+        assignedUser.name ||
+        assignedUser.displayName ||
+        assignedUser.email?.split('@')[0] ||
+        'Unknown'
+
+      const createdForName =
+        createdForUser.name ||
+        createdForUser.displayName ||
+        createdForUser.email?.split('@')[0] ||
         'Unknown'
 
       const ticketId = uuidv4()
@@ -73,9 +85,10 @@ const adminCreateTicketRoute = {
         image,
         status: status || 'Open',
         createdBy: authUser.uid,
-        createdFor: userId,
-        assignedTo: userId,
-        assignedToName: userName,
+        createdFor,
+        createdForName,
+        assignedTo,
+        assignedToName,
         createdAt: new Date(),
         comments: [],
         createdByAdmin: true,
@@ -90,12 +103,12 @@ const adminCreateTicketRoute = {
           const mongoId = result.insertedId
 
           const userUpdate = await users.updateOne(
-            { id: userId },
+            { id: createdFor },
             { $push: { tickets: ticketId } }
           )
 
           if (userUpdate.modifiedCount === 0) {
-            throw new Error('Failed to assign ticket to user')
+            throw new Error('Failed to assign ticket to created-for user')
           }
 
           await logActivity(
@@ -115,7 +128,7 @@ const adminCreateTicketRoute = {
         await session.endSession()
       }
 
-      // ✅ Emit real-time event via Socket.IO
+      // 🔄 Emit via Socket.IO
       const io = req.app.get('io')
       if (io) {
         io.emit('ticket-created', response)

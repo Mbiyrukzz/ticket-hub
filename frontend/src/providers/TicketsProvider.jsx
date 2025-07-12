@@ -20,15 +20,44 @@ const TicketsProvider = ({ children }) => {
     if (!user?.uid || !socket || !isConnected) return
 
     const handleCreated = (newTicket) => {
-      if (newTicket.createdBy === user.uid) return
-      console.log('📥 Real-time ticket created:', newTicket)
-      setTickets((prev) => [newTicket, ...prev])
+      console.log('📥 Full ticket object:', JSON.stringify(newTicket, null, 2))
+      console.log('User UID:', user.uid)
+      console.log(
+        'Condition check:',
+        newTicket.createdBy === user.uid,
+        newTicket.createdFor === user.uid,
+        newTicket.assignedTo === user.uid
+      )
+      if (
+        newTicket.createdBy === user.uid ||
+        newTicket.createdFor === user.uid ||
+        newTicket.assignedTo === user.uid
+      ) {
+        // Add post field to match TicketList grouping
+        const ticketWithPost = {
+          ...newTicket,
+          post: newTicket.createdFor === user.uid ? 'createdFor' : 'owner',
+        }
+        console.log('📥 Adding ticket to state:', ticketWithPost.id)
+        setTickets((prev) => {
+          // Prevent duplicates
+          if (prev.some((t) => t.id === ticketWithPost.id)) {
+            console.log('📥 Ticket already in state:', ticketWithPost.id)
+            return prev
+          }
+          return [ticketWithPost, ...prev]
+        })
+      } else {
+        console.log('📥 Ticket ignored, condition not met:', newTicket.id)
+      }
     }
 
     const handleUpdated = (updatedTicket) => {
       const isOwner = updatedTicket.createdBy === user.uid
       const isShared = sharedTickets.some((t) => t.id === updatedTicket.id)
-      if (!isOwner && !isShared) return
+      const isCreatedFor = updatedTicket.createdFor === user.uid
+      const isAssignedTo = updatedTicket.assignedTo === user.uid
+      if (!isOwner && !isShared && !isCreatedFor && !isAssignedTo) return
 
       setTickets((prev) =>
         prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t))
@@ -54,16 +83,38 @@ const TicketsProvider = ({ children }) => {
   // ✅ Load user's tickets
   useEffect(() => {
     const loadTickets = async () => {
-      if (!user || !isReady) return
+      if (!user || !user.uid || !isReady) {
+        console.log('⏳ Skipping fetch, user/isReady not ready')
+        return
+      }
 
       setIsLoading(true)
 
       try {
-        const { ownedTicketsWithComments, sharedWithUsersTicketsFormatted } =
-          await get(`${API_URL}/api/users/${user.uid}/tickets`)
+        const res = await get(`${API_URL}/api/users/${user.uid}/tickets`)
+        console.log('✅ Ticket fetch response:', res)
 
-        setTickets(ownedTicketsWithComments || [])
-        setSharedTickets(sharedWithUsersTicketsFormatted || [])
+        const {
+          ownedTicketsWithComments = [],
+          sharedWithUsersTicketsFormatted = [],
+          createdForTickets = [],
+        } = res
+
+        const owned = ownedTicketsWithComments.map((t) => ({
+          ...t,
+          post: 'owner',
+        }))
+        const shared = sharedWithUsersTicketsFormatted.map((t) => ({
+          ...t,
+          post: 'shared',
+        }))
+        const createdFor = createdForTickets.map((t) => ({
+          ...t,
+          post: 'createdFor',
+        }))
+
+        setTickets([...owned, ...createdFor])
+        setSharedTickets(shared)
       } catch (error) {
         console.error('❌ Error fetching tickets:', error)
         setTickets([])
@@ -188,7 +239,7 @@ const TicketsProvider = ({ children }) => {
         setTickets,
         shareTicket,
         unshareTicket,
-        socket, // now from global provider
+        socket,
       }}
     >
       {children}
