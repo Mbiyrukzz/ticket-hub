@@ -46,7 +46,7 @@ const adminViewTicketsRoute = {
           { $match: ticketQuery },
           { $sort: { createdAt: -1 } },
           { $skip: parseInt(offset) },
-          { $limit: Math.min(parseInt(limit), 50) }, // cap limit for safety
+          { $limit: Math.min(parseInt(limit), 50) },
           {
             $lookup: {
               from: 'users',
@@ -64,21 +64,30 @@ const adminViewTicketsRoute = {
             },
           },
           {
+            $lookup: {
+              from: 'users',
+              localField: 'createdFor',
+              foreignField: 'id',
+              as: 'createdForInfo',
+            },
+          },
+          {
             $addFields: {
               userName: { $arrayElemAt: ['$creatorInfo.name', 0] },
               assignedToName: { $arrayElemAt: ['$assigneeInfo.name', 0] },
+              createdForName: { $arrayElemAt: ['$createdForInfo.name', 0] },
             },
           },
           {
             $project: {
               creatorInfo: 0,
               assigneeInfo: 0,
+              createdForInfo: 0,
             },
           },
         ])
         .toArray()
 
-      // Shared tickets remain unpaginated, or you can paginate separately if needed
       const sharedWithUsersTickets = await tickets
         .aggregate([
           {

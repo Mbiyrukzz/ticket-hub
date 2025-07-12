@@ -1,9 +1,16 @@
 const { getActivitiesRoute } = require('./activitiesRoutes.js')
 const { makeAdminRoute } = require('./admin.js')
+const {
+  adminAssignedOtherUserTickets,
+} = require('./adminAssignedOtherUserTickets.js')
+const {
+  adminAssignedToMeTickets,
+} = require('./adminAssignedToMeTicketsRoute.js')
 const { adminCreateTicketRoute } = require('./adminCreateTicketRoute.js')
 const { adminNotificationsRoute } = require('./adminNotificationsRoute.js')
 const { adminRecentTicketsRoute } = require('./adminRecentTicketsRoute.js')
 const { adminSearchRoute } = require('./adminSearchRoute.js')
+const { adminList, adminListRoute } = require('./adminsListRoute.js')
 const {
   adminTicketPriorityChartRoute,
 } = require('./adminTicketPriorityChartRoute.js')
@@ -36,10 +43,13 @@ const { updateUserProfileRoute } = require('./updateUserProfile.js')
 const routes = [
   createUserRoute,
   makeAdminRoute,
+  adminListRoute,
   adminCreateTicketRoute,
   adminUpdateTicketRoute,
   adminViewTicketsRoute,
   adminRecentTicketsRoute,
+  adminAssignedToMeTickets,
+  adminAssignedOtherUserTickets,
   adminTicketPriorityChartRoute,
   adminTicketStatusLineChartRoute,
   adminNotificationsRoute,
