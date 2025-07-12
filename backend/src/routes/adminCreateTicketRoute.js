@@ -48,14 +48,24 @@ const adminCreateTicketRoute = {
         return res.status(400).json({ error: 'Title and content are required' })
       }
 
+      // Fetch assigned user and ensure they are an admin
       const assignedUser = await users.findOne({ id: assignedTo })
       if (!assignedUser) {
         return res.status(404).json({ error: 'Assigned user not found' })
       }
+      if (!assignedUser.isAdmin) {
+        return res.status(400).json({ error: 'Assigned user must be an admin' })
+      }
 
+      // Fetch created-for user and ensure they are not an admin
       const createdForUser = await users.findOne({ id: createdFor })
       if (!createdForUser) {
         return res.status(404).json({ error: 'Created-for user not found' })
+      }
+      if (createdForUser.isAdmin) {
+        return res
+          .status(400)
+          .json({ error: 'Created-for user cannot be an admin' })
       }
 
       const assignedToName =
