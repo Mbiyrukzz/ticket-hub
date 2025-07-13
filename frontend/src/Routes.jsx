@@ -14,6 +14,7 @@ import './customScroll.css' // Import custom styles
 import UsersProfilePage from './pages/UsersProfilePage'
 import TicketSharingPage from './pages/TicketSharingPage'
 import ResolvedTicketsPage from './pages/ResolvedTicketsPage'
+import UnResolvedTicketsPage from './pages/UnResolvedTicketsPage'
 
 const MyRoutes = () => {
   const { user, isLoading } = useUser()
@@ -72,6 +73,10 @@ const MyRoutes = () => {
                 <Route
                   path="/resolved-tickets"
                   element={<ResolvedTicketsPage />}
+                />
+                <Route
+                  path="/unresolved-tickets"
+                  element={<UnResolvedTicketsPage />}
                 />
                 <Route
                   path="/tickets/:ticketId"

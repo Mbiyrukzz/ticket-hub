@@ -1,32 +1,33 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect, useContext, useState } from 'react'
 import TicketContext from '../contexts/TicketContext'
 
-const ResolvedTicketList = () => {
-  const { resolvedTickets, loadResolvedTickets, isResolvedLoading, hasMore } =
+const UnresolvedTicketList = () => {
+  const { unresolvedTickets, loadUnresolvedTickets, hasMoreUnresolved } =
     useContext(TicketContext)
 
-  // Fetch resolved tickets on mount
-  useEffect(() => {
-    loadResolvedTickets(0, 10, true) // Reset on mount
-  }, [loadResolvedTickets])
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  // Load more tickets
-  const handleLoadMore = () => {
-    if (!hasMore || isResolvedLoading) return
-    loadResolvedTickets(resolvedTickets.length, 10, false) // Append more tickets
+  // Load on mount
+  useEffect(() => {
+    loadUnresolvedTickets(0, 10, true)
+  }, [loadUnresolvedTickets])
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMoreUnresolved) return
+    setIsLoadingMore(true)
+    await loadUnresolvedTickets(unresolvedTickets.length, 10, false)
+    setIsLoadingMore(false)
   }
 
   return (
     <div>
-      {isResolvedLoading && resolvedTickets.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-      ) : resolvedTickets.length === 0 ? (
+      {unresolvedTickets.length === 0 ? (
         <p className="text-gray-600 dark:text-gray-400">
-          No resolved tickets found.
+          No unresolved tickets found.
         </p>
       ) : (
         <ul className="space-y-4">
-          {resolvedTickets.map((ticket) => (
+          {unresolvedTickets.map((ticket) => (
             <li
               key={ticket.id}
               className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow"
@@ -36,6 +37,9 @@ const ResolvedTicketList = () => {
                 {ticket.content}
               </p>
               <p className="text-xs mt-2 text-gray-400">
+                Status: <span className="capitalize">{ticket.status}</span>
+              </p>
+              <p className="text-xs text-gray-400">
                 Updated: {new Date(ticket.updatedAt).toLocaleString()}
               </p>
             </li>
@@ -43,14 +47,14 @@ const ResolvedTicketList = () => {
         </ul>
       )}
 
-      {hasMore && (
+      {hasMoreUnresolved && (
         <div className="mt-6 text-center">
           <button
             onClick={handleLoadMore}
-            disabled={isResolvedLoading}
+            disabled={isLoadingMore}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
           >
-            {isResolvedLoading ? 'Loading...' : 'Load More'}
+            {isLoadingMore ? 'Loading...' : 'Load More'}
           </button>
         </div>
       )}
@@ -58,4 +62,4 @@ const ResolvedTicketList = () => {
   )
 }
 
-export default ResolvedTicketList
+export default UnresolvedTicketList

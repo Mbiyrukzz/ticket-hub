@@ -3,6 +3,7 @@ import TicketContext from '../contexts/TicketContext'
 import { useUser } from '../hooks/useUser'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import useSocket from '../hooks/useSocket'
+import { useCallback } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
 
@@ -15,6 +16,8 @@ const TicketsProvider = ({ children }) => {
   const [tickets, setTickets] = useState([])
   const [sharedTickets, setSharedTickets] = useState([])
   const [resolvedTickets, setResolvedTickets] = useState([])
+  const [unresolvedTickets, setUnresolvedTickets] = useState([])
+  const [hasMoreUnresolved, setHasMoreUnresolved] = useState(true)
 
   const [offset, setOffset] = useState(0)
   const [limit] = useState(10)
@@ -135,32 +138,67 @@ const TicketsProvider = ({ children }) => {
     loadTickets(true)
   }, [user, isReady])
 
-  const loadResolvedTickets = async (offset = 0, limit = 10, reset = false) => {
-    if (!user?.uid || !isReady) return
+  const loadResolvedTickets = useCallback(
+    async (offset = 0, limit = 10, reset = false) => {
+      if (!user?.uid || !isReady) return
 
-    try {
-      const res = await get(
-        `${API_URL}/api/users/${user.uid}/tickets/resolved?offset=${offset}&limit=${limit}`
-      )
-      const tickets = res.resolvedTickets || []
-      console.log('Resolved tickets:', tickets)
-      if (reset) {
-        setResolvedTickets(tickets) // Reset state
-      } else {
-        setResolvedTickets((prev) => [...prev, ...tickets]) // Append for pagination
+      try {
+        const res = await get(
+          `${API_URL}/api/users/${user.uid}/tickets/resolved?offset=${offset}&limit=${limit}`
+        )
+        const tickets = res.resolvedTickets || []
+        console.log('Resolved tickets:', tickets)
+        if (reset) {
+          setResolvedTickets(tickets)
+        } else {
+          setResolvedTickets((prev) => [...prev, ...tickets])
+        }
+        return tickets
+      } catch (err) {
+        console.error('❌ Failed to load resolved tickets:', err)
+        setResolvedTickets([])
+        return []
       }
-      return tickets
-    } catch (err) {
-      console.error('❌ Failed to load resolved tickets:', err)
-      setResolvedTickets([])
-      return []
-    }
-  }
+    },
+    [user?.uid, isReady, get]
+  )
 
   // Load resolved tickets on mount/reset
   useEffect(() => {
     loadResolvedTickets(0, 10, true)
-  }, [user, get, isReady])
+  }, [loadResolvedTickets])
+
+  const loadUnresolvedTickets = useCallback(
+    async (offset = 0, limit = 10, reset = false) => {
+      if (!user?.uid || !isReady) return
+
+      try {
+        const res = await get(
+          `${API_URL}/api/users/${user.uid}/tickets/unresolved?offset=${offset}&limit=${limit}`
+        )
+
+        const tickets = res.unresolvedTickets || []
+        const hasMore = res.hasMore ?? tickets.length === limit
+
+        if (reset) {
+          setUnresolvedTickets(tickets)
+        } else {
+          setUnresolvedTickets((prev) => [...prev, ...tickets])
+        }
+
+        setHasMoreUnresolved(hasMore)
+      } catch (err) {
+        console.error('❌ Failed to load unresolved tickets:', err)
+        setUnresolvedTickets([])
+        setHasMoreUnresolved(false)
+      }
+    },
+    [user?.uid, isReady, get]
+  )
+
+  useEffect(() => {
+    loadUnresolvedTickets()
+  }, [loadUnresolvedTickets])
 
   // ✅ Create ticket
   const createTicket = async ({ title, content, image }) => {
@@ -278,7 +316,10 @@ const TicketsProvider = ({ children }) => {
         socket,
         loadMoreTickets: () => loadTickets(false),
         loadResolvedTickets,
+        unresolvedTickets,
+        loadUnresolvedTickets,
         hasMore,
+        hasMoreUnresolved,
       }}
     >
       {children}

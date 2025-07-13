@@ -1,8 +1,8 @@
 const { ticketsCollection, usersCollection } = require('../db.js')
 const { verifyAuthToken } = require('../middleware/verifyAuthToken.js')
 
-const userResolvedTicketsRoute = {
-  path: '/users/:userId/tickets/resolved',
+const userUnresolvedTicketsRoute = {
+  path: '/users/:userId/tickets/unresolved',
   method: 'get',
   middleware: [verifyAuthToken],
   handler: async (req, res) => {
@@ -20,15 +20,14 @@ const userResolvedTicketsRoute = {
       const user = await users.findOne({ id: userId })
       if (!user) return res.status(404).json({ error: 'User not found' })
 
-      // Authorization: only allow self or admin
       if (!isAdmin && authUser.uid !== userId) {
         return res.status(403).json({ error: 'Unauthorized access' })
       }
 
-      // Find all resolved tickets where user is creator, target, or shared
-      const resolvedTickets = await tickets
+      // Find unresolved tickets: status is 'Open' or 'InProgress'
+      const unresolvedTickets = await tickets
         .find({
-          status: 'Resolved',
+          status: { $in: ['Open', 'InProgress'] },
           $or: [
             { createdBy: userId },
             { createdFor: userId },
@@ -45,17 +44,19 @@ const userResolvedTicketsRoute = {
         .limit(limit + 1)
         .toArray()
 
-      const hasMore = resolvedTickets.length > limit
-      if (hasMore) {
-        resolvedTickets.pop()
+      const unresolvedTicketsHasMore = unresolvedTickets.length > limit
+      if (unresolvedTicketsHasMore) {
+        unresolvedTickets.pop()
       }
 
-      return res.status(200).json({ resolvedTickets, hasMore })
+      return res
+        .status(200)
+        .json({ unresolvedTickets, unresolvedTicketsHasMore })
     } catch (error) {
-      console.error('❌ Error fetching resolved tickets:', error)
+      console.error('❌ Error fetching unresolved tickets:', error)
       return res.status(500).json({ error: 'Internal Server Error' })
     }
   },
 }
 
-module.exports = { userResolvedTicketsRoute }
+module.exports = { userUnresolvedTicketsRoute }

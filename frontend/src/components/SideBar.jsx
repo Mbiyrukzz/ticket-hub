@@ -42,7 +42,7 @@ const SideBar = () => {
               color: 'text-green-500 dark:text-green-400',
             },
             {
-              to: '/unsolved',
+              to: '/unresolved-tickets',
               icon: faExclamationCircle,
               label: 'Unsolved',
               color: 'text-red-500 dark:text-red-400',
