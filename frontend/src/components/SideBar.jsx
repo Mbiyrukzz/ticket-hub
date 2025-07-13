@@ -36,7 +36,7 @@ const SideBar = () => {
               color: 'text-blue-500 dark:text-blue-400',
             },
             {
-              to: '/solved',
+              to: '/resolved-tickets',
               icon: faCheckCircle,
               label: 'Solved',
               color: 'text-green-500 dark:text-green-400',

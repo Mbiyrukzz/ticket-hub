@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react'
+import React, { useContext, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TicketList from '../components/TicketList'
 import SharedTicketList from '../components/SharedTicketList'
@@ -14,8 +14,15 @@ import { toast } from 'react-hot-toast'
 const Dashboard = () => {
   const navigate = useNavigate()
   const { refreshActivities } = useContext(ActivityContext)
-  const { isLoading, tickets, sharedTickets, createTicket, deleteTicket } =
-    useContext(TicketContext)
+  const {
+    isLoading,
+    tickets,
+    sharedTickets,
+    createTicket,
+    deleteTicket,
+    loadMoreTickets,
+    hasMore,
+  } = useContext(TicketContext)
 
   const { socket } = useContext(SocketContext)
 
@@ -24,6 +31,8 @@ const Dashboard = () => {
   const [errorMessage, setErrorMessage] = useState('')
   const [activeTab, setActiveTab] = useState('my-tickets')
   const [highlightedTicketId, setHighlightedTicketId] = useState(null)
+
+  const listRef = useRef(null)
 
   // ✅ Real-time updates via shared socket
   useEffect(() => {
@@ -61,6 +70,26 @@ const Dashboard = () => {
       return () => clearTimeout(timeout)
     }
   }, [highlightedTicketId])
+
+  // ✅ Infinite scroll for My Tickets
+  useEffect(() => {
+    if (activeTab !== 'my-tickets') return
+
+    const onScroll = () => {
+      if (!listRef.current || !hasMore) return
+      const { scrollTop, scrollHeight, clientHeight } = listRef.current
+      const nearBottom = scrollTop + clientHeight >= scrollHeight - 200
+      if (nearBottom) {
+        loadMoreTickets()
+      }
+    }
+
+    const container = listRef.current
+    if (container) container.addEventListener('scroll', onScroll)
+    return () => {
+      if (container) container.removeEventListener('scroll', onScroll)
+    }
+  }, [activeTab, hasMore, loadMoreTickets])
 
   const handleNewTicketSubmit = async ({ title, content, image }) => {
     try {
@@ -130,7 +159,10 @@ const Dashboard = () => {
         )}
 
         {activeTab === 'my-tickets' ? (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
+          <div
+            ref={listRef}
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto"
+          >
             <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
             <TicketList
               tickets={tickets}
@@ -138,6 +170,11 @@ const Dashboard = () => {
               onRequestDelete={setTicketIdToDelete}
               onClickItem={(id) => navigate(`/tickets/${id}`)}
             />
+            {!hasMore && tickets.length > 0 && (
+              <p className="text-gray-500 dark:text-gray-400 text-center mt-4 text-sm">
+                You've reached the end.
+              </p>
+            )}
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">

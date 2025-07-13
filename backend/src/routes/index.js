@@ -39,6 +39,7 @@ const { unShareTicketRoute } = require('./unshareTicketRoute.js')
 const { updateCommentRoute } = require('./updateCommentRoute.js')
 const { updateTicketRoute } = require('./updateTicketRoute.js')
 const { updateUserProfileRoute } = require('./updateUserProfile.js')
+const { userResolvedTicketsRoute } = require('./userListResolvedTickets.js')
 
 const routes = [
   createUserRoute,
@@ -65,6 +66,7 @@ const routes = [
   createTicketRoute,
   updateTicketRoute,
   deleteTicketRoute,
+  userResolvedTicketsRoute,
 
   sharedTicketRoute,
   unShareTicketRoute,

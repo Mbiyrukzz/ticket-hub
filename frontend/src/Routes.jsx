@@ -13,6 +13,7 @@ import { useUser } from './hooks/useUser'
 import './customScroll.css' // Import custom styles
 import UsersProfilePage from './pages/UsersProfilePage'
 import TicketSharingPage from './pages/TicketSharingPage'
+import ResolvedTicketsPage from './pages/ResolvedTicketsPage'
 
 const MyRoutes = () => {
   const { user, isLoading } = useUser()
@@ -68,6 +69,10 @@ const MyRoutes = () => {
                 {' '}
                 <Route path="/profile" element={<UsersProfilePage />} />
                 <Route path="/tickets" element={<Dashboard />} />
+                <Route
+                  path="/resolved-tickets"
+                  element={<ResolvedTicketsPage />}
+                />
                 <Route
                   path="/tickets/:ticketId"
                   element={<TicketDetailPage />}

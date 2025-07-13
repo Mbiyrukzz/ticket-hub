@@ -14,6 +14,10 @@ const ticketslistRoutes = {
     const authUser = req.user
     const isAdmin = authUser.isAdmin === true || authUser.admin === true
 
+    // Handle pagination params
+    const offset = parseInt(req.query.offset) || 0
+    const limit = parseInt(req.query.limit) || 10
+
     try {
       const collections = {
         users: usersCollection(),
@@ -80,10 +84,13 @@ const ticketslistRoutes = {
         },
       }
 
-      // Fetch tickets the user owns
+      // Fetch owned tickets
       const ownedTicketsWithComments = await collections.tickets
         .aggregate([
           { $match: isAdmin ? {} : { id: { $in: user.tickets || [] } } },
+          { $sort: { createdAt: -1 } },
+          { $skip: offset },
+          { $limit: limit },
           commentLookup,
           creatorLookup,
           addUserName,
@@ -91,20 +98,25 @@ const ticketslistRoutes = {
         ])
         .toArray()
 
-      // Add post: 'owner'
       const ownedWithPost = ownedTicketsWithComments.map((ticket) => ({
         ...ticket,
         post: 'owner',
       }))
 
-      // Fetch tickets shared with user
+      // Fetch sharedWith tickets
       const sharedWithUsersTickets = await collections.tickets
         .aggregate([
           {
             $match: {
-              'sharedWith.email': { $regex: `^${user.email}$`, $options: 'i' },
+              'sharedWith.email': {
+                $regex: `^${user.email}$`,
+                $options: 'i',
+              },
             },
           },
+          { $sort: { createdAt: -1 } },
+          { $skip: offset },
+          { $limit: limit },
           commentLookup,
           creatorLookup,
           addUserName,
@@ -133,7 +145,7 @@ const ticketslistRoutes = {
         })
       )
 
-      // Fetch tickets created *for* the user by an admin
+      // Fetch createdFor tickets
       const createdForTickets = await collections.tickets
         .aggregate([
           {
@@ -141,6 +153,9 @@ const ticketslistRoutes = {
               createdFor: userId,
             },
           },
+          { $sort: { createdAt: -1 } },
+          { $skip: offset },
+          { $limit: limit },
           commentLookup,
           creatorLookup,
           addUserName,
@@ -155,6 +170,8 @@ const ticketslistRoutes = {
 
       return res.status(200).json({
         isAdmin,
+        offset,
+        limit,
         ownedTicketsWithComments: ownedWithPost,
         sharedWithUsersTicketsFormatted,
         createdForTickets: createdForWithPost,

@@ -14,41 +14,30 @@ const TicketsProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
   const [sharedTickets, setSharedTickets] = useState([])
+  const [resolvedTickets, setResolvedTickets] = useState([])
+
+  const [offset, setOffset] = useState(0)
+  const [limit] = useState(10)
+  const [hasMore, setHasMore] = useState(true)
 
   // ✅ Real-time ticket events
   useEffect(() => {
     if (!user?.uid || !socket || !isConnected) return
 
     const handleCreated = (newTicket) => {
-      console.log('📥 Full ticket object:', JSON.stringify(newTicket, null, 2))
-      console.log('User UID:', user.uid)
-      console.log(
-        'Condition check:',
-        newTicket.createdBy === user.uid,
-        newTicket.createdFor === user.uid,
-        newTicket.assignedTo === user.uid
-      )
       if (
         newTicket.createdBy === user.uid ||
         newTicket.createdFor === user.uid ||
         newTicket.assignedTo === user.uid
       ) {
-        // Add post field to match TicketList grouping
         const ticketWithPost = {
           ...newTicket,
           post: newTicket.createdFor === user.uid ? 'createdFor' : 'owner',
         }
-        console.log('📥 Adding ticket to state:', ticketWithPost.id)
         setTickets((prev) => {
-          // Prevent duplicates
-          if (prev.some((t) => t.id === ticketWithPost.id)) {
-            console.log('📥 Ticket already in state:', ticketWithPost.id)
-            return prev
-          }
+          if (prev.some((t) => t.id === ticketWithPost.id)) return prev
           return [ticketWithPost, ...prev]
         })
-      } else {
-        console.log('📥 Ticket ignored, condition not met:', newTicket.id)
       }
     }
 
@@ -65,7 +54,6 @@ const TicketsProvider = ({ children }) => {
     }
 
     const handleDeleted = ({ ticketId }) => {
-      console.log('🗑️ Real-time ticket deleted:', ticketId)
       setTickets((prev) => prev.filter((t) => t.id !== ticketId))
     }
 
@@ -80,52 +68,99 @@ const TicketsProvider = ({ children }) => {
     }
   }, [user?.uid, socket, isConnected, sharedTickets])
 
-  // ✅ Load user's tickets
-  useEffect(() => {
-    const loadTickets = async () => {
-      if (!user || !user.uid || !isReady) {
-        console.log('⏳ Skipping fetch, user/isReady not ready')
-        return
+  // ✅ Load user's tickets with pagination
+  const loadTickets = async (reset = false) => {
+    if (!user || !user.uid || !isReady) return
+
+    const currentOffset = reset ? 0 : offset
+
+    setIsLoading(true)
+
+    try {
+      const res = await get(
+        `${API_URL}/api/users/${user.uid}/tickets?offset=${currentOffset}&limit=${limit}`
+      )
+
+      const {
+        ownedTicketsWithComments = [],
+        sharedWithUsersTicketsFormatted = [],
+        createdForTickets = [],
+      } = res
+
+      const owned = ownedTicketsWithComments.map((t) => ({
+        ...t,
+        post: 'owner',
+      }))
+      const shared = sharedWithUsersTicketsFormatted.map((t) => ({
+        ...t,
+        post: 'shared',
+      }))
+      const createdFor = createdForTickets.map((t) => ({
+        ...t,
+        post: 'createdFor',
+      }))
+
+      const all = [...owned, ...createdFor]
+
+      if (reset) {
+        setTickets(all)
+        setSharedTickets(shared)
+        setOffset(limit)
+      } else {
+        setTickets((prev) => [...prev, ...all])
+        setSharedTickets((prev) => [...prev, ...shared])
+        setOffset(currentOffset + limit)
       }
 
-      setIsLoading(true)
-
-      try {
-        const res = await get(`${API_URL}/api/users/${user.uid}/tickets`)
-        console.log('✅ Ticket fetch response:', res)
-
-        const {
-          ownedTicketsWithComments = [],
-          sharedWithUsersTicketsFormatted = [],
-          createdForTickets = [],
-        } = res
-
-        const owned = ownedTicketsWithComments.map((t) => ({
-          ...t,
-          post: 'owner',
-        }))
-        const shared = sharedWithUsersTicketsFormatted.map((t) => ({
-          ...t,
-          post: 'shared',
-        }))
-        const createdFor = createdForTickets.map((t) => ({
-          ...t,
-          post: 'createdFor',
-        }))
-
-        setTickets([...owned, ...createdFor])
-        setSharedTickets(shared)
-      } catch (error) {
-        console.error('❌ Error fetching tickets:', error)
+      // If we got fewer than requested, no more results
+      if (all.length < limit && shared.length < limit) {
+        setHasMore(false)
+      } else {
+        setHasMore(true)
+      }
+    } catch (error) {
+      console.error('❌ Error fetching tickets:', error)
+      if (reset) {
         setTickets([])
         setSharedTickets([])
-      } finally {
-        setIsLoading(false)
       }
+      setHasMore(false)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    loadTickets()
-  }, [user, isReady, get])
+  // 🔁 Load on mount/reset
+  useEffect(() => {
+    loadTickets(true)
+  }, [user, isReady])
+
+  const loadResolvedTickets = async (offset = 0, limit = 10, reset = false) => {
+    if (!user?.uid || !isReady) return
+
+    try {
+      const res = await get(
+        `${API_URL}/api/users/${user.uid}/tickets/resolved?offset=${offset}&limit=${limit}`
+      )
+      const tickets = res.resolvedTickets || []
+      console.log('Resolved tickets:', tickets)
+      if (reset) {
+        setResolvedTickets(tickets) // Reset state
+      } else {
+        setResolvedTickets((prev) => [...prev, ...tickets]) // Append for pagination
+      }
+      return tickets
+    } catch (err) {
+      console.error('❌ Failed to load resolved tickets:', err)
+      setResolvedTickets([])
+      return []
+    }
+  }
+
+  // Load resolved tickets on mount/reset
+  useEffect(() => {
+    loadResolvedTickets(0, 10, true)
+  }, [user, get, isReady])
 
   // ✅ Create ticket
   const createTicket = async ({ title, content, image }) => {
@@ -233,6 +268,7 @@ const TicketsProvider = ({ children }) => {
         tickets,
         isLoading,
         sharedTickets,
+        resolvedTickets,
         createTicket,
         deleteTicket,
         updateTicket,
@@ -240,6 +276,9 @@ const TicketsProvider = ({ children }) => {
         shareTicket,
         unshareTicket,
         socket,
+        loadMoreTickets: () => loadTickets(false),
+        loadResolvedTickets,
+        hasMore,
       }}
     >
       {children}
