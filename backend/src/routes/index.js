@@ -26,6 +26,9 @@ const { createUserRoute } = require('./createUserRoute.js')
 const { deleteActivitiesRoute } = require('./deleteActivitiesRoute.js')
 const { deleteCommentRoute } = require('./deleteCommentRoute.js')
 const { deleteTicketRoute } = require('./deleteTicketRoute.js')
+const {
+  getOrganizationDetailsRoute,
+} = require('./getOrganizationDetailsRoute.js')
 const { getOrganizationsRoute } = require('./getOrganizationRoute.js')
 const { getTypingUsersRoute } = require('./getTypingUsersRoute.js')
 const { getUserProfileRoute } = require('./getUserProfileRoute.js')
@@ -60,6 +63,7 @@ const routes = [
   adminNotificationsRoute,
   adminSearchRoute,
   getOrganizationsRoute,
+  getOrganizationDetailsRoute,
 
   getUserProfileRoute,
   listAllUsersTickets,
