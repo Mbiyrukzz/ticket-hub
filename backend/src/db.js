@@ -4,7 +4,9 @@ let client = null
 let ticketsCollection = null
 let commentsCollection = null
 let usersCollection = null
-let activitiesCollection = null // Add activitiesCollection
+let activitiesCollection = null
+let newsCollection = null // ✅ Add this declaration
+let typingStatusCollection = null // ✅ Add this declaration
 
 const initializeDbConnection = async () => {
   if (client) {
@@ -24,7 +26,7 @@ const initializeDbConnection = async () => {
       message: error.message,
       stack: error.stack,
     })
-    throw error // Re-throw the error to be handled by the caller
+    throw error
   }
 
   const db = client.db('tickets-app-db')
@@ -32,6 +34,7 @@ const initializeDbConnection = async () => {
   commentsCollection = db.collection('comments')
   usersCollection = db.collection('users')
   activitiesCollection = db.collection('activities')
+  newsCollection = db.collection('news')
   typingStatusCollection = db.collection('typingStatus')
 }
 
@@ -67,12 +70,19 @@ module.exports = {
     }
     return usersCollection
   },
-
   typingStatusCollection: () => {
     if (!typingStatusCollection) {
       console.error('❌ Typing status collection not initialized')
       throw new Error('Typing status collection not initialized')
     }
+    return typingStatusCollection // ✅ Add return statement
+  },
+  newsCollection: () => {
+    if (!newsCollection) {
+      console.error('❌ News collection not initialized')
+      throw new Error('News collection not initialized') // ✅ Add error throwing
+    }
+    return newsCollection // ✅ Add return statement
   },
   activitiesCollection: getActivitiesCollection,
 }

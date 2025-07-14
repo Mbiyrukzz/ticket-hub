@@ -6,6 +6,7 @@ const {
 const {
   adminAssignedToMeTickets,
 } = require('./adminAssignedToMeTicketsRoute.js')
+const { adminCreatePostRoute } = require('./adminCreatePostRoute.js')
 const { adminCreateTicketRoute } = require('./adminCreateTicketRoute.js')
 const { adminNotificationsRoute } = require('./adminNotificationsRoute.js')
 const { adminRecentTicketsRoute } = require('./adminRecentTicketsRoute.js')
@@ -17,6 +18,7 @@ const {
 const {
   adminTicketStatusLineChartRoute,
 } = require('./adminTicketPriorityStatusRoute.js')
+const adminUpdateNewsFeedPostRoute = require('./adminUpdatePostFeedRoute.js')
 const { adminUpdateTicketRoute } = require('./adminUpdateTicketRoute.js')
 const { adminViewTicketsRoute } = require('./adminViewTicketRoute.js')
 
@@ -35,6 +37,7 @@ const { getUserProfileRoute } = require('./getUserProfileRoute.js')
 const { listAllUsersRoute } = require('./listAllUsersRoute.js')
 const { listAllUsersTickets } = require('./listAllUsersTickets.js')
 const { listCommentsRoute } = require('./listCommentsRoute.js')
+const { newsFeedRoute } = require('./newsFeedRoute.js')
 
 const { sharedTicketRoute } = require('./sharedTicketRoute.js')
 
@@ -64,12 +67,16 @@ const routes = [
   adminSearchRoute,
   getOrganizationsRoute,
   getOrganizationDetailsRoute,
+  adminCreatePostRoute,
+  adminUpdateNewsFeedPostRoute,
 
   getUserProfileRoute,
   listAllUsersTickets,
   listAllUsersRoute,
   updateUserProfileRoute,
   getTypingUsersRoute,
+
+  newsFeedRoute,
 
   ticketslistRoutes,
   createTicketRoute,
