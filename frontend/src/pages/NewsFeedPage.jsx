@@ -12,7 +12,7 @@ const NewsFeedPage = () => {
   }, [fetchNews])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white dark:from-[#0f0f0f] dark:to-[#1a1a1a] px-4 py-10 md:px-12 text-gray-800 dark:text-gray-100 transition-all duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white dark:from-[#0f0f0f] dark:to-[#1a1a1a] px-4 py-12 md:px-10 text-gray-800 dark:text-gray-100 transition-all duration-300">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-10 flex items-center justify-between">
@@ -31,11 +31,7 @@ const NewsFeedPage = () => {
                 Array.isArray(post.images) && post.images.length > 0
                   ? post.images[0]
                   : post.images
-              const imageUrl = image
-                ? image
-                : image
-                ? `${API_URL}${image}`
-                : null
+              const imageUrl = image || image ? image : `${API_URL}${image}`
 
               return (
                 <Link
@@ -45,11 +41,11 @@ const NewsFeedPage = () => {
                 >
                   <div className="bg-white dark:bg-[#121212] rounded-2xl shadow-md hover:shadow-lg overflow-hidden transition-shadow">
                     {imageUrl && (
-                      <div className="w-full h-48 overflow-hidden">
+                      <div className="w-full h-48 overflow-hidden group relative">
                         <img
                           src={imageUrl}
                           alt={post.title}
-                          className="w-full h-full object-cover transition-transform duration-300 ease-in-out"
+                          className="w-full h-full object-cover transform group-hover:scale-105 transition duration-300 ease-in-out"
                         />
                       </div>
                     )}
