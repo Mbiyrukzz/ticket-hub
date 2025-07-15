@@ -30,9 +30,9 @@ const SideBar = () => {
               color: 'text-blue-500 dark:text-blue-400',
             },
             {
-              to: '/analytics',
+              to: '/news',
               icon: faChartBar,
-              label: 'Analytics',
+              label: 'Updates',
               color: 'text-blue-500 dark:text-blue-400',
             },
             {

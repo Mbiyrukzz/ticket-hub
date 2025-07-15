@@ -12,6 +12,8 @@ const TicketsProvider = ({ children }) => {
   const { user } = useUser()
   const { socket, isConnected } = useSocket()
 
+  const [news, setNews] = useState([])
+
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState([])
   const [sharedTickets, setSharedTickets] = useState([])
@@ -200,6 +202,29 @@ const TicketsProvider = ({ children }) => {
     loadUnresolvedTickets()
   }, [loadUnresolvedTickets])
 
+  const fetchNews = useCallback(async () => {
+    if (!isReady) return
+    try {
+      const res = await get(`${API_URL}/api/news-feed`)
+      if (Array.isArray(res)) {
+  setNews(res)
+  console.log('✅ News Found (direct array):', res)
+} else if (Array.isArray(res?.news)) {
+  setNews(res.news)
+  console.log('✅ News Found (in res.news):', res.news)
+} else {
+  console.warn('⚠️ No valid news format received:', res)
+}
+
+
+    
+    } catch (err) {
+      console.error('❌ Failed to load news feed:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [get, isReady])
+
   // ✅ Create ticket
   const createTicket = async ({ title, content, image }) => {
     if (!user || !title || !content) return
@@ -303,6 +328,8 @@ const TicketsProvider = ({ children }) => {
   return (
     <TicketContext.Provider
       value={{
+        news,
+        fetchNews,
         tickets,
         isLoading,
         sharedTickets,

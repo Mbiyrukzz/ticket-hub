@@ -4,7 +4,7 @@ const { verifyAuthToken } = require('../middleware/verifyAuthToken')
 const newsFeedRoute = {
   path: '/news-feed',
   method: 'get',
-  middleware: [verifyAuthToken], // Remove if you want it public
+  middleware: [verifyAuthToken],
   handler: async (req, res) => {
     try {
       const offset = parseInt(req.query.offset) || 0

@@ -15,6 +15,8 @@ import UsersProfilePage from './pages/UsersProfilePage'
 import TicketSharingPage from './pages/TicketSharingPage'
 import ResolvedTicketsPage from './pages/ResolvedTicketsPage'
 import UnResolvedTicketsPage from './pages/UnResolvedTicketsPage'
+import NewsFeedPage from './pages/NewsFeedPage'
+import NewsDetailPage from './pages/NewsDetailPage'
 
 const MyRoutes = () => {
   const { user, isLoading } = useUser()
@@ -78,6 +80,7 @@ const MyRoutes = () => {
                   path="/unresolved-tickets"
                   element={<UnResolvedTicketsPage />}
                 />
+                <Route path="/news" element={<NewsFeedPage />} />
                 <Route
                   path="/tickets/:ticketId"
                   element={<TicketDetailPage />}
@@ -86,6 +89,7 @@ const MyRoutes = () => {
                   path="/shared/:ticketId"
                   element={<TicketDetailPage isOwner={false} />}
                 />
+                <Route path="/news/:postId" element={<NewsDetailPage />} />
                 <Route
                   path="/sharing/:ticketId"
                   element={<TicketSharingPage />}

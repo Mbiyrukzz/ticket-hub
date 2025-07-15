@@ -35,6 +35,14 @@ const adminUpdateNewsFeedPostRoute = {
   method: 'put',
   middleware: [verifyAuthToken, isAdmin, upload.array('images[]')],
   handler: async (req, res) => {
+    const userDoc = req.userDoc
+
+    if (!userDoc.isAdmin) {
+      return res
+        .status(403)
+        .json({ error: 'Only admins can update the news feed' })
+    }
+
     const { postId } = req.params
     const { title, content, existingImages } = req.body
     const collection = newsCollection()
@@ -78,13 +86,9 @@ const adminUpdateNewsFeedPostRoute = {
       }
 
       // Emit socket update
-      req.io?.emit('news-updated', {
-        type: 'update',
-        id: postId,
-        post: result.value,
-      })
+      req.io?.emit('news-updated', result.value)
 
-      res.json({ success: true, post: result.value })
+      res.json(result.value)
     } catch (err) {
       console.error('❌ Failed to update news feed post:', err)
       res.status(500).json({ error: 'Internal server error' })
