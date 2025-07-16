@@ -11,6 +11,8 @@ const { routes } = require('./routes/index.js')
 const credentials = require('../credentials.json')
 const { socketAuth } = require('./sockets/socketAuth.js')
 
+require('dotenv').config()
+
 // ✅ Firebase Admin Init
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
