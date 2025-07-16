@@ -5,7 +5,7 @@ import useAuthedRequest from '../hooks/useAuthedRequest'
 import useSocket from '../hooks/useSocket'
 import { useCallback } from 'react'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090/api/'
 
 const TicketsProvider = ({ children }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
@@ -83,7 +83,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const res = await get(
-        `${API_URL}/api/users/${user.uid}/tickets?offset=${currentOffset}&limit=${limit}`
+        `${API_URL}/users/${user.uid}/tickets?offset=${currentOffset}&limit=${limit}`
       )
 
       const {
@@ -146,7 +146,7 @@ const TicketsProvider = ({ children }) => {
 
       try {
         const res = await get(
-          `${API_URL}/api/users/${user.uid}/tickets/resolved?offset=${offset}&limit=${limit}`
+          `${API_URL}/users/${user.uid}/tickets/resolved?offset=${offset}&limit=${limit}`
         )
         const tickets = res.resolvedTickets || []
         console.log('Resolved tickets:', tickets)
@@ -176,7 +176,7 @@ const TicketsProvider = ({ children }) => {
 
       try {
         const res = await get(
-          `${API_URL}/api/users/${user.uid}/tickets/unresolved?offset=${offset}&limit=${limit}`
+          `${API_URL}/users/${user.uid}/tickets/unresolved?offset=${offset}&limit=${limit}`
         )
 
         const tickets = res.unresolvedTickets || []
@@ -205,19 +205,16 @@ const TicketsProvider = ({ children }) => {
   const fetchNews = useCallback(async () => {
     if (!isReady) return
     try {
-      const res = await get(`${API_URL}/api/news-feed`)
+      const res = await get(`${API_URL}/news-feed`)
       if (Array.isArray(res)) {
-  setNews(res)
-  console.log('✅ News Found (direct array):', res)
-} else if (Array.isArray(res?.news)) {
-  setNews(res.news)
-  console.log('✅ News Found (in res.news):', res.news)
-} else {
-  console.warn('⚠️ No valid news format received:', res)
-}
-
-
-    
+        setNews(res)
+        console.log('✅ News Found (direct array):', res)
+      } else if (Array.isArray(res?.news)) {
+        setNews(res.news)
+        console.log('✅ News Found (in res.news):', res.news)
+      } else {
+        console.warn('⚠️ No valid news format received:', res)
+      }
     } catch (err) {
       console.error('❌ Failed to load news feed:', err)
     } finally {
@@ -236,7 +233,7 @@ const TicketsProvider = ({ children }) => {
 
     try {
       const newTicket = await post(
-        `${API_URL}/api/users/${user.uid}/tickets`,
+        `${API_URL}/users/${user.uid}/tickets`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -258,7 +255,7 @@ const TicketsProvider = ({ children }) => {
       if (fields.image instanceof File) formData.append('image', fields.image)
 
       const updatedTicket = await put(
-        `${API_URL}/api/users/${userId}/tickets/${ticketId}`,
+        `${API_URL}/users/${userId}/tickets/${ticketId}`,
         formData
       )
 
@@ -283,7 +280,7 @@ const TicketsProvider = ({ children }) => {
     if (!user) return
 
     try {
-      await del(`${API_URL}/api/users/${user.uid}/tickets/${ticketId}`)
+      await del(`${API_URL}/users/${user.uid}/tickets/${ticketId}`)
       setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
     } catch (error) {
       console.error('❌ Error deleting ticket:', error.response?.data || error)

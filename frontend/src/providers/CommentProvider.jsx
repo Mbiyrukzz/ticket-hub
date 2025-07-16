@@ -11,7 +11,7 @@ import SocketContext from '../contexts/SocketContext'
 import useAuthedRequest from '../hooks/useAuthedRequest'
 import { useUser } from '../hooks/useUser'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090/api/'
 
 const CommentProvider = ({ children, ticketId }) => {
   const { get, post, put, del, isReady } = useAuthedRequest()
@@ -76,7 +76,7 @@ const CommentProvider = ({ children, ticketId }) => {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await get(`${API_URL}/api/tickets/${ticketId}/comments`)
+        const res = await get(`${API_URL}/tickets/${ticketId}/comments`)
         const incoming = Array.isArray(res.comments) ? res.comments : []
         setComments((prev) => [
           ...prev.filter((c) => c.ticketId !== ticketId),
@@ -107,7 +107,7 @@ const CommentProvider = ({ children, ticketId }) => {
 
       try {
         const { comment } = await post(
-          `${API_URL}/api/tickets/${ticketId}/comments`,
+          `${API_URL}/tickets/${ticketId}/comments`,
           formData
         )
         setComments((prev) => [...prev, comment])
@@ -128,7 +128,7 @@ const CommentProvider = ({ children, ticketId }) => {
       if (!updatedData?.content?.trim()) return
       try {
         const res = await put(
-          `${API_URL}/api/tickets/${ticketId}/comments/${commentId}`,
+          `${API_URL}/tickets/${ticketId}/comments/${commentId}`,
           updatedData
         )
         const updated = res?.updatedComment
