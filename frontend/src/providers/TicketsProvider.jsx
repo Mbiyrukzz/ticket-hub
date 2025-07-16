@@ -235,9 +235,7 @@ const TicketsProvider = ({ children }) => {
       const newTicket = await post(
         `${API_URL}/users/${user.uid}/tickets`,
         formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
+        {}
       )
 
       setTickets((prev) => [newTicket, ...prev])
