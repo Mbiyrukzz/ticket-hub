@@ -63,12 +63,12 @@ const createTicketRoute = {
 
       const newTicketId = uuidv4()
       const image = req.file
-        ? `${process.env.BASE_URL || 'http://localhost:8090'}/uploads/${
+        ? `${process.env.API_URL || 'http://localhost:8090'}/uploads/${
             req.file.filename
           }`
         : null
 
-      console.log('✅ Using API_URL:', process.env.BASE_URL)
+      console.log('✅ Using API_URL:', process.env.API_URL)
 
       const newTicket = {
         id: newTicketId,
