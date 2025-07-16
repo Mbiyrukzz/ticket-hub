@@ -1,126 +1,38 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
-import CreateAccountForm from '../components/CreateAccountForm'
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
-import Loading from '../components/Loading'
-import './CreateAccountPage.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8090'
+import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCircleInfo, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { Link } from 'react-router-dom'
 
 const CreateAccountPage = () => {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [bubbles, setBubbles] = useState([])
-
-  useEffect(() => {
-    const generateBubbles = () => {
-      const newBubbles = Array.from({ length: 10 }).map(() => ({
-        id: Math.random(),
-        size: Math.random() * 60 + 20,
-        left: Math.random() * 90,
-        duration: Math.random() * 6 + 4,
-        delay: Math.random() * 3,
-      }))
-      setBubbles(newBubbles)
-    }
-    generateBubbles()
-  }, [])
-
-  const createAccount = async (name, email, password, confirmPassword) => {
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const result = await createUserWithEmailAndPassword(
-        getAuth(),
-        email,
-        password
-      )
-      const token = await result.user.getIdToken()
-
-      await axios.post(
-        `${API_URL}/api/users`,
-        { name },
-        { headers: { authtoken: token } }
-      )
-
-      navigate('/tickets')
-    } catch (err) {
-      console.error('Error creating account:', err)
-      setError(err.code)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center px-4 py-12 overflow-hidden relative">
-      {/* Animated Bubbles */}
-      {bubbles.map((bubble) => (
-        <div
-          key={bubble.id}
-          className="bubble absolute rounded-full bg-blue-200 dark:bg-blue-400 opacity-30 dark:opacity-20"
-          style={{
-            width: `${bubble.size}px`,
-            height: `${bubble.size}px`,
-            left: `${bubble.left}%`,
-            bottom: '-100px',
-            animation: `floatUp ${bubble.duration}s infinite ease-in-out`,
-            animationDelay: `${bubble.delay}s`,
-          }}
-        />
-      ))}
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="max-w-md w-full bg-white dark:bg-gray-900 p-10 rounded-2xl shadow-2xl border dark:border-gray-700 text-center animate-fadeIn">
+        <div className="text-blue-600 dark:text-blue-400 mb-6">
+          <FontAwesomeIcon icon={faCircleInfo} size="4x" />
+        </div>
 
-      {/* Animated Cubes */}
-      <div
-        className="cube absolute bg-blue-300 dark:bg-blue-500 opacity-20"
-        style={{
-          width: '60px',
-          height: '60px',
-          top: '15%',
-          left: '10%',
-          animation: 'rotateCube 10s infinite linear',
-        }}
-      />
-      <div
-        className="cube absolute bg-purple-300 dark:bg-purple-500 opacity-20"
-        style={{
-          width: '45px',
-          height: '45px',
-          bottom: '20%',
-          right: '15%',
-          animation: 'rotateCube 12s infinite linear',
-          animationDelay: '2s',
-        }}
-      />
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4">
+          Account Creation Restricted
+        </h1>
 
-      {/* Main Content */}
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 animate-fadeIn relative z-10">
-        <h4 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">
-          Create An Account
-        </h4>
+        <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base mb-6">
+          You must be using one of our products or services to create an
+          account. If you believe you should have access, please contact us.
+        </p>
 
-        {loading ? (
-          <div className="flex flex-col items-center space-y-4 animate-pulse">
-            <Loading />
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Creating your account...
-            </p>
-          </div>
-        ) : (
-          <CreateAccountForm
-            error={error}
-            onSubmit={createAccount}
-            disabled={loading}
-          />
-        )}
+        <a
+          href="https://ashmif.com/contact"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
+        >
+          Contact Us
+          <FontAwesomeIcon icon={faArrowRight} />
+        </a>
+
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-6">
+          © {new Date().getFullYear()} Ashmif Technologies. All rights reserved.
+        </p>
       </div>
     </div>
   )
