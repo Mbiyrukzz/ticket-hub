@@ -8,7 +8,8 @@ const logActivity = require('../middleware/logActivity.js')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = '/home/forge/support.ashmif.com/backend/uploads'
+    const uploadPath =
+      process.env.UPLOAD_PATH || path.join(__dirname, '..', 'uploads')
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true })
     }
