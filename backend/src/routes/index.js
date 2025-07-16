@@ -54,6 +54,7 @@ const {
 } = require('./userUnresolvedTicketsRoute .js')
 
 const routes = [
+  //admin routes
   createUserRoute,
   makeAdminRoute,
   adminListRoute,
