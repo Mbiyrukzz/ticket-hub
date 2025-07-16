@@ -13,6 +13,8 @@ const { socketAuth } = require('./sockets/socketAuth.js')
 
 require('dotenv').config()
 
+console.log('✅ Server booting with API_URL:', process.env.API_URL)
+
 // ✅ Firebase Admin Init
 admin.initializeApp({ credential: admin.credential.cert(credentials) })
 
