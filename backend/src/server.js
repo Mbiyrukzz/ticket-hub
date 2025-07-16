@@ -31,7 +31,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 const server = http.createServer(app)
 const io = socketIo(server, {
   cors: {
-    origin: '*',
+    origin: 'support.ashmif.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 })
