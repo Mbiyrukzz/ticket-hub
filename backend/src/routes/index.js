@@ -39,6 +39,7 @@ const { listAllUsersRoute } = require('./listAllUsersRoute.js')
 const { listAllUsersTickets } = require('./listAllUsersTickets.js')
 const { listCommentsRoute } = require('./listCommentsRoute.js')
 const { newsFeedRoute } = require('./newsFeedRoute.js')
+const { searchRoute } = require('./searchRoute.js')
 
 const { sharedTicketRoute } = require('./sharedTicketRoute.js')
 
@@ -94,6 +95,8 @@ const routes = [
   deleteCommentRoute,
   createCommentRoute,
   updateCommentRoute,
+
+  searchRoute,
 
   getActivitiesRoute,
   deleteActivitiesRoute,

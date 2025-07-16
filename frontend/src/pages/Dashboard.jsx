@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [errorMessage, setErrorMessage] = useState('')
   const [activeTab, setActiveTab] = useState('my-tickets')
   const [highlightedTicketId, setHighlightedTicketId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const listRef = useRef(null)
 
@@ -113,6 +114,19 @@ const Dashboard = () => {
     }
   }
 
+  // 🔍 Filtered tickets based on search
+  const filteredTickets = tickets.filter(
+    (t) =>
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredSharedTickets = sharedTickets.filter(
+    (t) =>
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   if (isLoading) return <Loading />
 
   return (
@@ -129,6 +143,18 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="p-6">
+        {/* 🔍 Search Input */}
+        <div className="mb-6">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tickets..."
+            className="w-full md:max-w-md px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
+        </div>
+
+        {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
             onClick={() => setActiveTab('my-tickets')}
@@ -152,12 +178,14 @@ const Dashboard = () => {
           </button>
         </div>
 
+        {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-4 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600 rounded-lg">
             {errorMessage}
           </div>
         )}
 
+        {/* Tickets List */}
         {activeTab === 'my-tickets' ? (
           <div
             ref={listRef}
@@ -165,7 +193,7 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-semibold mb-4">My Tickets</h2>
             <TicketList
-              tickets={tickets}
+              tickets={filteredTickets}
               highlightedTicketId={highlightedTicketId}
               onRequestDelete={setTicketIdToDelete}
               onClickItem={(id) => navigate(`/tickets/${id}`)}
@@ -180,12 +208,12 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow p-4 max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Shared With You</h2>
             <SharedTicketList
-              sharedTickets={sharedTickets}
+              sharedTickets={filteredSharedTickets}
               onClickItem={(id) => navigate(`/shared/${id}`)}
             />
-            {sharedTickets.length === 0 && (
+            {filteredSharedTickets.length === 0 && (
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-4">
-                No tickets shared with you yet.
+                No tickets match your search.
               </p>
             )}
           </div>

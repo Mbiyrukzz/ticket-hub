@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch } from '@fortawesome/free-solid-svg-icons'
+
 import LogoutButton from './LogoutButton'
 import Loading from './Loading'
 import { useUser } from '../hooks/useUser'
@@ -36,21 +35,6 @@ const NavBar = () => {
         >
           TicketHub
         </Link>
-
-        {/* Search */}
-        <div className="relative w-full max-w-md mx-4 hidden md:block">
-          <input
-            type="text"
-            placeholder="Search tickets..."
-            className="w-full pl-5 pr-10 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full border border-gray-300 dark:border-gray-700 
-              focus:ring-2 focus:ring-blue-500 outline-none shadow-inner transition"
-            aria-label="Search tickets"
-          />
-          <FontAwesomeIcon
-            icon={faSearch}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
-          />
-        </div>
 
         {/* Right Side: User Info */}
         <div className="flex items-center space-x-5 sm:space-x-6 relative">
