@@ -8,6 +8,7 @@ const {
 } = require('./adminAssignedToMeTicketsRoute.js')
 const { adminCreatePostRoute } = require('./adminCreatePostRoute.js')
 const { adminCreateTicketRoute } = require('./adminCreateTicketRoute.js')
+const { adminDeleteTicketRoute } = require('./adminDeleteTicketRoute.js')
 const { adminNotificationsRoute } = require('./adminNotificationsRoute.js')
 const { adminRecentTicketsRoute } = require('./adminRecentTicketsRoute.js')
 const { adminSearchRoute } = require('./adminSearchRoute.js')
@@ -57,6 +58,7 @@ const routes = [
   adminListRoute,
   adminCreateTicketRoute,
   adminUpdateTicketRoute,
+  adminDeleteTicketRoute,
   adminViewTicketsRoute,
   adminRecentTicketsRoute,
   adminAssignedToMeTickets,
