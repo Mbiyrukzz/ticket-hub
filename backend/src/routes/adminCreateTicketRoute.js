@@ -42,8 +42,8 @@ const adminCreateTicketRoute = {
           .json({ error: 'Only admins can create tickets for others' })
       }
 
-      const { title, content, priority, status, assignedTo, createdFor } =
-        req.body
+      const { title, content, priority, status, assignedTo } = req.body
+      const createdFor = req.params.userId
 
       if (!title?.trim() || !content?.trim()) {
         return res.status(400).json({ error: 'Title and content are required' })
